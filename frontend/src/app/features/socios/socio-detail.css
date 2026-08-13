@@ -1,0 +1,36 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.actions,
+.btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 16px;
+  margin: 16px 0;
+}
+
+.detail dt {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.detail dd {
+  margin: 0;
+}
+
+.estado-actions {
+  margin-top: 24px;
+}

@@ -1,0 +1,492 @@
+<h1 class="page-title">Creditos</h1>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="creditos-error">{{ error() }}</div>
+}
+@if (ok()) {
+  <div class="alert alert-success" data-testid="creditos-ok">{{ ok() }}</div>
+}
+
+<nav class="tabs" data-testid="creditos-tabs">
+  <button type="button" class="tab" [class.active]="tab() === 'productos'" (click)="tab.set('productos')">Productos</button>
+  <button type="button" class="tab" [class.active]="tab() === 'solicitudes'" (click)="tab.set('solicitudes')">Solicitudes</button>
+  <button type="button" class="tab" [class.active]="tab() === 'creditos'" (click)="tab.set('creditos')">Creditos</button>
+  <button type="button" class="tab" [class.active]="tab() === 'cartera'" (click)="tab.set('cartera')">Cartera</button>
+  <button type="button" class="tab" [class.active]="tab() === 'simulador'" (click)="tab.set('simulador')">Simulador</button>
+</nav>
+
+@if (tab() === 'productos') {
+  <section class="panel" data-testid="productos-panel">
+    <h2>Productos de credito</h2>
+
+    @if (puedeCrear()) {
+      <form [formGroup]="productoForm" (ngSubmit)="crearProducto()" class="form-grid" data-testid="producto-form">
+        <label class="field">
+          <span>Nombre</span>
+          <input formControlName="nombre" data-testid="input-nombre-producto" />
+        </label>
+        <label class="field">
+          <span>Tasa de interes (%)</span>
+          <input type="number" formControlName="tasaInteres" data-testid="input-tasa-producto" />
+        </label>
+        <label class="field">
+          <span>Tasa de mora (%)</span>
+          <input type="number" formControlName="tasaMora" data-testid="input-tasa-mora-producto" />
+        </label>
+        <label class="field">
+          <span>Sistema de amortizacion</span>
+          <select formControlName="sistemaAmortizacion" data-testid="input-sistema-producto">
+            <option value="FRANCES">FRANCES</option>
+            <option value="ALEMAN">ALEMAN</option>
+            <option value="AMERICANO">AMERICANO</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Plazo maximo (meses)</span>
+          <input type="number" formControlName="plazoMaxMeses" data-testid="input-plazo-producto" />
+        </label>
+        <label class="field">
+          <span>Monto minimo</span>
+          <input type="number" formControlName="montoMin" data-testid="input-monto-min-producto" />
+        </label>
+        <label class="field">
+          <span>Monto maximo</span>
+          <input type="number" formControlName="montoMax" data-testid="input-monto-max-producto" />
+        </label>
+        <label class="field">
+          <span>Requiere garante</span>
+          <input type="checkbox" formControlName="requiereGarante" data-testid="input-garante-producto" />
+        </label>
+        <label class="field">
+          <span>Vigente desde</span>
+          <input type="date" formControlName="vigenteDesde" data-testid="input-vigencia-producto" />
+        </label>
+        <button type="submit" class="btn btn-primary" data-testid="btn-crear-producto" [disabled]="productoForm.invalid || guardando()">
+          Crear
+        </button>
+      </form>
+    }
+
+    <table class="table" data-testid="productos-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tasa</th>
+          <th>Mora</th>
+          <th>Sistema</th>
+          <th>Plazo max</th>
+          <th>Montos</th>
+          <th>Garante</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of productos(); track p.id) {
+          <tr>
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.tasaInteres | number }}%</td>
+            <td>{{ p.tasaMora | number }}%</td>
+            <td>{{ p.sistemaAmortizacion }}</td>
+            <td>{{ p.plazoMaxMeses }} meses</td>
+            <td>{{ p.montoMin | number: '1.2-2' }} - {{ p.montoMax | number: '1.2-2' }}</td>
+            <td>{{ p.requiereGarante ? 'Si' : 'No' }}</td>
+            <td>
+              <span class="badge" [class.badge-success]="p.activo">{{ p.activo ? 'ACTIVO' : 'INACTIVO' }}</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (tab() === 'solicitudes') {
+  <section class="panel" data-testid="solicitudes-panel">
+    <h2>Solicitudes de credito</h2>
+
+    @if (puedeCrear()) {
+      <form [formGroup]="solicitudForm" (ngSubmit)="crearSolicitud()" class="form-inline" data-testid="solicitud-form">
+        <label class="field">
+          <span>Socio</span>
+          <select formControlName="socioId" data-testid="input-socio-solicitud">
+            <option [ngValue]="0" disabled>Socio</option>
+            @for (s of socios(); track s.id) {
+              <option [ngValue]="s.id">{{ s.codigo }} - {{ s.nombres }} {{ s.apellidos }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Producto</span>
+          <select formControlName="productoId" data-testid="input-producto-solicitud">
+            <option [ngValue]="0" disabled>Producto</option>
+            @for (p of productos(); track p.id) {
+              @if (p.activo) {
+                <option [ngValue]="p.id">{{ p.nombre }}</option>
+              }
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Monto</span>
+          <input type="number" formControlName="montoSolicitado" data-testid="input-monto-solicitud" />
+        </label>
+        <label class="field">
+          <span>Plazo (meses)</span>
+          <input type="number" formControlName="plazoMeses" data-testid="input-plazo-solicitud" />
+        </label>
+        <label class="field">
+          <span>Destino</span>
+          <input formControlName="destino" data-testid="input-destino-solicitud" />
+        </label>
+        <button type="submit" class="btn btn-primary" data-testid="btn-crear-solicitud" [disabled]="solicitudForm.invalid || guardando()">
+          Registrar
+        </button>
+      </form>
+    }
+
+    <table class="table" data-testid="solicitudes-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Socio</th>
+          <th>Producto</th>
+          <th>Monto</th>
+          <th>Plazo</th>
+          <th>Destino</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of solicitudes(); track s.id) {
+          <tr>
+            <td>{{ s.id }}</td>
+            <td>{{ s.socioCodigo }} - {{ s.socioNombre }}</td>
+            <td>{{ s.nombreProducto }}</td>
+            <td>{{ s.montoSolicitado | number: '1.2-2' }}</td>
+            <td>{{ s.plazoMeses }} meses</td>
+            <td>{{ s.destino ?? '-' }}</td>
+            <td>
+              <span class="badge" [class.badge-success]="s.estado === 'APROBADA'">{{ s.estado }}</span>
+            </td>
+            <td>
+              @if (s.estado === 'PENDIENTE' && puedeEditar()) {
+                <button type="button" class="btn btn-outline btn-sm" data-testid="btn-evaluar" (click)="evaluar(s.id)">
+                  Evaluar
+                </button>
+              }
+              @if (s.estado === 'EVALUACION' && puedeAprobar()) {
+                <button type="button" class="btn btn-outline btn-sm" data-testid="btn-aprobar" (click)="aprobar(s.id)">
+                  Aprobar
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" data-testid="btn-abrir-rechazo" (click)="abrirRechazo(s.id)">
+                  Rechazar
+                </button>
+              }
+              @if (rechazoId() === s.id) {
+                <form [formGroup]="rechazoForm" (ngSubmit)="rechazar(s.id)" class="form-inline" data-testid="rechazo-form">
+                  <label class="field">
+                    <span>Motivo</span>
+                    <input formControlName="motivoRechazo" data-testid="input-motivo-rechazo" />
+                  </label>
+                  <button type="submit" class="btn btn-danger btn-sm" data-testid="btn-confirmar-rechazo" [disabled]="rechazoForm.invalid || guardando()">
+                    Confirmar
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm" data-testid="btn-cancelar-rechazo" (click)="cancelarRechazo()">
+                    Cancelar
+                  </button>
+                </form>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (tab() === 'creditos') {
+  <section class="panel" data-testid="creditos-panel">
+    <div class="page-header">
+      <h2>Creditos otorgados</h2>
+      @if (puedeEditar()) {
+        <button type="button" class="btn btn-outline" data-testid="btn-procesar-mora" (click)="procesarVencidas()" [disabled]="guardando()">
+          Procesar vencidas
+        </button>
+      }
+    </div>
+
+    @if (moraResultado()) {
+      <div class="alert alert-success" data-testid="mora-resultado">
+        Cuotas marcadas: {{ moraResultado()!.cuotasMarcadas }} - Mora total: {{ moraResultado()!.moraTotal | number: '1.2-2' }} - Creditos en mora: {{ moraResultado()!.creditosEnMora }}
+      </div>
+    }
+
+    <table class="table" data-testid="creditos-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Socio</th>
+          <th>Producto</th>
+          <th>Monto</th>
+          <th>Tasa</th>
+          <th>Plazo</th>
+          <th>Saldo</th>
+          <th>Cuotas pend.</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of creditos(); track c.id) {
+          <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ c.socioCodigo }} - {{ c.socioNombre }}</td>
+            <td>{{ c.nombreProducto }}</td>
+            <td>{{ c.montoDesembolsado | number: '1.2-2' }}</td>
+            <td>{{ c.tasaInteres | number }}%</td>
+            <td>{{ c.plazoMeses }} meses</td>
+            <td>{{ c.saldoCapital | number: '1.2-2' }}</td>
+            <td>{{ c.cuotasPendientes }}</td>
+            <td>
+              <span class="badge" [class.badge-success]="c.estado === 'VIGENTE'">{{ c.estado }}</span>
+            </td>
+            <td>
+              @if (c.estado === 'APROBADA' && puedeAprobar()) {
+                <button type="button" class="btn btn-primary btn-sm" data-testid="btn-desembolsar" (click)="desembolsar(c.id)">
+                  Desembolsar
+                </button>
+              }
+              <button type="button" class="btn btn-outline btn-sm" data-testid="btn-detalle" (click)="seleccionarCredito(c)">
+                Detalle
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  @if (creditoSeleccionado()) {
+    <section class="panel" data-testid="detalle-panel">
+      <div class="page-header">
+        <h2>Detalle - Credito {{ creditoSeleccionado()!.id }} ({{ creditoSeleccionado()!.socioNombre }})</h2>
+        <span class="saldo">Saldo: {{ creditoSeleccionado()!.saldoCapital | number: '1.2-2' }}</span>
+      </div>
+
+      <h3>Tabla de amortizacion</h3>
+      <table class="table" data-testid="cuotas-table">
+        <thead>
+          <tr>
+            <th>Cuota</th>
+            <th>Vencimiento</th>
+            <th>Capital</th>
+            <th>Interes</th>
+            <th>Total</th>
+            <th>Saldo</th>
+            <th>Mora</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (q of cuotas(); track q.id) {
+            <tr>
+              <td>{{ q.numeroCuota }}</td>
+              <td>{{ q.fechaVencimiento }}</td>
+              <td>{{ q.capital | number: '1.2-2' }}</td>
+              <td>{{ q.interes | number: '1.2-2' }}</td>
+              <td>{{ q.cuotaTotal | number: '1.2-2' }}</td>
+              <td>{{ q.saldoCapital | number: '1.2-2' }}</td>
+              <td>{{ q.mora | number: '1.2-2' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="q.estado === 'PAGADA'">{{ q.estado }}</span>
+              </td>
+              <td>
+                @if (puedeCrear() && (q.estado === 'PENDIENTE' || q.estado === 'VENCIDA')) {
+                  <button type="button" class="btn btn-outline btn-sm" data-testid="btn-pagar-cuota" (click)="pagarCuota(creditoSeleccionado()!, q)">
+                    Cobrar
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (puedeAprobar()) {
+        <h3>Refinanciar</h3>
+        <form [formGroup]="refinanciarForm" (ngSubmit)="refinanciar()" class="form-inline" data-testid="refinanciar-form">
+          <label class="field">
+            <span>Plazo (meses)</span>
+            <input type="number" formControlName="plazoMeses" data-testid="input-plazo-refinanciar" />
+          </label>
+          <label class="field">
+            <span>Tasa (%)</span>
+            <input type="number" formControlName="tasaInteres" data-testid="input-tasa-refinanciar" />
+          </label>
+          <button type="submit" class="btn btn-primary" data-testid="btn-refinanciar" [disabled]="refinanciarForm.invalid || guardando()">
+            Refinanciar
+          </button>
+        </form>
+      }
+
+      <h3>Historial de pagos</h3>
+      <table class="table" data-testid="pagos-table">
+        <thead>
+          <tr>
+            <th>Cuota</th>
+            <th>Capital</th>
+            <th>Interes</th>
+            <th>Mora</th>
+            <th>Comprobante</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of pagos(); track p.id) {
+            <tr>
+              <td>{{ p.cuotaId }}</td>
+              <td>{{ p.montoCapital | number: '1.2-2' }}</td>
+              <td>{{ p.montoInteres | number: '1.2-2' }}</td>
+              <td>{{ p.montoMora | number: '1.2-2' }}</td>
+              <td>{{ p.comprobanteNumero ?? '-' }}</td>
+              <td>{{ p.pagadoAt | date: 'short' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+  </section>
+  }
+}
+
+@if (tab() === 'cartera') {
+  <section class="panel" data-testid="cartera-panel">
+    <h2>Cartera de creditos</h2>
+
+    @if (morosidad(); as m) {
+      <div class="alert alert-info" data-testid="cartera-resumen">
+        Cuotas vencidas: {{ m.cuotasVencidas }} - Saldo vencido: {{ m.saldoVencido | number: '1.2-2' }}
+        - Cartera colocada: {{ m.carteraColocada | number: '1.2-2' }}
+        - Morosidad: {{ m.porcentajeMorosidad | number: '1.2-2' }}%
+      </div>
+    }
+
+    <div class="toolbar">
+      <div class="filter-group" role="group" aria-label="Filtro de cartera">
+        @for (opcion of carteraFiltros; track opcion) {
+          <button type="button" class="btn" [class.btn-primary]="carteraFiltro() === opcion"
+                  (click)="filtrarCartera(opcion)" [attr.data-testid]="'cartera-filtro-' + opcion.toLowerCase()">
+            {{ opcion }}
+          </button>
+        }
+      </div>
+      <button type="button" class="btn" data-testid="btn-exportar-cartera"
+              [disabled]="exportando()" (click)="exportarCartera()">
+        Exportar CSV
+      </button>
+    </div>
+
+    <table class="table" data-testid="cartera-table">
+      <thead>
+        <tr>
+          <th>Socio</th>
+          <th>Producto</th>
+          <th>Cuota</th>
+          <th>Vencimiento</th>
+          <th>Capital</th>
+          <th>Cuota total</th>
+          <th>Mora</th>
+          <th>Total a pagar</th>
+          <th>Dias vencido</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of cartera(); track item.id) {
+          <tr>
+            <td>{{ item.socioCodigo }} - {{ item.socioNombre }}</td>
+            <td>{{ item.nombreProducto ?? '-' }}</td>
+            <td>{{ item.numeroCuota }}</td>
+            <td>{{ item.fechaVencimiento }}</td>
+            <td>{{ item.saldoCapital | number: '1.2-2' }}</td>
+            <td>{{ item.cuotaTotal | number: '1.2-2' }}</td>
+            <td>{{ item.mora | number: '1.2-2' }}</td>
+            <td>{{ item.totalPagar | number: '1.2-2' }}</td>
+            <td>{{ item.diasVencido }}</td>
+            <td>
+              <span class="badge" [class.badge-danger]="item.estado === 'VENCIDA'">{{ item.estado }}</span>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="10" class="empty">Sin cuotas en cartera.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (tab() === 'simulador') {
+  <section class="panel" data-testid="simulador-panel">
+    <h2>Simulador de credito</h2>
+
+    <form [formGroup]="simuladorForm" (ngSubmit)="simular()" class="form-inline" data-testid="simulador-form">
+      <label class="field">
+        <span>Monto</span>
+        <input type="number" formControlName="monto" data-testid="input-monto-simulador" />
+      </label>
+      <label class="field">
+        <span>Plazo (meses)</span>
+        <input type="number" formControlName="plazoMeses" data-testid="input-plazo-simulador" />
+      </label>
+      <label class="field">
+        <span>Tasa (%)</span>
+        <input type="number" formControlName="tasaInteres" data-testid="input-tasa-simulador" />
+      </label>
+      <label class="field">
+        <span>Sistema</span>
+        <select formControlName="sistemaAmortizacion" data-testid="input-sistema-simulador">
+          <option value="FRANCES">FRANCES</option>
+          <option value="ALEMAN">ALEMAN</option>
+          <option value="AMERICANO">AMERICANO</option>
+        </select>
+      </label>
+      <button type="submit" class="btn btn-primary" data-testid="btn-simular" [disabled]="simuladorForm.invalid || guardando()">
+        Simular
+      </button>
+    </form>
+
+    @if (simulacion()) {
+      <div class="alert alert-success" data-testid="simulacion-resultado">
+        Cuota mensual: {{ simulacion()!.cuotaMensual | number: '1.2-2' }} - Interes total: {{ simulacion()!.totalInteres | number: '1.2-2' }} - Total a pagar: {{ simulacion()!.totalPagar | number: '1.2-2' }}
+      </div>
+
+      <table class="table" data-testid="simulacion-table">
+        <thead>
+          <tr>
+            <th>Cuota</th>
+            <th>Vencimiento</th>
+            <th>Capital</th>
+            <th>Interes</th>
+            <th>Cuota</th>
+            <th>Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (q of simulacion()!.cuotas; track q.numero) {
+            <tr>
+              <td>{{ q.numero }}</td>
+              <td>{{ q.fechaVencimiento }}</td>
+              <td>{{ q.capital | number: '1.2-2' }}</td>
+              <td>{{ q.interes | number: '1.2-2' }}</td>
+              <td>{{ q.cuota | number: '1.2-2' }}</td>
+              <td>{{ q.saldo | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+}

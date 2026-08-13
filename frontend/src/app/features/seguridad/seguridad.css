@@ -1,0 +1,109 @@
+.panel {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.tab {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-muted);
+}
+
+.tab.active {
+  background: #eff6ff;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.form-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.page-header h3 {
+  margin: 0;
+}
+
+.rol-cols {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rol-checks,
+.permiso-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.badge-success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.permisos-editor {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.modulo {
+  margin-top: 12px;
+}
+
+.modulo h4 {
+  margin: 0 0 6px;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}

@@ -1,0 +1,87 @@
+<h1 class="page-title">Dashboard</h1>
+
+@if (user(); as u) {
+  <p class="welcome">Bienvenido, {{ u.nombreCompleto || u.username }}.</p>
+}
+
+@if (error()) {
+  <p class="error" data-testid="dashboard-error">{{ error() }}</p>
+}
+
+@if (resumen(); as r) {
+  <section class="kpis" aria-label="Indicadores">
+    @if (has('SOCIOS:VER')) {
+      <div class="kpi" data-testid="kpi-socios">
+        <span class="kpi-value">{{ r.sociosActivos | number }}</span>
+        <span class="kpi-label">Socios activos</span>
+      </div>
+    }
+    @if (has('CREDITOS:VER')) {
+      <div class="kpi" data-testid="kpi-creditos">
+        <span class="kpi-value">{{ r.creditosVigentes | number }}</span>
+        <span class="kpi-label">Créditos vigentes</span>
+      </div>
+      <div class="kpi" data-testid="kpi-cartera">
+        <span class="kpi-value">{{ formato(r.carteraColocada) }}</span>
+        <span class="kpi-label">Cartera colocada</span>
+      </div>
+      <div class="kpi" data-testid="kpi-vencida">
+        <span class="kpi-value">{{ formato(r.carteraVencida) }}</span>
+        <span class="kpi-label">Cartera vencida</span>
+      </div>
+      <div class="kpi" data-testid="kpi-morosidad">
+        <span class="kpi-value">{{ r.porcentajeMorosidad | number:'1.2-2' }}%</span>
+        <span class="kpi-label">Morosidad</span>
+      </div>
+    }
+    @if (has('CAJA:VER')) {
+      <div class="kpi" data-testid="kpi-cajas">
+        <span class="kpi-value">{{ r.cajasAbiertas | number }}</span>
+        <span class="kpi-label">Cajas abiertas</span>
+      </div>
+      <div class="kpi" data-testid="kpi-disponible-caja">
+        <span class="kpi-value">{{ formato(r.disponibleCaja) }}</span>
+        <span class="kpi-label">Disponible en caja</span>
+      </div>
+    }
+    @if (has('BANCOS:VER')) {
+      <div class="kpi" data-testid="kpi-disponible-bancos">
+        <span class="kpi-value">{{ formato(r.disponibleBancos) }}</span>
+        <span class="kpi-label">Disponible en bancos</span>
+      </div>
+    }
+  </section>
+}
+
+<div class="cards">
+  @if (has('SOCIOS:VER')) {
+    <a class="card" routerLink="/socios" data-testid="card-socios">
+      <h3>Socios</h3>
+      <p>Gestión de socios y beneficiarios</p>
+    </a>
+  }
+  @if (has('CAJA:VER')) {
+    <a class="card" routerLink="/caja" data-testid="card-caja">
+      <h3>Caja</h3>
+      <p>Aperturas, movimientos y arqueos</p>
+    </a>
+  }
+  @if (has('BANCOS:VER')) {
+    <a class="card" routerLink="/bancos" data-testid="card-bancos">
+      <h3>Bancos</h3>
+      <p>Cuentas bancarias y conciliación</p>
+    </a>
+  }
+  @if (has('CONTABILIDAD:VER')) {
+    <a class="card" routerLink="/contabilidad" data-testid="card-contabilidad">
+      <h3>Contabilidad</h3>
+      <p>Plan de cuentas y asientos</p>
+    </a>
+  }
+  @if (has('CREDITOS:VER')) {
+    <a class="card" routerLink="/creditos" data-testid="card-creditos">
+      <h3>Créditos</h3>
+      <p>Productos, solicitudes y cartera</p>
+    </a>
+  }
+</div>

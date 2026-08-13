@@ -1,0 +1,81 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.shell {
+  display: flex;
+  height: 100%;
+}
+
+.sidebar {
+  width: 220px;
+  background: #1f2937;
+  color: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+}
+
+.brand {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 8px 20px 20px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-link {
+  color: #d1d5db;
+  text-decoration: none;
+  padding: 10px 20px;
+}
+
+.nav-link:hover {
+  background: #374151;
+  color: #fff;
+}
+
+.nav-link.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.topbar-user {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.user-roles {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.content {
+  padding: 24px;
+  overflow: auto;
+}

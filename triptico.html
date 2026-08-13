@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: 11in 8.5in; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 11in; height: 8.5in; }
+
+  body {
+    font-family: 'Carlito', 'DejaVu Sans', sans-serif;
+    color: #1E1B16;
+    zoom: 1.302;
+  }
+
+  .sheet {
+    width: 11in;
+    height: 8.5in;
+    display: flex;
+    page-break-after: always;
+    overflow: hidden;
+    position: relative;
+  }
+  .sheet:last-child { page-break-after: avoid; }
+
+  .panel {
+    width: 3.6667in;
+    height: 8.5in;
+    padding: 0.45in 0.4in;
+    position: relative;
+    overflow: hidden;
+  }
+
+  h1, h2, h3, .display {
+    font-family: 'Bitstream Charter', 'DejaVu Serif', serif;
+  }
+
+  /* ---------- Paleta ---------- */
+  :root {
+    --navy: #16233F;
+    --navy-2: #1F3054;
+    --gold: #C79A3C;
+    --gold-l: #E8C978;
+    --sage: #5B7F62;
+    --sage-l: #DCE6DC;
+    --cream: #F6F2E7;
+    --ink: #1E1B16;
+    --ink-soft: #4A453C;
+  }
+
+  .bg-navy { background: var(--navy); color: var(--cream); }
+  .bg-cream { background: var(--cream); color: var(--ink); }
+
+  /* ---------- Elemento distintivo: anillos de crecimiento ---------- */
+  .rings {
+    position: absolute;
+    border-radius: 50%;
+    border-style: solid;
+    opacity: 1;
+  }
+
+  /* ---------- Logo / wordmark ---------- */
+  .wordmark {
+    font-family: 'Bitstream Charter', serif;
+    font-weight: bold;
+    letter-spacing: 0.09em;
+    font-size: 15px;
+  }
+  .wordmark .a1 { color: var(--gold); }
+  .bg-navy .wordmark { color: var(--cream); }
+  .bg-navy .wordmark .a1 { color: var(--gold); }
+  .bg-cream .wordmark { color: var(--navy); }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+  .bg-navy .eyebrow { color: var(--gold-l); }
+  .bg-cream .eyebrow { color: var(--sage); }
+
+  .rule { height: 1px; width: 34px; background: var(--gold); margin: 10px 0 14px; }
+
+  p, li { font-size: 11.3px; line-height: 1.55; color: var(--ink-soft); }
+  .bg-navy p, .bg-navy li { color: #D9DEE9; }
+
+  ul.plain { list-style: none; }
+  ul.plain li { position: relative; padding-left: 14px; margin-bottom: 7px; }
+  ul.plain li::before {
+    content: "";
+    position: absolute; left: 0; top: 6px;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--gold);
+  }
+
+  .stat-row { display: flex; gap: 10px; margin-top: 14px; }
+  .stat {
+    flex: 1;
+    border: 0.5px solid rgba(255,255,255,0.25);
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .bg-cream .stat { border-color: var(--sage); background: #fff; }
+  .stat .num { font-family: 'Bitstream Charter', serif; font-size: 20px; font-weight: bold; color: var(--gold); display: block; }
+  .bg-cream .stat .num { color: var(--navy); }
+  .stat .lbl { font-size: 8.6px; color: inherit; opacity: 0.85; }
+
+  .icon-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+  .icon-badge {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bg-cream .icon-badge { background: var(--sage-l); }
+  .bg-navy .icon-badge { background: rgba(199,154,60,0.22); }
+
+  .footer-mini {
+    position: absolute; bottom: 0.4in; left: 0.4in; right: 0.4in;
+    font-size: 9px; letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- HOJA 1 — EXTERIOR: [Panel Contacto] [Panel Por qué] [Portada] -->
+<!-- ============================================================ -->
+<div class="sheet">
+
+  <!-- PANEL 1 — Contacto / contraportada -->
+  <div class="panel bg-navy">
+    <svg class="rings" style="right:-70px; bottom:-70px; width:220px; height:220px;" viewBox="0 0 220 220">
+      <circle cx="110" cy="110" r="105" fill="none" stroke="#C79A3C" stroke-opacity="0.18" stroke-width="1.4"/>
+      <circle cx="110" cy="110" r="82" fill="none" stroke="#C79A3C" stroke-opacity="0.24" stroke-width="1.4"/>
+      <circle cx="110" cy="110" r="58" fill="none" stroke="#C79A3C" stroke-opacity="0.32" stroke-width="1.4"/>
+      <circle cx="110" cy="110" r="34" fill="none" stroke="#C79A3C" stroke-opacity="0.45" stroke-width="1.4"/>
+    </svg>
+
+    <div class="wordmark"><span class="a1">A</span>LANTEK</div>
+    <div class="rule"></div>
+
+    <h2 style="font-size:19px; line-height:1.3; margin-bottom:14px;">Conversemos sobre<br>tu cooperativa</h2>
+    <p style="margin-bottom:18px;">Una reunión breve basta para dimensionar el alcance y proponerte un plan de trabajo realista, por fases.</p>
+
+    <div style="margin-bottom:22px;">
+      <div style="display:flex; gap:10px; margin-bottom:12px; align-items:flex-start;">
+        <div class="icon-badge"><span style="color:#E8C978; font-family:'Bitstream Charter',serif; font-weight:bold; font-size:11px;">1</span></div>
+        <div><div style="font-size:11.5px; font-weight:bold; color:#fff;">Reunión de levantamiento</div><p style="font-size:10px;">Socios, volumen de operaciones, normativa aplicable.</p></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-bottom:12px; align-items:flex-start;">
+        <div class="icon-badge"><span style="color:#E8C978; font-family:'Bitstream Charter',serif; font-weight:bold; font-size:11px;">2</span></div>
+        <div><div style="font-size:11.5px; font-weight:bold; color:#fff;">Propuesta a medida</div><p style="font-size:10px;">Alcance, fases, cronograma e inversión ajustados.</p></div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <div class="icon-badge"><span style="color:#E8C978; font-family:'Bitstream Charter',serif; font-weight:bold; font-size:11px;">3</span></div>
+        <div><div style="font-size:11.5px; font-weight:bold; color:#fff;">Implementación por fases</div><p style="font-size:10px;">Empiezas a operar antes de que todo el alcance esté listo.</p></div>
+      </div>
+    </div>
+
+    <div style="position:absolute; bottom:0.5in; left:0.4in; right:0.4in;">
+      <div style="border-top:0.5px solid rgba(255,255,255,0.25); padding-top:12px;">
+        <p style="font-size:10.5px; color:#fff; margin-bottom:4px;">contacto@alantek.dev</p>
+        <p style="font-size:10.5px; color:#fff; margin-bottom:4px;">+593 XXX XXX XXX</p>
+        <p style="font-size:10.5px; color:#fff;">www.alantek.dev</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2 — Por qué / propuesta de valor -->
+  <div class="panel bg-cream" style="border-left:0.5px dashed #C9BFA6; border-right:0.5px dashed #C9BFA6;">
+    <div class="eyebrow">Propuesta de valor</div>
+    <h2 style="font-size:19px; color:var(--navy); line-height:1.3; margin:8px 0 16px;">Una sola plataforma para toda la operación financiera</h2>
+
+    <div class="icon-row">
+      <div class="icon-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B7F62" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg>
+      </div>
+      <div>
+        <div style="font-size:11.5px; font-weight:bold; color:var(--navy);">Trazabilidad total</div>
+        <p>Ninguna transacción se elimina: toda operación queda auditada con usuario, fecha y motivo.</p>
+      </div>
+    </div>
+
+    <div class="icon-row">
+      <div class="icon-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B7F62" stroke-width="2"><circle cx="7" cy="12" r="3.2"/><circle cx="17" cy="12" r="3.2"/><path d="M10.2 12h3.6"/></svg>
+      </div>
+      <div>
+        <div style="font-size:11.5px; font-weight:bold; color:var(--navy);">Contabilidad automática</div>
+        <p>Cada operación (aportación, depósito, desembolso, cobro) genera su asiento contable sola.</p>
+      </div>
+    </div>
+
+    <div class="icon-row">
+      <div class="icon-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B7F62" stroke-width="2"><path d="M4 19V9M12 19V4M20 19v-6"/></svg>
+      </div>
+      <div>
+        <div style="font-size:11.5px; font-weight:bold; color:var(--navy);">Indicadores en tiempo real</div>
+        <p>Morosidad, cartera colocada, captación y liquidez, siempre actualizados.</p>
+      </div>
+    </div>
+
+    <div class="icon-row" style="margin-bottom:6px;">
+      <div class="icon-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B7F62" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+      </div>
+      <div>
+        <div style="font-size:11.5px; font-weight:bold; color:var(--navy);">Roles y aprobaciones</div>
+        <p>Quien crea una operación sensible no es, por defecto, quien la aprueba.</p>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><span class="num">24</span><span class="lbl">módulos<br>integrados</span></div>
+      <div class="stat"><span class="num">6</span><span class="lbl">fases de<br>implementación</span></div>
+      <div class="stat"><span class="num">0</span><span class="lbl">doble<br>digitación</span></div>
+    </div>
+  </div>
+
+  <!-- PANEL 3 — Portada -->
+  <div class="panel bg-navy">
+    <svg class="rings" style="left:-90px; top:-90px; width:260px; height:260px;" viewBox="0 0 260 260">
+      <circle cx="130" cy="130" r="124" fill="none" stroke="#C79A3C" stroke-opacity="0.14" stroke-width="1.4"/>
+      <circle cx="130" cy="130" r="96" fill="none" stroke="#C79A3C" stroke-opacity="0.20" stroke-width="1.4"/>
+      <circle cx="130" cy="130" r="68" fill="none" stroke="#C79A3C" stroke-opacity="0.28" stroke-width="1.4"/>
+    </svg>
+
+    <div class="wordmark"><span class="a1">A</span>LANTEK</div>
+    <div style="font-size:8.6px; letter-spacing:0.1em; color:#9FB0CC; margin-top:2px;">CONSULTORÍA TI · DESARROLLO A MEDIDA</div>
+
+    <div style="margin-top:70px;">
+      <div class="eyebrow" style="margin-bottom:10px;">Software financiero cooperativo</div>
+      <h1 style="font-size:29px; line-height:1.22; color:#fff; margin-bottom:16px;">El sistema para tu caja de ahorro, en un solo lugar</h1>
+      <p style="font-size:12px; color:#C9D2E3;">Socios · aportaciones · ahorros · créditos · caja · bancos · contabilidad de partida doble — todo integrado, todo auditado.</p>
+    </div>
+
+    <!-- Mockup mini: tarjeta de dashboard -->
+    <div style="position:absolute; bottom:0.9in; left:0.4in; right:0.4in;">
+      <div style="background:#fff; border-radius:6px; padding:10px 12px; box-shadow:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:8.5px; font-weight:bold; color:var(--navy);">Dashboard gerencial</span>
+          <span style="font-size:7px; color:var(--sage);">● en vivo</span>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <div style="flex:1; background:#F6F2E7; border-radius:4px; padding:6px;">
+            <div style="font-size:6.6px; color:#8A8371;">Morosidad</div>
+            <div style="font-size:12px; font-weight:bold; color:var(--navy);">3.2%</div>
+          </div>
+          <div style="flex:1; background:#F6F2E7; border-radius:4px; padding:6px;">
+            <div style="font-size:6.6px; color:#8A8371;">Cartera</div>
+            <div style="font-size:12px; font-weight:bold; color:var(--navy);">$482K</div>
+          </div>
+          <div style="flex:1; background:#F6F2E7; border-radius:4px; padding:6px;">
+            <div style="font-size:6.6px; color:#8A8371;">Socios</div>
+            <div style="font-size:12px; font-weight:bold; color:var(--navy);">1,204</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-mini" style="color:#9FB0CC; bottom:0.42in;">www.alantek.dev</div>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- HOJA 2 — INTERIOR: [El reto] [Mockup principal] [Módulos]     -->
+<!-- ============================================================ -->
+<div class="sheet">
+
+  <!-- PANEL 4 — El reto que resolvemos -->
+  <div class="panel bg-cream">
+    <div class="eyebrow">El problema</div>
+    <h2 style="font-size:18px; color:var(--navy); line-height:1.3; margin:8px 0 14px;">La información financiera vive dispersa</h2>
+    <p style="margin-bottom:16px;">Hojas de cálculo, sistemas contables genéricos y controles manuales de cartera no fueron pensados para una cooperativa de ahorro y crédito. El resultado: reprocesos, errores y auditorías difíciles.</p>
+
+    <div style="background:#fff; border:0.5px solid #D8CFB4; border-radius:6px; padding:12px; margin-bottom:14px;">
+      <div style="font-size:9.5px; font-weight:bold; color:#9A6B2E; margin-bottom:8px;">HOY — disperso</div>
+      <ul class="plain" style="margin-bottom:0;">
+        <li>Caja en una hoja, cartera en otra</li>
+        <li>Intereses y mora calculados a mano</li>
+        <li>Sin pista de auditoría confiable</li>
+      </ul>
+    </div>
+
+    <div style="background:var(--navy); border-radius:6px; padding:12px;">
+      <div style="font-size:9.5px; font-weight:bold; color:var(--gold-l); margin-bottom:8px;">CON ALANTEK — integrado</div>
+      <ul class="plain" style="margin-bottom:0;">
+        <li style="color:#D9DEE9;">Un solo registro por operación</li>
+        <li style="color:#D9DEE9;">Cálculo automático y trazable</li>
+        <li style="color:#D9DEE9;">Auditoría desde el primer día</li>
+      </ul>
+    </div>
+
+    <div class="rule" style="margin-top:20px;"></div>
+    <h3 style="font-size:12.5px; color:var(--navy); margin-bottom:8px;">Motor contable automático</h3>
+    <p>Cada operación —aportación, depósito, desembolso, cobro de cuota— genera su asiento Debe/Haber sin doble digitación, mediante una matriz de reglas configurable.</p>
+  </div>
+
+  <!-- PANEL 5 — Mockup principal: dashboard -->
+  <div class="panel bg-navy" style="padding:0.4in 0.32in;">
+    <div class="eyebrow" style="margin-bottom:6px;">Así se ve por dentro</div>
+    <h2 style="font-size:16.5px; color:#fff; line-height:1.3; margin-bottom:14px;">Panel gerencial en tiempo real</h2>
+
+    <!-- Mockup de pantalla: dashboard -->
+    <div style="background:#fff; border-radius:8px; overflow:hidden;">
+      <!-- barra superior -->
+      <div style="background:#EFEAE0; padding:6px 10px; display:flex; align-items:center; gap:5px;">
+        <span style="width:6px; height:6px; border-radius:50%; background:#E0A15C; display:inline-block;"></span>
+        <span style="width:6px; height:6px; border-radius:50%; background:#C9BFA6; display:inline-block;"></span>
+        <span style="width:6px; height:6px; border-radius:50%; background:#C9BFA6; display:inline-block;"></span>
+        <span style="font-size:7px; color:#8A8371; margin-left:6px;">panel.alantek.app/dashboard</span>
+      </div>
+
+      <div style="display:flex;">
+        <!-- sidebar -->
+        <div style="width:26%; background:#16233F; padding:10px 6px;">
+          <div style="font-size:6.4px; color:#E8C978; font-weight:bold; padding:5px 6px; background:rgba(199,154,60,0.18); border-radius:3px; margin-bottom:4px;">▪ Dashboard</div>
+          <div style="font-size:6.4px; color:#AEB8CC; padding:5px 6px;">Socios</div>
+          <div style="font-size:6.4px; color:#AEB8CC; padding:5px 6px;">Ahorros</div>
+          <div style="font-size:6.4px; color:#AEB8CC; padding:5px 6px;">Créditos</div>
+          <div style="font-size:6.4px; color:#AEB8CC; padding:5px 6px;">Caja</div>
+          <div style="font-size:6.4px; color:#AEB8CC; padding:5px 6px;">Contabilidad</div>
+        </div>
+
+        <!-- contenido -->
+        <div style="width:74%; padding:10px;">
+          <div style="font-size:8px; font-weight:bold; color:var(--navy); margin-bottom:8px;">Resumen general — agosto 2026</div>
+
+          <div style="display:flex; gap:5px; margin-bottom:8px;">
+            <div style="flex:1; background:#F6F2E7; border-radius:4px; padding:6px;">
+              <div style="font-size:6px; color:#8A8371;">Cartera colocada</div>
+              <div style="font-size:11px; font-weight:bold; color:var(--navy);">$482,300</div>
+            </div>
+            <div style="flex:1; background:#F6F2E7; border-radius:4px; padding:6px;">
+              <div style="font-size:6px; color:#8A8371;">Morosidad</div>
+              <div style="font-size:11px; font-weight:bold; color:#B5542C;">3.2%</div>
+            </div>
+            <div style="flex:1; background:#F6F2E7; border-radius:4px; padding:6px;">
+              <div style="font-size:6px; color:#8A8371;">Disponible caja</div>
+              <div style="font-size:11px; font-weight:bold; color:var(--sage);">$18,940</div>
+            </div>
+          </div>
+
+          <!-- mini gráfico de barras -->
+          <div style="background:#F6F2E7; border-radius:4px; padding:8px; margin-bottom:6px;">
+            <div style="font-size:6px; color:#8A8371; margin-bottom:5px;">Captación mensual de ahorros</div>
+            <svg width="100%" height="46" viewBox="0 0 220 46">
+              <rect x="4"  y="26" width="16" height="20" rx="1.5" fill="#5B7F62"/>
+              <rect x="30" y="18" width="16" height="28" rx="1.5" fill="#5B7F62"/>
+              <rect x="56" y="22" width="16" height="24" rx="1.5" fill="#5B7F62"/>
+              <rect x="82" y="10" width="16" height="36" rx="1.5" fill="#5B7F62"/>
+              <rect x="108" y="14" width="16" height="32" rx="1.5" fill="#5B7F62"/>
+              <rect x="134" y="4"  width="16" height="42" rx="1.5" fill="#C79A3C"/>
+              <rect x="160" y="16" width="16" height="30" rx="1.5" fill="#5B7F62"/>
+              <rect x="186" y="20" width="16" height="26" rx="1.5" fill="#5B7F62"/>
+            </svg>
+          </div>
+
+          <!-- lista de alertas -->
+          <div style="background:#fff; border:0.5px solid #E4DEC9; border-radius:4px; padding:6px;">
+            <div style="font-size:6px; color:#8A8371; margin-bottom:4px;">Alertas recientes</div>
+            <div style="font-size:6.4px; color:#4A453C; margin-bottom:2px;">⚠ 12 cuotas próximas a vencer</div>
+            <div style="font-size:6.4px; color:#4A453C;">⚠ Cierre de caja pendiente — sucursal 2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:9.5px; color:#B7C0D6; text-align:center; margin-top:10px;">Indicadores de socios, cartera, caja y bancos, siempre calculados desde datos reales.</p>
+  </div>
+
+  <!-- PANEL 6 — Módulos + mockup secundario -->
+  <div class="panel bg-cream" style="border-left:0.5px dashed #C9BFA6;">
+    <div class="eyebrow">Alcance funcional</div>
+    <h2 style="font-size:16px; color:var(--navy); line-height:1.3; margin:8px 0 12px;">Módulos incluidos</h2>
+
+    <div style="display:flex; gap:14px; margin-bottom:16px;">
+      <ul class="plain" style="flex:1;">
+        <li>Socios</li>
+        <li>Aportaciones</li>
+        <li>Ahorros</li>
+        <li>Créditos</li>
+        <li>Cartera y cobranza</li>
+        <li>Simulador de crédito</li>
+      </ul>
+      <ul class="plain" style="flex:1;">
+        <li>Caja y bancos</li>
+        <li>Contabilidad</li>
+        <li>Tesorería</li>
+        <li>Presupuesto</li>
+        <li>Auditoría</li>
+        <li>Reportes y alertas</li>
+      </ul>
+    </div>
+
+    <!-- Mockup secundario: simulador de crédito -->
+    <div style="background:#fff; border:0.5px solid #E4DEC9; border-radius:6px; padding:9px; margin-bottom:16px;">
+      <div style="font-size:8px; font-weight:bold; color:var(--navy); margin-bottom:7px;">Simulador de crédito</div>
+      <div style="display:flex; justify-content:space-between; font-size:6.6px; color:#8A8371; margin-bottom:3px;">
+        <span>Monto</span><span style="color:var(--navy); font-weight:bold;">$3,500</span>
+      </div>
+      <div style="height:3px; background:#EFEAE0; border-radius:2px; margin-bottom:6px;">
+        <div style="height:3px; width:55%; background:#C79A3C; border-radius:2px;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:6.6px; color:#8A8371; margin-bottom:3px;">
+        <span>Plazo</span><span style="color:var(--navy); font-weight:bold;">18 meses</span>
+      </div>
+      <div style="height:3px; background:#EFEAE0; border-radius:2px; margin-bottom:8px;">
+        <div style="height:3px; width:40%; background:#5B7F62; border-radius:2px;"></div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <div style="flex:1; background:#F6F2E7; border-radius:4px; padding:5px; text-align:center;">
+          <div style="font-size:5.8px; color:#8A8371;">Cuota est.</div>
+          <div style="font-size:9.5px; font-weight:bold; color:var(--navy);">$214</div>
+        </div>
+        <div style="flex:1; background:#F6F2E7; border-radius:4px; padding:5px; text-align:center;">
+          <div style="font-size:5.8px; color:#8A8371;">Interés total</div>
+          <div style="font-size:9.5px; font-weight:bold; color:var(--navy);">$352</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+    <h3 style="font-size:11.5px; color:var(--navy); margin-bottom:6px;">Stack tecnológico</h3>
+    <p style="font-size:10px;">Angular · Spring Boot · PostgreSQL · Spring Security + JWT · Docker + Nginx</p>
+  </div>
+
+</div>
+
+</body>
+</html>

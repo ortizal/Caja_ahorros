@@ -1,0 +1,122 @@
+<a class="back-link" [routerLink]="['/bancos']">← Volver a Bancos</a>
+
+<h1 class="page-title" data-testid="cuenta-titulo">
+  {{ cuenta()?.banco }} — {{ cuenta()?.numeroCuenta ?? 'Cargando…' }}
+</h1>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="detalle-error">{{ error() }}</div>
+}
+@if (ok()) {
+  <div class="alert alert-success" data-testid="detalle-ok">{{ ok() }}</div>
+}
+
+@if (cuenta(); as c) {
+  <section class="panel">
+    <div class="cuenta-info" data-testid="cuenta-info">
+      <div class="saldo-card">
+        <span>Banco</span>
+        <strong>{{ c.banco }}</strong>
+      </div>
+      <div class="saldo-card">
+        <span>Número</span>
+        <strong>{{ c.numeroCuenta }}</strong>
+      </div>
+      <div class="saldo-card">
+        <span>Tipo</span>
+        <strong>{{ c.tipo }}</strong>
+      </div>
+      <div class="saldo-card">
+        <span>Saldo contable</span>
+        <strong data-testid="cuenta-saldo-contable">{{ c.saldoContable | number: '1.2-2' }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-testid="movimiento-banco-panel">
+    <h2>Registrar movimiento bancario</h2>
+    <form [formGroup]="movimientoForm" (ngSubmit)="registrarMovimiento()" class="form-grid" data-testid="movimiento-banco-form">
+      <label class="field">
+        <span>Tipo</span>
+        <select formControlName="tipo" data-testid="input-tipo-banco">
+          @for (tipo of tipos; track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Monto</span>
+        <input type="number" step="0.01" formControlName="monto" data-testid="input-monto-banco" />
+      </label>
+      <label class="field">
+        <span>Fecha</span>
+        <input type="date" formControlName="fecha" data-testid="input-fecha-banco" />
+      </label>
+      <button type="submit" class="btn btn-primary" data-testid="btn-registrar-banco" [disabled]="movimientoForm.invalid || guardando()">
+        Registrar
+      </button>
+    </form>
+  </section>
+
+  <section class="panel" data-testid="conciliacion-panel">
+    <h2>Conciliación bancaria</h2>
+    <form [formGroup]="conciliacionForm" (ngSubmit)="conciliar()" class="form-inline" data-testid="conciliacion-form">
+      <label class="field">
+        <span>Periodo</span>
+        <input type="month" formControlName="periodo" data-testid="input-periodo" />
+      </label>
+      <label class="field">
+        <span>Saldo según banco</span>
+        <input type="number" step="0.01" formControlName="saldoBancario" data-testid="input-saldo-bancario" />
+      </label>
+      <button type="submit" class="btn btn-outline" data-testid="btn-conciliar" [disabled]="conciliacionForm.invalid || guardando()">
+        Conciliar
+      </button>
+    </form>
+    @if (conciliacion(); as cc) {
+      <div class="conciliacion-resultado" data-testid="conciliacion-resultado">
+        Saldo contable: <strong>{{ cc.saldoContable | number: '1.2-2' }}</strong> ·
+        Saldo bancario: <strong>{{ cc.saldoBancario | number: '1.2-2' }}</strong> ·
+        Diferencia: <strong [class.texto-error]="cc.diferencia !== 0">{{ cc.diferencia | number: '1.2-2' }}</strong>
+      </div>
+    }
+  </section>
+
+  <section class="panel">
+    <h2>Movimientos</h2>
+    @if (movimientos().length === 0) {
+      <p data-testid="movimientos-banco-vacio">Sin movimientos registrados.</p>
+    } @else {
+      <table class="table" data-testid="movimientos-banco-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Fecha</th>
+            <th>Saldo contable</th>
+            <th>Conciliado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of movimientos(); track m.id) {
+            <tr>
+              <td>{{ m.tipo }}</td>
+              <td>{{ m.monto | number: '1.2-2' }}</td>
+              <td>{{ m.fecha }}</td>
+              <td>{{ m.saldoContable | number: '1.2-2' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="m.conciliado" [class.badge-neutral]="!m.conciliado">
+                  {{ m.conciliado ? 'SÍ' : 'NO' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+} @else {
+  @if (!cargando()) {
+    <p>Cuenta no encontrada.</p>
+  }
+}

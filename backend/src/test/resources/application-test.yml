@@ -1,0 +1,10 @@
+spring:
+  test:
+    database:
+      replace: none
+  sql:
+    init:
+      mode: never
+  jpa:
+    hibernate:
+      ddl-auto: none

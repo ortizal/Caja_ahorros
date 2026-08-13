@@ -1,0 +1,76 @@
+<h1 class="page-title">Bancos</h1>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="bancos-error">{{ error() }}</div>
+}
+@if (ok()) {
+  <div class="alert alert-success" data-testid="bancos-ok">{{ ok() }}</div>
+}
+
+@if (cargando()) {
+  <p>Cargando…</p>
+}
+
+@if (puedeCrear()) {
+  <section class="panel" data-testid="nueva-cuenta-panel">
+    <h2>Nueva cuenta bancaria</h2>
+    <form [formGroup]="form" (ngSubmit)="crearCuenta()" class="form-grid" data-testid="nueva-cuenta-form">
+      <label class="field">
+        <span>Banco</span>
+        <input formControlName="banco" data-testid="input-banco" />
+      </label>
+      <label class="field">
+        <span>Número de cuenta</span>
+        <input formControlName="numeroCuenta" data-testid="input-numero-cuenta" />
+      </label>
+      <label class="field">
+        <span>Tipo</span>
+        <select formControlName="tipo" data-testid="input-tipo-cuenta">
+          <option value="CORRIENTE">Corriente</option>
+          <option value="AHORROS">Ahorros</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Saldo contable inicial</span>
+        <input type="number" step="0.01" formControlName="saldoContable" data-testid="input-saldo-contable" />
+      </label>
+      <button type="submit" class="btn btn-primary" data-testid="btn-crear-cuenta" [disabled]="form.invalid || guardando()">
+        Crear cuenta
+      </button>
+    </form>
+  </section>
+}
+
+<section class="panel">
+  <h2>Cuentas</h2>
+  @if (cuentas().length === 0) {
+    <p data-testid="cuentas-vacio">No hay cuentas registradas.</p>
+  } @else {
+    <table class="table" data-testid="cuentas-table">
+      <thead>
+        <tr>
+          <th>Banco</th>
+          <th>Cuenta</th>
+          <th>Tipo</th>
+          <th>Saldo contable</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (cuenta of cuentas(); track cuenta.id) {
+          <tr>
+            <td>{{ cuenta.banco }}</td>
+            <td>{{ cuenta.numeroCuenta }}</td>
+            <td>{{ cuenta.tipo }}</td>
+            <td>{{ cuenta.saldoContable | number: '1.2-2' }}</td>
+            <td>
+              <a class="btn btn-outline btn-sm" [routerLink]="['/bancos', cuenta.id]" [attr.data-testid]="'btn-cuenta-' + cuenta.id">
+                Ver
+              </a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

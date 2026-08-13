@@ -1,0 +1,70 @@
+.panel {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.tab {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-muted);
+}
+
+.tab.active {
+  background: #eff6ff;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.form-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.badge-success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+.saldo {
+  font-weight: 600;
+  color: var(--color-primary);
+}

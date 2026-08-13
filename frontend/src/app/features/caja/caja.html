@@ -1,0 +1,194 @@
+<h1 class="page-title">Caja</h1>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="caja-error">{{ error() }}</div>
+}
+@if (ok()) {
+  <div class="alert alert-success" data-testid="caja-ok">{{ ok() }}</div>
+}
+
+@if (cargando()) {
+  <p>Cargando…</p>
+}
+
+@if (!hayAbierta() && !cargando()) {
+  @if (puedeCrear()) {
+    <section class="panel" data-testid="apertura-panel">
+      <h2>Abrir caja del día</h2>
+      <form [formGroup]="aperturaForm" (ngSubmit)="abrirCaja()" class="form-inline" data-testid="apertura-form">
+        <label class="field">
+          <span>Saldo inicial</span>
+          <input type="number" step="0.01" formControlName="saldoInicial" data-testid="input-saldo-inicial" />
+        </label>
+        <button type="submit" class="btn btn-primary" data-testid="btn-abrir-caja" [disabled]="aperturaForm.invalid || guardando()">
+          Abrir caja
+        </button>
+      </form>
+    </section>
+  } @else {
+    <p>No tiene permisos para abrir caja.</p>
+  }
+}
+
+@if (cajas().length > 0) {
+  <section class="panel">
+    <h2>Mis cajas</h2>
+    <table class="table" data-testid="cajas-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Saldo inicial</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (caja of cajas(); track caja.id) {
+          <tr [class.fila-activa]="seleccionada()?.id === caja.id">
+            <td>{{ caja.id }}</td>
+            <td>{{ caja.fecha }}</td>
+            <td>{{ caja.saldoInicial | number: '1.2-2' }}</td>
+            <td><span class="badge" [class.badge-success]="caja.estado === 'ABIERTA'">{{ caja.estado }}</span></td>
+            <td>
+              <button type="button" class="btn btn-outline btn-sm" (click)="seleccionar(caja)" [attr.data-testid]="'btn-caja-' + caja.id">
+                Ver
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (seleccionada(); as caja) {
+  <section class="panel">
+    <div class="page-header">
+      <h2>Caja #{{ caja.id }} — {{ caja.estado }}</h2>
+      @if (caja.estado === 'ABIERTA' && puedeCrear()) {
+        <button type="button" class="btn btn-danger" data-testid="btn-cerrar-caja" (click)="cerrarCaja()" [disabled]="guardando()">
+          Cerrar caja
+        </button>
+      }
+    </div>
+
+    @if (saldo(); as s) {
+      <div class="saldo-grid">
+        <div class="saldo-card">
+          <span>Saldo inicial</span>
+          <strong data-testid="saldo-inicial">{{ s.saldoInicial | number: '1.2-2' }}</strong>
+        </div>
+        <div class="saldo-card">
+          <span>Ingresos</span>
+          <strong data-testid="saldo-ingresos">{{ s.totalIngresos | number: '1.2-2' }}</strong>
+        </div>
+        <div class="saldo-card">
+          <span>Egresos</span>
+          <strong data-testid="saldo-egresos">{{ s.totalEgresos | number: '1.2-2' }}</strong>
+        </div>
+        <div class="saldo-card">
+          <span>Saldo actual</span>
+          <strong data-testid="saldo-actual">{{ s.saldoActual | number: '1.2-2' }}</strong>
+        </div>
+      </div>
+    }
+  </section>
+
+  @if (caja.estado === 'ABIERTA') {
+    <section class="panel" data-testid="movimiento-panel">
+      <h2>Registrar movimiento</h2>
+      <form [formGroup]="movimientoForm" (ngSubmit)="registrarMovimiento()" class="form-grid" data-testid="movimiento-form">
+        <label class="field">
+          <span>Tipo</span>
+          <select formControlName="tipo" data-testid="input-tipo-movimiento">
+            @for (tipo of tipos; track tipo) {
+              <option [value]="tipo">{{ tipo }}</option>
+            }
+          </select>
+        </label>
+        @if (!cobroActivo()) {
+          <label class="field">
+            <span>Monto</span>
+            <input type="number" step="0.01" formControlName="monto" data-testid="input-monto-movimiento" />
+          </label>
+        }
+        @if (cobroActivo()) {
+          <label class="field">
+            <span>Capital</span>
+            <input type="number" step="0.01" formControlName="montoCapital" data-testid="input-monto-capital" />
+          </label>
+          <label class="field">
+            <span>Interés</span>
+            <input type="number" step="0.01" formControlName="montoInteres" data-testid="input-monto-interes" />
+          </label>
+          <label class="field">
+            <span>Mora</span>
+            <input type="number" step="0.01" formControlName="montoMora" data-testid="input-monto-mora" />
+          </label>
+        }
+        <label class="field">
+          <span>Descripción</span>
+          <input formControlName="descripcion" data-testid="input-descripcion-movimiento" />
+        </label>
+        <button type="submit" class="btn btn-primary" data-testid="btn-registrar-movimiento" [disabled]="movimientoForm.invalid || guardando()">
+          Registrar
+        </button>
+      </form>
+    </section>
+
+    <section class="panel" data-testid="arqueo-panel">
+      <h2>Arqueo</h2>
+      <form [formGroup]="arqueoForm" (ngSubmit)="hacerArqueo()" class="form-inline" data-testid="arqueo-form">
+        <label class="field">
+          <span>Saldo físico</span>
+          <input type="number" step="0.01" formControlName="saldoFisico" data-testid="input-saldo-fisico" />
+        </label>
+        <label class="field">
+          <span>Observación</span>
+          <input formControlName="observacion" data-testid="input-observacion" />
+        </label>
+        <button type="submit" class="btn btn-outline" data-testid="btn-arqueo" [disabled]="arqueoForm.invalid || guardando()">
+          Registrar arqueo
+        </button>
+      </form>
+      @if (arqueoResultado(); as a) {
+        <div class="arqueo-resultado" data-testid="arqueo-resultado">
+          Saldo sistema: <strong>{{ a.saldoSistema | number: '1.2-2' }}</strong> ·
+          Saldo físico: <strong>{{ a.saldoFisico | number: '1.2-2' }}</strong> ·
+          Diferencia: <strong [class.texto-error]="a.diferencia !== 0">{{ a.diferencia | number: '1.2-2' }}</strong>
+        </div>
+      }
+    </section>
+  }
+
+  <section class="panel">
+    <h2>Movimientos</h2>
+    @if (movimientos().length === 0) {
+      <p data-testid="movimientos-vacio">Sin movimientos registrados.</p>
+    } @else {
+      <table class="table" data-testid="movimientos-table">
+        <thead>
+          <tr>
+            <th>Comprobante</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Referencia</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of movimientos(); track m.id) {
+            <tr>
+              <td>{{ m.comprobanteNumero || '—' }}</td>
+              <td>{{ m.tipo }}</td>
+              <td>{{ m.monto | number: '1.2-2' }}</td>
+              <td>{{ m.referenciaTabla ? m.referenciaTabla + ' #' + m.referenciaId : '—' }}</td>
+              <td>{{ m.createdAt | date: 'short' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+}

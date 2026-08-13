@@ -1,0 +1,332 @@
+<h1 class="page-title">Contabilidad</h1>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="contabilidad-error">{{ error() }}</div>
+}
+@if (ok()) {
+  <div class="alert alert-success" data-testid="contabilidad-ok">{{ ok() }}</div>
+}
+
+<nav class="tabs" data-testid="contabilidad-tabs">
+  <button type="button" class="tab" [class.active]="tab() === 'periodos'" (click)="tab.set('periodos')">Periodos</button>
+  <button type="button" class="tab" [class.active]="tab() === 'plan'"(click)="tab.set('plan')">Plan de cuentas</button>
+  <button type="button" class="tab" [class.active]="tab() === 'diario'"(click)="tab.set('diario')">Libro diario</button>
+  <button type="button" class="tab" [class.active]="tab() === 'mayor'"(click)="tab.set('mayor')">Libro mayor</button>
+  <button type="button" class="tab" [class.active]="tab() === 'balance'"(click)="tab.set('balance')">Balance</button>
+  <button type="button" class="tab" [class.active]="tab() === 'asiento'"(click)="tab.set('asiento')">Asiento manual</button>
+</nav>
+
+@if (cargando()) {
+  <p>Cargando…</p>
+}
+
+@if (tab() === 'periodos') {
+  <section class="panel" data-testid="periodos-panel">
+    <h2>Periodos contables</h2>
+    <table class="table" data-testid="periodos-table">
+      <thead>
+        <tr>
+          <th>Periodo</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of periodos(); track p.id) {
+          <tr>
+            <td>{{ p.anio }}-{{ p.mes | number: '2.0-0' }}</td>
+            <td>
+              <span class="badge" [class.badge-success]="p.estado === 'ABIERTO'">
+                {{ p.estado }}
+              </span>
+            </td>
+            <td>
+              @if (p.estado === 'ABIERTO' && puedeAprobar()) {
+                <button type="button" class="btn btn-danger btn-sm" (click)="cerrarPeriodo(p)" [disabled]="guardando()">
+                  Cerrar
+                </button>
+              }
+              @if (p.estado === 'CERRADO' && esAdmin()) {
+                <button type="button" class="btn btn-outline btn-sm" (click)="reabrirPeriodo(p)" [disabled]="guardando()">
+                  Reabrir
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (tab() === 'plan') {
+  <section class="panel" data-testid="plan-panel">
+    <h2>Plan de cuentas</h2>
+
+    @if (puedeCrear()) {
+      <form [formGroup]="cuentaForm" (ngSubmit)="crearCuenta()" class="form-grid" data-testid="cuenta-form">
+        <label class="field">
+          <span>Código</span>
+          <input formControlName="codigo" data-testid="input-codigo-cuenta" />
+        </label>
+        <label class="field">
+          <span>Nombre</span>
+          <input formControlName="nombre" data-testid="input-nombre-cuenta" />
+        </label>
+        <label class="field">
+          <span>Tipo</span>
+          <select formControlName="tipo" data-testid="input-tipo-cuenta">
+            @for (tipo of tiposCuenta; track tipo) {
+              <option [value]="tipo">{{ tipo }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Nivel</span>
+          <input type="number" formControlName="nivel" data-testid="input-nivel-cuenta" />
+        </label>
+        <label class="field check">
+          <input type="checkbox" formControlName="aceptaMovimiento" data-testid="input-acepta-movimiento" />
+          <span>Acepta movimiento</span>
+        </label>
+        <button type="submit" class="btn btn-primary" data-testid="btn-crear-cuenta" [disabled]="cuentaForm.invalid || guardando()">
+          Crear
+        </button>
+      </form>
+    }
+
+    <table class="table" data-testid="plan-table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Nivel</th>
+          <th>Movimiento</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of planCuentas(); track c.id) {
+          <tr>
+            <td>{{ c.codigo }}</td>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.tipo }}</td>
+            <td>{{ c.nivel }}</td>
+            <td>{{ c.aceptaMovimiento ? 'Sí' : 'No' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (tab() === 'diario') {
+  <section class="panel" data-testid="diario-panel">
+    <h2>Libro diario</h2>
+    <form [formGroup]="diarioForm" (ngSubmit)="consultarDiario()" class="form-inline" data-testid="diario-form">
+      <label class="field">
+        <span>Desde</span>
+        <input type="date" formControlName="desde" data-testid="input-diario-desde" />
+      </label>
+      <label class="field">
+        <span>Hasta</span>
+        <input type="date" formControlName="hasta" data-testid="input-diario-hasta" />
+      </label>
+      <button type="submit" class="btn btn-primary" data-testid="btn-consultar-diario">Consultar</button>
+    </form>
+
+    @for (asiento of diario(); track asiento.id) {
+      <div class="asiento" data-testid="asiento">
+        <div class="asiento-cabecera">
+          <strong>#{{ asiento.id }}</strong> · {{ asiento.fecha }} · {{ asiento.descripcion }} ·
+          <span class="badge">{{ asiento.origen }}</span>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Cuenta</th>
+              <th>Debe</th>
+              <th>Haber</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of asiento.detalles; track d.cuentaId) {
+              <tr>
+                <td>{{ d.cuentaCodigo }} — {{ d.cuentaNombre }}</td>
+                <td>{{ d.debe | number: '1.2-2' }}</td>
+                <td>{{ d.haber | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @if (diario().length === 0 && !cargando()) {
+      <p data-testid="diario-vacio">Sin asientos en el rango.</p>
+    }
+  </section>
+}
+
+@if (tab() === 'mayor') {
+  <section class="panel" data-testid="mayor-panel">
+    <h2>Libro mayor</h2>
+    <form [formGroup]="mayorForm" (ngSubmit)="consultarMayor()" class="form-inline" data-testid="mayor-form">
+      <label class="field">
+        <span>Cuenta</span>
+        <select formControlName="cuentaId" data-testid="input-mayor-cuenta">
+          <option [ngValue]="0" disabled>Seleccione cuenta</option>
+          @for (c of planCuentas(); track c.id) {
+            <option [ngValue]="c.id">{{ c.codigo }} — {{ c.nombre }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Desde</span>
+        <input type="date" formControlName="desde" data-testid="input-mayor-desde" />
+      </label>
+      <label class="field">
+        <span>Hasta</span>
+        <input type="date" formControlName="hasta" data-testid="input-mayor-hasta" />
+      </label>
+      <button type="submit" class="btn btn-primary" data-testid="btn-consultar-mayor">Consultar</button>
+    </form>
+
+    <table class="table" data-testid="mayor-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Asiento</th>
+          <th>Descripción</th>
+          <th>Debe</th>
+          <th>Haber</th>
+          <th>Saldo</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of mayor(); track $index) {
+          <tr>
+            <td>{{ l.fecha }}</td>
+            <td>{{ l.asientoId }}</td>
+            <td>{{ l.descripcion }}</td>
+            <td>{{ l.debe | number: '1.2-2' }}</td>
+            <td>{{ l.haber | number: '1.2-2' }}</td>
+            <td>{{ l.saldo | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    @if (mayor().length === 0 && !cargando()) {
+      <p data-testid="mayor-vacio">Sin movimientos para la cuenta.</p>
+    }
+  </section>
+}
+
+@if (tab() === 'balance') {
+  <section class="panel" data-testid="balance-panel">
+    <h2>Balance de comprobación</h2>
+    <form [formGroup]="balanceForm" (ngSubmit)="consultarBalance()" class="form-inline" data-testid="balance-form">
+      <label class="field">
+        <span>Año</span>
+        <input type="number" formControlName="anio" data-testid="input-balance-anio" />
+      </label>
+      <label class="field">
+        <span>Mes</span>
+        <input type="number" formControlName="mes" data-testid="input-balance-mes" />
+      </label>
+      <button type="submit" class="btn btn-primary" data-testid="btn-consultar-balance">Consultar</button>
+    </form>
+
+    <table class="table" data-testid="balance-table">
+      <thead>
+        <tr>
+          <th>Cuenta</th>
+          <th>Debe</th>
+          <th>Haber</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of balance(); track l.cuentaCodigo) {
+          <tr>
+            <td>{{ l.cuentaCodigo }} — {{ l.cuentaNombre }}</td>
+            <td>{{ l.debe | number: '1.2-2' }}</td>
+            <td>{{ l.haber | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+      @if (balance().length > 0) {
+        <tfoot>
+          <tr>
+            <td><strong>Totales</strong></td>
+            <td><strong data-testid="balance-total-debe">{{ totalBalance('debe') | number: '1.2-2' }}</strong></td>
+            <td><strong data-testid="balance-total-haber">{{ totalBalance('haber') | number: '1.2-2' }}</strong></td>
+          </tr>
+        </tfoot>
+      }
+    </table>
+    @if (balance().length === 0 && !cargando()) {
+      <p data-testid="balance-vacio">Sin movimientos en el periodo.</p>
+    }
+  </section>
+}
+
+@if (tab() === 'asiento') {
+  <section class="panel" data-testid="asiento-panel">
+    <h2>Asiento manual</h2>
+
+    @if (!puedeCrear()) {
+      <p>No tiene permiso para registrar asientos.</p>
+    } @else {
+      <form [formGroup]="asientoForm" (ngSubmit)="registrarAsiento()" class="asiento-form" data-testid="asiento-form">
+        <div class="form-inline">
+          <label class="field">
+            <span>Fecha</span>
+            <input type="date" formControlName="fecha" data-testid="input-asiento-fecha" />
+          </label>
+          <label class="field grow">
+            <span>Descripción</span>
+            <input formControlName="descripcion" data-testid="input-asiento-descripcion" />
+          </label>
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Cuenta</th>
+              <th>Debe</th>
+              <th>Haber</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody formArrayName="detalles">
+            @for (d of detalles.controls; track $index) {
+              <tr [formGroupName]="$index">
+                <td>
+                  <select formControlName="cuentaId" [attr.data-testid]="'input-asiento-cuenta-' + $index">
+                    <option [ngValue]="0" disabled>Seleccione cuenta</option>
+                    @for (c of planCuentas(); track c.id) {
+                      <option [ngValue]="c.id" [disabled]="!c.aceptaMovimiento">{{ c.codigo }} — {{ c.nombre }}</option>
+                    }
+                  </select>
+                </td>
+                <td><input type="number" step="0.01" formControlName="debe" [attr.data-testid]="'input-asiento-debe-' + $index" /></td>
+                <td><input type="number" step="0.01" formControlName="haber" [attr.data-testid]="'input-asiento-haber-' + $index" /></td>
+                <td>
+                  <button type="button" class="btn btn-outline btn-sm" (click)="quitarDetalle($index)" [disabled]="detalles.length === 1">
+                    Quitar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="asiento-actions">
+          <button type="button" class="btn btn-outline" (click)="agregarDetalle()" data-testid="btn-agregar-detalle">Agregar línea</button>
+          <button type="submit" class="btn btn-primary" data-testid="btn-registrar-asiento" [disabled]="asientoForm.invalid || guardando()">
+            Registrar asiento
+          </button>
+        </div>
+      </form>
+    }
+  </section>
+}

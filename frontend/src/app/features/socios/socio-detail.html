@@ -1,0 +1,74 @@
+@if (error()) {
+  <div class="alert alert-error" data-testid="detail-error">{{ error() }}</div>
+}
+
+@if (socio(); as socio) {
+  <div class="page-header">
+    <h1 class="page-title" data-testid="detail-codigo">{{ socio.codigo }} — {{ socio.nombres }} {{ socio.apellidos }}</h1>
+    <div class="actions">
+      <a class="btn btn-outline" routerLink="/socios">Volver</a>
+      @if (puedeEditar()) {
+        <a class="btn btn-primary" [routerLink]="['/socios', socio.id, 'editar']" data-testid="btn-editar-socio">Editar</a>
+      }
+    </div>
+  </div>
+
+  <dl class="detail">
+    <dt>Identificación</dt>
+    <dd data-testid="detail-identificacion">{{ socio.identificacion }}</dd>
+    <dt>Estado</dt>
+    <dd><span class="badge" data-testid="detail-estado">{{ socio.estado }}</span></dd>
+    <dt>Fecha de ingreso</dt>
+    <dd>{{ socio.fechaIngreso }}</dd>
+    <dt>Teléfono</dt>
+    <dd>{{ socio.telefono || '—' }}</dd>
+    <dt>Email</dt>
+    <dd>{{ socio.email || '—' }}</dd>
+    <dt>Dirección</dt>
+    <dd>{{ socio.direccion || '—' }}</dd>
+  </dl>
+
+  <section>
+    <h2>Beneficiarios</h2>
+    @if (socio.beneficiarios.length === 0) {
+      <p>Sin beneficiarios registrados.</p>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nombres</th>
+            <th>Parentesco</th>
+            <th>Porcentaje</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of socio.beneficiarios; track b.id) {
+            <tr>
+              <td>{{ b.nombres }}</td>
+              <td>{{ b.parentesco || '—' }}</td>
+              <td>{{ b.porcentaje ?? '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  @if (puedeEditar()) {
+    <section class="estado-actions">
+      <h2>Cambiar estado</h2>
+      <div class="btn-group">
+        @for (estado of estados; track estado) {
+          <button
+            type="button"
+            class="btn btn-outline btn-sm"
+            [disabled]="cambiandoEstado() || socio.estado === estado"
+            (click)="cambiarEstado(estado)"
+            [attr.data-testid]="'btn-estado-' + estado">
+            {{ estado }}
+          </button>
+        }
+      </div>
+    </section>
+  }
+}

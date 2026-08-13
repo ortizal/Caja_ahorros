@@ -1,0 +1,75 @@
+:host {
+  display: block;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.form-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.saldo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.saldo-card {
+  background: #f9fafb;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.saldo-card span {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.saldo-card strong {
+  font-size: 20px;
+}
+
+.badge-success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.fila-activa {
+  background: #eff6ff;
+}
+
+.arqueo-resultado {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.texto-error {
+  color: var(--color-danger);
+}

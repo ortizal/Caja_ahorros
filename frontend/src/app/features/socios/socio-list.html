@@ -1,0 +1,43 @@
+<div class="page-header">
+  <h1 class="page-title">Socios</h1>
+  @if (puedeCrear()) {
+    <a class="btn btn-primary" routerLink="/socios/nuevo" data-testid="btn-nuevo-socio">Nuevo socio</a>
+  }
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="list-error">{{ error() }}</div>
+}
+
+@if (loading()) {
+  <p data-testid="list-loading">Cargando…</p>
+} @else if (socios().length === 0) {
+  <p data-testid="list-empty">No hay socios registrados.</p>
+} @else {
+  <table class="table" data-testid="socios-table">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Identificación</th>
+        <th>Nombres</th>
+        <th>Apellidos</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (socio of socios(); track socio.id) {
+        <tr>
+          <td>{{ socio.codigo }}</td>
+          <td>{{ socio.identificacion }}</td>
+          <td>{{ socio.nombres }}</td>
+          <td>{{ socio.apellidos }}</td>
+          <td><span class="badge">{{ socio.estado }}</span></td>
+          <td>
+            <a class="btn btn-outline btn-sm" [routerLink]="['/socios', socio.id]" data-testid="btn-ver-socio">Ver</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
