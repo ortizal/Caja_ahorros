@@ -469,3 +469,70 @@ SELECT
 FROM credito c
 JOIN tabla_amortizacion ta ON ta.credito_id = c.id
 WHERE ta.estado IN ('PENDIENTE', 'VENCIDA');
+
+-- ----------------------------------------------------------------------------
+-- 2.6 Tesoreria y presupuesto (Fase 5)
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS gastos (
+  id BIGSERIAL PRIMARY KEY,
+  concepto VARCHAR(200) NOT NULL,
+  descripcion VARCHAR(500),
+  monto NUMERIC(14,2) NOT NULL,
+  cuenta_contable_id BIGINT NOT NULL REFERENCES plan_cuentas(id),
+  fecha_solicitud DATE NOT NULL DEFAULT CURRENT_DATE,
+  solicitado_por BIGINT NOT NULL REFERENCES usuarios(id),
+  estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, APROBADO, RECHAZADO, PAGADO, ANULADO
+  aprobado_por BIGINT REFERENCES usuarios(id),
+  fecha_aprobacion TIMESTAMP,
+  motivo_rechazo VARCHAR(300),
+  comprobante_id BIGINT REFERENCES comprobantes(id),
+  caja_movimiento_id BIGINT REFERENCES caja_movimiento(id),
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cuentas_por_pagar (
+  id BIGSERIAL PRIMARY KEY,
+  proveedor VARCHAR(200) NOT NULL,
+  concepto VARCHAR(200) NOT NULL,
+  monto NUMERIC(14,2) NOT NULL,
+  cuenta_contable_id BIGINT NOT NULL REFERENCES plan_cuentas(id),
+  fecha_emision DATE NOT NULL DEFAULT CURRENT_DATE,
+  fecha_vencimiento DATE NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, PAGADA
+  comprobante_id BIGINT REFERENCES comprobantes(id),
+  caja_movimiento_id BIGINT REFERENCES caja_movimiento(id),
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cuentas_por_cobrar (
+  id BIGSERIAL PRIMARY KEY,
+  socio_id BIGINT REFERENCES socios(id),
+  deudor VARCHAR(200) NOT NULL,
+  concepto VARCHAR(200) NOT NULL,
+  monto NUMERIC(14,2) NOT NULL,
+  fecha_emision DATE NOT NULL DEFAULT CURRENT_DATE,
+  fecha_vencimiento DATE NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, COBRADA
+  comprobante_id BIGINT REFERENCES comprobantes(id),
+  caja_movimiento_id BIGINT REFERENCES caja_movimiento(id),
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS presupuesto_partidas (
+  id BIGSERIAL PRIMARY KEY,
+  anio INT NOT NULL,
+  concepto VARCHAR(200) NOT NULL,
+  cuenta_contable_id BIGINT NOT NULL REFERENCES plan_cuentas(id),
+  monto_presupuestado NUMERIC(14,2) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  UNIQUE(anio, concepto)
+);
+
+CREATE INDEX IF NOT EXISTS idx_gasto_estado ON gastos(estado);
+CREATE INDEX IF NOT EXISTS idx_cxp_estado ON cuentas_por_pagar(estado);
+CREATE INDEX IF NOT EXISTS idx_cxc_estado ON cuentas_por_cobrar(estado);
+CREATE INDEX IF NOT EXISTS idx_presupuesto_anio ON presupuesto_partidas(anio);

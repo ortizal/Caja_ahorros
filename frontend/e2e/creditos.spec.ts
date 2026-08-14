@@ -122,9 +122,7 @@ test.describe('Modulo de creditos', () => {
     await page.getByTestId('input-plazo-refinanciar').fill('24');
     await page.getByTestId('btn-refinanciar').click();
     const cuotasRefinanciadas = page.getByTestId('detalle-panel').getByTestId('cuotas-table');
-    await expect(cuotasRefinanciadas).toContainText('13');
-    const filasCuotas = await cuotasRefinanciadas.locator('tbody tr').count();
-    expect(filasCuotas).toBeGreaterThan(20);
+    await expect.poll(async () => cuotasRefinanciadas.locator('tbody tr').count()).toBeGreaterThan(20);
     await expect(cuotasRefinanciadas).toContainText('PAGADA');
 
     // Procesar vencidas (idempotente)

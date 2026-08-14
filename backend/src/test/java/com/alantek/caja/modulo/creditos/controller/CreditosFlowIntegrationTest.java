@@ -1,7 +1,9 @@
 package com.alantek.caja.modulo.creditos.controller;
 
 import com.alantek.caja.modulo.creditos.entity.CuotaCredito;
+import com.alantek.caja.modulo.creditos.entity.ProductoCredito;
 import com.alantek.caja.modulo.creditos.repository.CuotaCreditoRepository;
+import com.alantek.caja.modulo.creditos.repository.ProductoCreditoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -15,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -39,6 +42,9 @@ class CreditosFlowIntegrationTest {
 
     @Autowired
     private CuotaCreditoRepository cuotaRepository;
+
+    @Autowired
+    private ProductoCreditoRepository productoRepository;
 
     @Test
     void cicloCompletoSolicitudDesembolsoYPagoDeCuota() throws Exception {
@@ -247,6 +253,147 @@ class CreditosFlowIntegrationTest {
                         .header("Authorization", "Bearer " + admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(24));
+    }
+
+    @Test
+    void moraUsaFormulaDeLaSeccion5ConValoresExactos() throws Exception {
+        String cajero = loginToken("cajero", "cajero123");
+        String admin = loginToken("admin", "admin123");
+
+        Long socioId = primerSocioId(cajero);
+        MvcResult producto = mvc.perform(post("/api/v1/productos-credito")
+                        .header("Authorization", "Bearer " + cajero)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"PERSONAL MORA\",\"tasaInteres\":18.0000,"
+                                + "\"tasaMora\":1.0000,\"sistemaAmortizacion\":\"FRANCES\","
+                                + "\"plazoMaxMeses\":12,\"montoMin\":50.00,\"montoMax\":5000.00,"
+                                + "\"requiereGarante\":false,\"vigenteDesde\":\"2026-01-01\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        Long productoId = objectMapper.readTree(producto.getResponse().getContentAsString()).get("id").asLong();
+
+        MvcResult solicitud = mvc.perform(post("/api/v1/solicitudes-credito")
+                        .header("Authorization", "Bearer " + cajero)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"socioId\":" + socioId + ",\"productoId\":" + productoId
+                                + ",\"montoSolicitado\":1200.00,\"plazoMeses\":12,"
+                                + "\"destino\":\"Mora exacta\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        Long solicitudId = objectMapper.readTree(solicitud.getResponse().getContentAsString()).get("id").asLong();
+
+        mvc.perform(put("/api/v1/solicitudes-credito/" + solicitudId + "/evaluar")
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk());
+        mvc.perform(put("/api/v1/solicitudes-credito/" + solicitudId + "/aprobar")
+                        .header("Authorization", "Bearer " + admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"aprobar\":true}"))
+                .andExpect(status().isOk());
+
+        Long creditoId = creditoIdDeSolicitud(admin, solicitudId);
+        abrirCaja(admin);
+        mvc.perform(post("/api/v1/creditos/" + creditoId + "/desembolsar")
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk());
+
+        CuotaCredito primera = cuotaRepository.findByCreditoIdOrderByNumeroCuotaAsc(creditoId).get(0);
+        assertThat(primera.getCapital()).isCloseTo(new BigDecimal("92.02"),
+                org.assertj.core.data.Offset.offset(new BigDecimal("0.01")));
+
+        primera.setFechaVencimiento(LocalDate.now().minusDays(30));
+        cuotaRepository.save(primera);
+
+        BigDecimal esperado = primera.getCapital()
+                .multiply(new BigDecimal("1.00")).divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP)
+                .multiply(new BigDecimal("30"))
+                .divide(new BigDecimal("360"), 2, RoundingMode.HALF_UP);
+
+        MvcResult moraResult = mvc.perform(post("/api/v1/creditos/procesar-vencidas")
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode mora = objectMapper.readTree(moraResult.getResponse().getContentAsString());
+        assertThat(mora.get("cuotasMarcadas").asInt()).isEqualTo(1);
+        assertThat(mora.get("moraTotal").decimalValue())
+                .isEqualByComparingTo(esperado);
+        assertThat(mora.get("creditosEnMora").asInt()).isEqualTo(1);
+
+        CuotaCredito actualizada = cuotaRepository.findByCreditoIdOrderByNumeroCuotaAsc(creditoId).get(0);
+        assertThat(actualizada.getEstado()).isEqualTo("VENCIDA");
+        assertThat(actualizada.getMora()).isEqualByComparingTo(esperado);
+    }
+
+    @Test
+    void cambioDeTasaVigenteNoAlteraCuotasYaGeneradas() throws Exception {
+        String cajero = loginToken("cajero", "cajero123");
+        String admin = loginToken("admin", "admin123");
+
+        Long socioId = primerSocioId(cajero);
+        MvcResult producto = mvc.perform(post("/api/v1/productos-credito")
+                        .header("Authorization", "Bearer " + cajero)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"PERSONAL HISTORICO\",\"tasaInteres\":18.0000,"
+                                + "\"tasaMora\":1.0000,\"sistemaAmortizacion\":\"FRANCES\","
+                                + "\"plazoMaxMeses\":12,\"montoMin\":50.00,\"montoMax\":5000.00,"
+                                + "\"requiereGarante\":false,\"vigenteDesde\":\"2026-01-01\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        Long productoId = objectMapper.readTree(producto.getResponse().getContentAsString()).get("id").asLong();
+
+        MvcResult solicitud = mvc.perform(post("/api/v1/solicitudes-credito")
+                        .header("Authorization", "Bearer " + cajero)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"socioId\":" + socioId + ",\"productoId\":" + productoId
+                                + ",\"montoSolicitado\":1200.00,\"plazoMeses\":12,"
+                                + "\"destino\":\"Historico de tasas\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        Long solicitudId = objectMapper.readTree(solicitud.getResponse().getContentAsString()).get("id").asLong();
+
+        mvc.perform(put("/api/v1/solicitudes-credito/" + solicitudId + "/evaluar")
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk());
+        mvc.perform(put("/api/v1/solicitudes-credito/" + solicitudId + "/aprobar")
+                        .header("Authorization", "Bearer " + admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"aprobar\":true}"))
+                .andExpect(status().isOk());
+
+        Long creditoId = creditoIdDeSolicitud(admin, solicitudId);
+        abrirCaja(admin);
+        mvc.perform(post("/api/v1/creditos/" + creditoId + "/desembolsar")
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tasaInteres").value(18.0));
+
+        MvcResult cuotasAntes = mvc.perform(get("/api/v1/creditos/" + creditoId + "/amortizacion")
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode tablaAntes = objectMapper.readTree(cuotasAntes.getResponse().getContentAsString());
+        BigDecimal capitalAntes = tablaAntes.get(0).get("capital").decimalValue();
+        BigDecimal interesAntes = tablaAntes.get(0).get("interes").decimalValue();
+        BigDecimal cuotaAntes = tablaAntes.get(0).get("cuotaTotal").decimalValue();
+
+        ProductoCredito productoActualizado = productoRepository.findById(productoId).orElseThrow();
+        productoActualizado.setTasaInteres(new BigDecimal("22.00"));
+        productoRepository.save(productoActualizado);
+
+        mvc.perform(get("/api/v1/creditos/" + creditoId)
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tasaInteres").value(18.0));
+
+        MvcResult cuotasDespues = mvc.perform(get("/api/v1/creditos/" + creditoId + "/amortizacion")
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode tablaDespues = objectMapper.readTree(cuotasDespues.getResponse().getContentAsString());
+        assertThat(tablaDespues).hasSize(12);
+        assertThat(tablaDespues.get(0).get("capital").decimalValue()).isEqualByComparingTo(capitalAntes);
+        assertThat(tablaDespues.get(0).get("interes").decimalValue()).isEqualByComparingTo(interesAntes);
+        assertThat(tablaDespues.get(0).get("cuotaTotal").decimalValue()).isEqualByComparingTo(cuotaAntes);
     }
 
     @Test

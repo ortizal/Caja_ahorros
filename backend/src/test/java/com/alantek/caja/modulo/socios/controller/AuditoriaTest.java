@@ -70,15 +70,87 @@ class AuditoriaTest {
 
         assertThat(creacion.getTablaAfectada()).isEqualTo("socios");
         assertThat(creacion.getValorNuevo()).contains("1105999999");
+        assertThat(creacion.getUsuarioId()).isNotNull();
+        assertThat(creacion.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    void aprobarSolicitudCreditoRegistraAuditoriaConUsuario() throws Exception {
+        String cajero = loginToken("cajero", "cajero123");
+        String admin = loginToken("admin", "admin123");
+
+        Long socioId = primerSocioId(cajero);
+        Long productoId = primerProductoId(cajero);
+
+        MvcResult solicitud = mvc.perform(post("/api/v1/solicitudes-credito")
+                        .header("Authorization", "Bearer " + cajero)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"socioId\":" + socioId + ",\"productoId\":" + productoId
+                                + ",\"montoSolicitado\":200.00,\"plazoMeses\":6}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        Long solicitudId = objectMapper.readTree(solicitud.getResponse().getContentAsString()).get("id").asLong();
+
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/solicitudes-credito/" + solicitudId + "/evaluar")
+                        .header("Authorization", "Bearer " + admin))
+                .andExpect(status().isOk());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/solicitudes-credito/" + solicitudId + "/aprobar")
+                        .header("Authorization", "Bearer " + admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"aprobar\":true}"))
+                .andExpect(status().isOk());
+
+        List<Auditoria> aprobaciones = auditoriaRepository.filtrar("solicitud_credito",
+                Instant.now().minusSeconds(60), Instant.now().plusSeconds(60));
+
+        Auditoria aprobacion = aprobaciones.stream()
+                .filter(a -> "APROBAR".equals(a.getAccion()) && solicitudId.equals(a.getRegistroId()))
+                .findFirst().orElseThrow();
+        assertThat(aprobacion.getTablaAfectada()).isEqualTo("solicitud_credito");
+        assertThat(aprobacion.getUsuarioId()).isNotNull();
+        assertThat(aprobacion.getCreatedAt()).isNotNull();
+        assertThat(aprobacion.getValorAnterior()).contains("EVALUACION");
+        assertThat(aprobacion.getValorNuevo()).contains("APROBADA");
     }
 
     private String loginToken() throws Exception {
+        return loginToken("admin", "admin123");
+    }
+
+    private String loginToken(String username, String password) throws Exception {
         MvcResult result = mvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"admin\",\"password\":\"admin123\"}"))
+                        .content("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         return body.get("token").asText();
+    }
+
+    private Long primerSocioId(String token) throws Exception {
+        MvcResult result = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/socios")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        for (JsonNode socio : body) {
+            if ("ACTIVO".equals(socio.get("estado").asText())) {
+                return socio.get("id").asLong();
+            }
+        }
+        throw new IllegalStateException("No hay socios ACTIVOS para la prueba");
+    }
+
+    private Long primerProductoId(String token) throws Exception {
+        MvcResult result = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/productos-credito")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        return body.get(0).get("id").asLong();
     }
 }

@@ -16,8 +16,8 @@ test.describe('Dashboard de indicadores', () => {
     await expect(page.getByTestId('kpi-disponible-bancos')).toBeVisible();
   });
 
-  test('contador no ve indicadores de modulos sin permiso', async ({ page }) => {
-    await loginAs(page, 'contador', 'contador123');
+  test('analista de credito no ve indicadores de modulos sin permiso', async ({ page }) => {
+    await loginAs(page, 'credito', 'credito123');
     await page.goto('/dashboard');
 
     await expect(page.getByTestId('kpi-cartera')).toBeVisible();

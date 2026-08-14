@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { loginAs, operarConCaja } from './helpers';
 
-const PERIODO = `2027-${String(new Date().getDate()).padStart(2, '0')}`;
+const PERIODO = '2027-11';
 
 test.describe.configure({ mode: 'serial' });
 

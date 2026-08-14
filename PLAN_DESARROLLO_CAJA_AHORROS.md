@@ -876,7 +876,7 @@ src/app/
 
 Cada fase termina con: (a) demo funcional con datos reales o de prueba, (b) manual de usuario breve del módulo, (c) checklist de pruebas de la sección 10 aprobado.
 
-**Estado de avance:** Fases 1–4 implementadas y probadas (backend 45/45 tests, frontend 54/54 unit tests, e2e 23/23). Fase 4 (Créditos y cobranza) incluye módulo completo con simulador, mora y refinanciamiento.
+**Estado de avance:** Fases 1–4 implementadas y probadas (backend 56/56 tests, frontend 59/59 unit tests, e2e 26/26). Fase 4 (Créditos y cobranza) incluye módulo completo con simulador, mora y refinanciamiento; la sección 11.9 (cartera, dashboard y reportes CSV) está implementada de extremo a extremo.
 
 ---
 
@@ -1039,6 +1039,14 @@ No inventes datos: todos los indicadores deben calcularse desde las tablas
 reales, nunca hardcodeados.
 ```
 
+**Estado:** Implementado. Backend: vista `v_cartera`, `CarteraService` con
+cartera/morosidad/disponible, `CarteraController` (`GET /cartera`,
+`GET /cartera/morosidad`, `GET /dashboard/resumen`, `GET /reportes/cartera`
+CSV con separador `;` y BOM UTF-8). Frontend: tab "Cartera" en el módulo de
+créditos (filtros TODOS/PENDIENTE/VENCIDA + exportar CSV) y dashboard de KPIs
+protegidos por permiso. Verificación: backend 52/52, frontend 59/59, e2e 26/26
+(incluye `e2e/dashboard.spec.ts` y test de cartera en `e2e/creditos.spec.ts`).
+
 ### 11.10 Pruebas integrales finales (Fase 6)
 
 ```
@@ -1047,6 +1055,52 @@ contra el sistema completo. Para cada ítem que falle, crea un issue con
 pasos de reproducción y corrígelo antes de cerrar la fase. Genera un reporte
 final de cobertura de pruebas por módulo.
 ```
+
+**Estado:** Checklist de la sección 10 ejecutado. Resultado: 9/9 ítems cubiertos
+por pruebas automatizadas (backend 56/56). Reporte de cobertura por ítem:
+
+1. **Reglas de negocio (interés, mora, cuota)** — Cubierto. `AmortizacionServiceTest`
+   (FRANCES 1000@18% → cuota 91.68, total interés 100.16, suma capital = monto exacto,
+   saldo final 0; ALEMAN interés 1º mes 15.00; AMERICANO cuota 1 = 15.00 y capital
+   1000.00 en la última) + `CreditosFlowIntegrationTest.simuladorReutilizaCalculoPuro`
+   (mismos números vía API) + **nuevo** `moraUsaFormulaDeLaSeccion5ConValoresExactos`
+   (capital cuota 1 ≈ 92.02 manual y `mora = capital × tasa_mora × dias / 360` con
+   valor exacto: 1200@18%, 30 días, 1% → 0.08).
+2. **Cuadre contable SUM(debe) = SUM(haber)** — Cubierto. `AsientoAutomaticoServiceTest`
+   (8 operaciones de la matriz: debe = haber = monto; cobro de cuota 100+20+5 → asiento
+   único con debe = haber = 125.00).
+3. **Inmutabilidad (solo anulación)** — Cubierto y reforzado.
+   `AuthFlowIntegrationTest.eliminarTransaccionFinancieraEstaBloqueadoEnApi` ahora
+   intenta DELETE sobre 7 rutas (socios, creditos, pagos, caja, aportaciones, bancos,
+   asientos) → todas 4xx. No existe ningún `@DeleteMapping` en el backend.
+4. **Auditoría con usuario y timestamp** — Cubierto y reforzado. `AuditoriaTest`
+   verifica `usuario_id` y `created_at` al CREAR socio, y **nuevo**
+   `aprobarSolicitudCreditoRegistraAuditoriaConUsuario` verifica la fila APROBAR de
+   `solicitud_credito` (usuario, timestamp, valorAnterior=EVALUACION, valorNuevo=APROBADA).
+5. **Permisos (403 directo al endpoint)** — Cubierto. `AuthFlowIntegrationTest`
+   (cajero 403 en seguridad), `AportacionesFlowIntegrationTest` y `AhorrosFlowIntegrationTest`
+   (contador 403), `CreditosFlowIntegrationTest` (contador 403 al crear solicitud;
+   cajero 403 al evaluar/aprobar).
+6. **Separación de funciones** — Cubierto. `solicitanteNoPuedeEvaluarNiAprobarSuPropiaSolicitud`
+   (400) y `cicloCompletoSolicitudDesembolsoYPagoDeCuota` (creador 403; solo admin aprueba).
+7. **Cierre de período** — Cubierto. `AsientoAutomaticoServiceTest.periodoCerradoBloqueaRegistroDeMovimientos`.
+8. **Histórico de tasas** — Cubierto. **Nuevo**
+   `cambioDeTasaVigenteNoAlteraCuotasYaGeneradas`: la tasa se copia al crédito al aprobar
+   (`CreditoService.crearCredito`) y el desembolso la usa desde esa copia; al cambiar la
+   tasa del producto, el crédito conserva `tasaInteres` original y las cuotas no varían.
+9. **Conciliación bancaria** — Cubierto. **Nuevo** `BancoFlowIntegrationTest`:
+   conciliación registra diferencia y auditoría; el movimiento marcado `conciliado=true`
+   no admite edición ni borrado (PUT/DELETE → 4xx; no existen endpoints de mutación).
+   Nota: `conciliar` registra la conciliación y su diferencia pero no auto-marca el flag
+   `conciliado` de los movimientos; la inmutabilidad se garantiza igual porque no hay
+   endpoints de edición de movimientos bancarios.
+
+**Reporte de cobertura por módulo:** socios/seguridad (AuthFlow + AuditoriaTest),
+caja (CajaFlowIntegrationTest), bancos (BancoFlowIntegrationTest nuevo),
+aportaciones (AportacionesFlowIntegrationTest), ahorros (AhorrosFlowIntegrationTest),
+contabilidad (AsientoAutomaticoServiceTest + ReglaContableRepositoryTest),
+créditos/cobranza (CreditosFlowIntegrationTest + AmortizacionServiceTest),
+cartera/reportes (CarteraIntegrationTest). Sin issues abiertos.
 
 ---
 

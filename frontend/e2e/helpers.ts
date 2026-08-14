@@ -15,8 +15,18 @@ export async function asegurarCajaAbierta(page: Page): Promise<void> {
   const { token } = (await login.json()) as { token: string };
   const headers = { Authorization: `Bearer ${token}` };
   const res = await page.request.get('http://localhost:8080/api/v1/caja/mias', { headers });
-  const cajas = (await res.json()) as { estado: string }[];
-  if (!cajas.some((c) => c.estado === 'ABIERTA')) {
+  const cajas = (await res.json()) as { id: number; estado: string; fecha: string }[];
+  const hoy = new Date();
+  const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+  for (const c of cajas) {
+    if (c.estado === 'ABIERTA' && c.fecha !== hoyStr) {
+      await page.request.post(`http://localhost:8080/api/v1/caja/${c.id}/cierre`, {
+        headers,
+        data: { saldoFisico: 0 }
+      });
+    }
+  }
+  if (!cajas.some((c) => c.estado === 'ABIERTA' && c.fecha === hoyStr)) {
     await page.request.post('http://localhost:8080/api/v1/caja/apertura', {
       headers,
       data: { saldoInicial: 500 }

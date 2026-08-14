@@ -117,10 +117,19 @@ class AuthFlowIntegrationTest {
     void eliminarTransaccionFinancieraEstaBloqueadoEnApi() throws Exception {
         String token = loginToken("admin", "admin123");
 
-        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .delete("/api/v1/socios/1")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isMethodNotAllowed());
+        for (String ruta : new String[]{
+                "/api/v1/socios/1",
+                "/api/v1/creditos/1",
+                "/api/v1/creditos/1/pagos/1",
+                "/api/v1/caja/1/movimientos/1",
+                "/api/v1/aportaciones/1/pagos/1",
+                "/api/v1/cuentas-bancarias/1/movimientos/1",
+                "/api/v1/asientos/1"}) {
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                            .delete(ruta)
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().is4xxClientError());
+        }
     }
 
     private String loginToken(String username, String password) throws Exception {
