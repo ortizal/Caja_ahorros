@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -9,10 +10,12 @@ import { Aportacion, AportacionConfig, AportacionPago } from '../../core/models/
 import { Socio } from '../../core/models/socio.model';
 import { AportacionService } from '../../core/services/aportacion.service';
 import { SocioService } from '../../core/services/socio.service';
+import { ToastService } from '../../core/services/toast.service';
+import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
 
 @Component({
   selector: 'app-aportaciones',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent],
   templateUrl: './aportaciones.html',
   styleUrl: './aportaciones.css'
 })
@@ -21,6 +24,7 @@ export class AportacionesComponent implements OnInit {
   private readonly aportacionService = inject(AportacionService);
   private readonly socioService = inject(SocioService);
   private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   protected readonly tab = signal<'config' | 'aportaciones'>('config');
   protected readonly configs = signal<AportacionConfig[]>([]);
@@ -30,20 +34,11 @@ export class AportacionesComponent implements OnInit {
   protected readonly pagoTarget = signal<Aportacion | null>(null);
   protected readonly filtroPeriodo = signal('');
   protected readonly error = signal('');
-  protected readonly ok = signal('');
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
 
-  protected readonly puedeVer = computedPermiso(this.auth, 'APORTACIONES:VER');
-  protected readonly puedeCrear = computedPermiso(this.auth, 'APORTACIONES:CREAR');
-
-  protected readonly configForm = this.fb.nonNullable.group({
-    tipo: ['OBLIGATORIA', [Validators.required]],
-    modoCalculo: ['FIJO', [Validators.required]],
-    valor: [25, [Validators.required, Validators.min(0.01)]],
-    periodicidad: ['MENSUAL', [Validators.required]],
-    vigenteDesde: [this.hoy(), [Validators.required]]
-  });
+  protected readonly puedeVer = computed(() => this.auth.hasPermiso('APORTACIONES:VER'));
+  protected readonly puedeCrear = computed(() => this.auth.hasPermiso('APORTACIONES:CREAR'));
 
   protected readonly generarForm = this.fb.nonNullable.group({
     periodo: [this.periodoActual(), [Validators.required, Validators.pattern(/^\d{4}-\d{2}$/)]]
@@ -57,10 +52,6 @@ export class AportacionesComponent implements OnInit {
     this.cargarConfigs();
     this.cargarSocios();
     this.cargarAportaciones();
-  }
-
-  private hoy(): string {
-    return new Date().toISOString().slice(0, 10);
   }
 
   private periodoActual(): string {
@@ -94,34 +85,6 @@ export class AportacionesComponent implements OnInit {
     this.cargarAportaciones();
   }
 
-  crearConfig(): void {
-    if (this.configForm.invalid || this.guardando()) {
-      return;
-    }
-    const raw = this.configForm.getRawValue();
-    this.guardando.set(true);
-    this.error.set('');
-    this.ok.set('');
-    this.aportacionService
-      .crearConfig({
-        tipo: raw.tipo,
-        modoCalculo: raw.modoCalculo,
-        valor: Number(raw.valor),
-        periodicidad: raw.periodicidad,
-        vigenteDesde: raw.vigenteDesde
-      })
-      .pipe(finalize(() => this.guardando.set(false)))
-      .subscribe({
-        next: () => {
-          this.ok.set('Configuracion de aportaciones creada.');
-          this.configForm.reset({ tipo: 'OBLIGATORIA', modoCalculo: 'FIJO', valor: 25, periodicidad: 'MENSUAL', vigenteDesde: this.hoy() });
-          this.cargarConfigs();
-        },
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo crear la configuracion.')
-      });
-  }
-
   generarPeriodo(): void {
     if (this.generarForm.invalid || this.guardando()) {
       return;
@@ -129,17 +92,19 @@ export class AportacionesComponent implements OnInit {
     const raw = this.generarForm.getRawValue();
     this.guardando.set(true);
     this.error.set('');
-    this.ok.set('');
     this.aportacionService
       .generarPeriodo(raw.periodo)
       .pipe(finalize(() => this.guardando.set(false)))
       .subscribe({
         next: (res) => {
-          this.ok.set(`Aportaciones generadas para ${res.periodo}: ${res.generadas}.`);
+          this.toast.success(`Aportaciones generadas para ${res.periodo}: ${res.generadas}.`);
           this.cargarAportaciones();
         },
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudieron generar las aportaciones.')
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudieron generar las aportaciones.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
       });
   }
 
@@ -164,22 +129,20 @@ export class AportacionesComponent implements OnInit {
     const raw = this.pagoForm.getRawValue();
     this.guardando.set(true);
     this.error.set('');
-    this.ok.set('');
     this.aportacionService
       .pagar(target.id, Number(raw.monto))
       .pipe(finalize(() => this.guardando.set(false)))
       .subscribe({
         next: () => {
-          this.ok.set(`Pago registrado para ${target.socioNombre}.`);
+          this.toast.success(`Pago registrado para ${target.socioNombre}.`);
           this.pagoTarget.set(null);
           this.cargarAportaciones();
         },
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el pago.')
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el pago.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
       });
   }
-}
-
-function computedPermiso(auth: AuthService, permiso: string): ReturnType<typeof computed> {
-  return computed(() => auth.hasPermiso(permiso));
 }

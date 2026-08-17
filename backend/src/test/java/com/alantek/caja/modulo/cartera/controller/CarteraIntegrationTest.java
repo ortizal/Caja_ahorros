@@ -58,6 +58,42 @@ class CarteraIntegrationTest {
     }
 
     @Test
+    void graficosDevuelveSeriesCompletas() throws Exception {
+        String token = loginToken("cajero", "cajero123");
+
+        MvcResult result = mvc.perform(get("/api/v1/dashboard/graficos")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode colocacion = body.get("colocacionPorMes");
+        JsonNode cobranza = body.get("cobranzaPorMes");
+        JsonNode flujo = body.get("flujoCajaPorMes");
+        JsonNode cartera = body.get("carteraPorEstado");
+
+        assertThat(colocacion.isArray()).isTrue();
+        assertThat(colocacion.size()).isEqualTo(12);
+        assertThat(cobranza.size()).isEqualTo(12);
+        assertThat(flujo.size()).isEqualTo(6);
+        for (JsonNode punto : colocacion) {
+            assertThat(punto.get("mes").asText()).matches("\\d{4}-\\d{2}");
+            assertThat(punto.get("monto").decimalValue()).isGreaterThanOrEqualTo(java.math.BigDecimal.ZERO);
+        }
+        for (JsonNode punto : flujo) {
+            assertThat(punto.get("ingresos")).isNotNull();
+            assertThat(punto.get("egresos")).isNotNull();
+        }
+        assertThat(cartera.isArray()).isTrue();
+    }
+
+    @Test
+    void graficosRequiereAutenticacion() throws Exception {
+        mvc.perform(get("/api/v1/dashboard/graficos"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void listarCarteraConTokenValido() throws Exception {
         String token = loginToken("credito", "credito123");
 

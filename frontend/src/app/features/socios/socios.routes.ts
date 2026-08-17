@@ -18,11 +18,6 @@ export const sociosRoutes: Routes = [
         path: ':id/editar',
         loadComponent: () =>
           import('./socio-form.component').then((m) => m.SocioFormComponent)
-      },
-      {
-        path: ':id',
-        loadComponent: () =>
-          import('./socio-detail.component').then((m) => m.SocioDetailComponent)
       }
     ]
   }

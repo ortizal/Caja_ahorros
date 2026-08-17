@@ -1,0 +1,336 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Gestión de Tesorería</h1>
+    <p class="page-subtitle">Solicitudes de gasto, cuentas por pagar/cobrar y control presupuestario anual</p>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="tesoreria-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+<div class="tabs" data-testid="tesoreria-tabs">
+  <button type="button" class="tab-btn" [class.active]="tab() === 'gastos'" (click)="tab.set('gastos')">Gastos</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'cuentas-pagar'" (click)="tab.set('cuentas-pagar')">Cuentas por pagar</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'cuentas-cobrar'" (click)="tab.set('cuentas-cobrar')">Cuentas por cobrar</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'presupuesto'" (click)="tab.set('presupuesto')">Presupuesto</button>
+</div>
+
+@if (cargando()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando tesorería…</div>
+  </div>
+}
+
+@if (tab() === 'gastos') {
+  <div class="card" data-testid="gastos-panel">
+    <div class="card-header">
+      <h3 class="card-title">Solicitudes de Gastos Operativos</h3>
+      @if (puedeCrear()) {
+        <a class="btn btn-sm btn-primary" routerLink="/tesoreria/gastos/nuevo" data-testid="btn-nuevo-gasto">💸 Nuevo Gasto</a>
+      }
+    </div>
+
+    @if (rechazoDe() !== null) {
+      <div class="card" style="margin-bottom: 20px; background: var(--color-danger-light);" data-testid="rechazo-form">
+        <div class="form-inline">
+          <label class="field" style="flex: 1;">
+            <span>Motivo del Rechazo</span>
+            <input class="form-control form-control-sm" [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" placeholder="Escriba la causa del rechazo" data-testid="input-motivo-rechazo" />
+          </label>
+          <button type="button" class="btn btn-sm btn-danger" data-testid="btn-confirmar-rechazo" (click)="confirmarRechazo()">Confirmar Rechazo</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-cancelar-rechazo" (click)="cancelarRechazo()">Cancelar</button>
+        </div>
+      </div>
+    }
+
+    <div class="table-responsive">
+      <table class="table" data-testid="gastos-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Concepto</th>
+            <th>Monto</th>
+            <th>Cuenta Contable</th>
+            <th>Fecha Solicitud</th>
+            <th>Estado</th>
+            <th>Motivo Rechazo</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (g of gastos(); track g.id) {
+            <tr>
+              <td><strong>#{{ g.id }}</strong></td>
+              <td>{{ g.concepto }} @if (g.descripcion) { <small>— {{ g.descripcion }}</small> }</td>
+              <td><strong>\${{ g.monto | number: '1.2-2' }}</strong></td>
+              <td>{{ cuentaLabel(g.cuentaContableId) }}</td>
+              <td>{{ g.fechaSolicitud }}</td>
+              <td>
+                <span class="badge"
+                      [class.badge-success]="g.estado === 'APROBADO' || g.estado === 'PAGADO'"
+                      [class.badge-warning]="g.estado === 'PENDIENTE'"
+                      [class.badge-danger]="g.estado === 'RECHAZADO' || g.estado === 'ANULADO'">
+                  {{ g.estado }}
+                </span>
+              </td>
+              <td>{{ g.motivoRechazo ?? '—' }}</td>
+              <td style="text-align: right;">
+                <app-acciones-menu>
+                  @if (g.estado === 'PENDIENTE' && puedeAprobar()) {
+                    <button type="button" class="btn btn-sm btn-success" data-testid="btn-aprobar-gasto" (click)="aprobarGasto(g.id)" [disabled]="guardando()">
+                      ✅ Aprobar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" data-testid="btn-rechazar-gasto" (click)="iniciarRechazo(g.id)" [disabled]="guardando()">
+                      ❌ Rechazar
+                    </button>
+                  }
+                  @if (g.estado === 'APROBADO' && puedeEditar()) {
+                    <button type="button" class="btn btn-sm btn-primary" data-testid="btn-pagar-gasto" (click)="pagarGasto(g.id)" [disabled]="guardando()">
+                      💵 Pagar
+                    </button>
+                  }
+                  @if (g.estado !== 'ANULADO' && g.estado !== 'PAGADO' && puedeAnular()) {
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-anular-gasto" (click)="anularGasto(g.id)" [disabled]="guardando()">
+                      🚫 Anular
+                    </button>
+                  }
+                </app-acciones-menu>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (gastos().length === 0 && !cargando()) {
+      <div class="empty-state" style="padding: 20px;" data-testid="gastos-vacio">
+        <div class="empty-state-text">Sin gastos registrados.</div>
+      </div>
+    }
+  </div>
+}
+
+@if (tab() === 'cuentas-pagar') {
+  <div class="card" data-testid="cuentas-pagar-panel">
+    <div class="card-header">
+      <h3 class="card-title">Cuentas por Pagar a Proveedores</h3>
+      @if (puedeCrear()) {
+        <a class="btn btn-sm btn-primary" routerLink="/tesoreria/cuentas-pagar/nuevo" data-testid="btn-nueva-cxp">📤 Nueva Cuenta por Pagar</a>
+      }
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" data-testid="cuentas-pagar-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Proveedor</th>
+            <th>Concepto</th>
+            <th>Monto</th>
+            <th>Cuenta Contable</th>
+            <th>Vencimiento</th>
+            <th>Estado</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of cuentasPagar(); track c.id) {
+            <tr>
+              <td><strong>#{{ c.id }}</strong></td>
+              <td><strong>{{ c.proveedor }}</strong></td>
+              <td>{{ c.concepto }}</td>
+              <td>\${{ c.monto | number: '1.2-2' }}</td>
+              <td>{{ cuentaLabel(c.cuentaContableId) }}</td>
+              <td>{{ c.fechaVencimiento }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="c.estado === 'PAGADA'" [class.badge-warning]="c.estado !== 'PAGADA'">
+                  {{ c.estado }}
+                </span>
+              </td>
+              <td style="text-align: right;">
+                @if (c.estado === 'PENDIENTE' && puedeEditar()) {
+                  <app-acciones-menu>
+                    <button type="button" class="btn btn-sm btn-primary" data-testid="btn-pagar-cxp" (click)="pagarCuentaPagar(c.id)" [disabled]="guardando()">
+                      💵 Pagar
+                    </button>
+                  </app-acciones-menu>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (cuentasPagar().length === 0 && !cargando()) {
+      <div class="empty-state" style="padding: 20px;" data-testid="cuentas-pagar-vacio">
+        <div class="empty-state-text">Sin cuentas por pagar.</div>
+      </div>
+    }
+  </div>
+}
+
+@if (tab() === 'cuentas-cobrar') {
+  <div class="card" data-testid="cuentas-cobrar-panel">
+    <div class="card-header">
+      <h3 class="card-title">Cuentas por Cobrar a Deudores</h3>
+      @if (puedeCrear()) {
+        <a class="btn btn-sm btn-primary" routerLink="/tesoreria/cuentas-cobrar/nuevo" data-testid="btn-nueva-cxc">📥 Nueva Cuenta por Cobrar</a>
+      }
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" data-testid="cuentas-cobrar-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Deudor</th>
+            <th>Concepto</th>
+            <th>Monto</th>
+            <th>Cuenta Contable</th>
+            <th>Vencimiento</th>
+            <th>Estado</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of cuentasCobrar(); track c.id) {
+            <tr>
+              <td><strong>#{{ c.id }}</strong></td>
+              <td><strong>{{ c.deudor }}</strong></td>
+              <td>{{ c.concepto }}</td>
+              <td>\${{ c.monto | number: '1.2-2' }}</td>
+              <td>{{ cuentaLabel(c.cuentaContableId) }}</td>
+              <td>{{ c.fechaVencimiento }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="c.estado === 'COBRADA'" [class.badge-warning]="c.estado !== 'COBRADA'">
+                  {{ c.estado }}
+                </span>
+              </td>
+              <td style="text-align: right;">
+                @if (c.estado === 'PENDIENTE' && puedeEditar()) {
+                  <app-acciones-menu>
+                    <button type="button" class="btn btn-sm btn-primary" data-testid="btn-cobrar-cxc" (click)="cobrarCuentaCobrar(c.id)" [disabled]="guardando()">
+                      💵 Cobrar
+                    </button>
+                  </app-acciones-menu>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (cuentasCobrar().length === 0 && !cargando()) {
+      <div class="empty-state" style="padding: 20px;" data-testid="cuentas-cobrar-vacio">
+        <div class="empty-state-text">Sin cuentas por cobrar.</div>
+      </div>
+    }
+  </div>
+}
+
+@if (tab() === 'presupuesto') {
+  <div class="card" data-testid="presupuesto-panel">
+    <div class="card-header">
+      <h3 class="card-title">Presupuesto Anual y Ejecución</h3>
+    </div>
+
+    <form [formGroup]="presupuestoForm" (ngSubmit)="crearPartida()" class="form-grid" style="margin-bottom: 20px;" data-testid="partida-form">
+      <label class="field">
+        <span>Año Presupuesto *</span>
+        <input type="number" class="form-control form-control-sm" formControlName="anio" placeholder="2026" data-testid="input-partida-anio" />
+      </label>
+      <label class="field">
+        <span>Concepto de Partida *</span>
+        <input class="form-control form-control-sm" formControlName="concepto" placeholder="Ej. Gastos administrativos" data-testid="input-partida-concepto" />
+      </label>
+      <label class="field">
+        <span>Cuenta Contable *</span>
+        <select class="form-select form-select-sm" formControlName="cuentaContableId" data-testid="input-partida-cuenta">
+          <option [ngValue]="0" disabled>Seleccione cuenta</option>
+          @for (c of planCuentas(); track c.id) {
+            <option [ngValue]="c.id" [disabled]="!c.aceptaMovimiento">{{ c.codigo }} — {{ c.nombre }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Monto Presupuestado ($) *</span>
+        <input type="number" step="0.01" class="form-control form-control-sm" formControlName="montoPresupuestado" placeholder="0.00" data-testid="input-partida-monto" />
+      </label>
+      <div class="form-actions" style="grid-column: 1 / -1;">
+        <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-partida" [disabled]="presupuestoForm.invalid || guardando() || !puedeCrear()">
+          ➕ Crear Partida Presupuestaria
+        </button>
+      </div>
+    </form>
+
+    <div class="form-inline" style="margin-bottom: 16px;">
+      <label class="field">
+        <span>Año a Consultar</span>
+        <input type="number" class="form-control form-control-sm" [ngModel]="anioSel()" (ngModelChange)="cambiarAnio($event)" data-testid="input-presupuesto-anio" style="max-width: 140px;" />
+      </label>
+    </div>
+
+    @if (presupuesto(); as p) {
+      <div class="form-grid" style="margin-bottom: 20px;" data-testid="presupuesto-resumen">
+        <div class="kpi">
+          <div class="kpi-icon-wrapper kpi-sky">📊</div>
+          <div class="kpi-info">
+            <span class="kpi-value" data-testid="total-presupuestado">\${{ p.totalPresupuestado | number: '1.2-2' }}</span>
+            <span class="kpi-label">Total Presupuestado</span>
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-icon-wrapper kpi-teal">💸</div>
+          <div class="kpi-info">
+            <span class="kpi-value" data-testid="total-ejecutado">\${{ p.totalEjecutado | number: '1.2-2' }}</span>
+            <span class="kpi-label">Total Ejecutado</span>
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-icon-wrapper kpi-emerald">📈</div>
+          <div class="kpi-info">
+            <span class="kpi-value" data-testid="porcentaje-ejecucion">{{ p.porcentajeEjecucion | number: '1.2-2' }}%</span>
+            <span class="kpi-label">% Ejecución Presupuestaria</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table" data-testid="partidas-table">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Cuenta Contable</th>
+              <th>Presupuestado</th>
+              <th>Ejecutado</th>
+              <th>% Ejecución</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (part of p.partidas; track part.id) {
+              <tr>
+                <td><strong>{{ part.concepto }}</strong></td>
+                <td>{{ cuentaLabel(part.cuentaContableId) }}</td>
+                <td>\${{ part.montoPresupuestado | number: '1.2-2' }}</td>
+                <td>\${{ part.montoEjecutado | number: '1.2-2' }}</td>
+                <td>
+                  <span class="badge" [class.badge-success]="part.porcentajeEjecucion <= 100" [class.badge-danger]="part.porcentajeEjecucion > 100">
+                    {{ part.porcentajeEjecucion | number: '1.2-2' }}%
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (p.partidas.length === 0 && !cargando()) {
+        <div class="empty-state" style="padding: 20px;" data-testid="partidas-vacio">
+          <div class="empty-state-text">Sin partidas registradas para el año {{ p.anio }}.</div>
+        </div>
+      }
+    }
+  </div>
+}
+

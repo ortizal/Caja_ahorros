@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
 import {
   BancoMovimiento,
@@ -12,6 +13,7 @@ import {
   TIPOS_MOVIMIENTO_BANCO
 } from '../../core/models/banco.model';
 import { BancoService } from '../../core/services/banco.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-cuenta-bancaria-detalle',
@@ -22,16 +24,18 @@ import { BancoService } from '../../core/services/banco.service';
 export class CuentaBancariaDetalleComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly bancoService = inject(BancoService);
+  private readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly cuenta = signal<CuentaBancaria | null>(null);
   protected readonly movimientos = signal<BancoMovimiento[]>([]);
   protected readonly conciliacion = signal<Conciliacion | null>(null);
   protected readonly error = signal('');
-  protected readonly ok = signal('');
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
   protected readonly tipos = TIPOS_MOVIMIENTO_BANCO;
+  protected readonly puedeCrear = computed(() => this.auth.hasPermiso('BANCOS:CREAR'));
 
   protected readonly movimientoForm = this.fb.nonNullable.group({
     tipo: ['DEPOSITO', [Validators.required]],
@@ -72,7 +76,9 @@ export class CuentaBancariaDetalleComponent implements OnInit {
         this.cargando.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo cargar la cuenta.');
+        const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo cargar la cuenta.';
+        this.error.set(msg);
+        this.toast.error(msg);
         this.cargando.set(false);
       }
     });
@@ -92,7 +98,6 @@ export class CuentaBancariaDetalleComponent implements OnInit {
     const raw = this.movimientoForm.getRawValue();
     this.guardando.set(true);
     this.error.set('');
-    this.ok.set('');
     this.bancoService
       .registrarMovimiento(this.cuentaId, {
         tipo: raw.tipo,
@@ -103,11 +108,14 @@ export class CuentaBancariaDetalleComponent implements OnInit {
       .subscribe({
         next: () => {
           this.movimientoForm.patchValue({ tipo: 'DEPOSITO', monto: 0, fecha: this.hoy() });
-          this.ok.set('Movimiento bancario registrado.');
+          this.toast.success('Movimiento bancario registrado.');
           this.cargarTodo();
         },
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el movimiento.')
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el movimiento.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
       });
   }
 
@@ -118,18 +126,20 @@ export class CuentaBancariaDetalleComponent implements OnInit {
     const raw = this.conciliacionForm.getRawValue();
     this.guardando.set(true);
     this.error.set('');
-    this.ok.set('');
     this.bancoService
       .conciliar(this.cuentaId, raw.periodo, Number(raw.saldoBancario))
       .pipe(finalize(() => this.guardando.set(false)))
       .subscribe({
         next: (conciliacion) => {
           this.conciliacion.set(conciliacion);
-          this.ok.set('Conciliación generada.');
+          this.toast.success('Conciliación generada.');
           this.cargarMovimientos();
         },
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo conciliar la cuenta.')
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo conciliar la cuenta.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
       });
   }
 }

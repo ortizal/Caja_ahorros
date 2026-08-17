@@ -1,194 +1,238 @@
-<h1 class="page-title">Caja</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Operaciones de Caja</h1>
+    <p class="page-subtitle">Apertura de caja diaria, registro de cobros/pagos, arqueos y comprobantes</p>
+  </div>
+</div>
 
 @if (error()) {
-  <div class="alert alert-error" data-testid="caja-error">{{ error() }}</div>
-}
-@if (ok()) {
-  <div class="alert alert-success" data-testid="caja-ok">{{ ok() }}</div>
+  <div class="alert alert-error" data-testid="caja-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
 }
 
 @if (cargando()) {
-  <p>Cargando…</p>
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando estado de caja…</div>
+  </div>
 }
 
-@if (!hayAbierta() && !cargando()) {
-  @if (puedeCrear()) {
-    <section class="panel" data-testid="apertura-panel">
-      <h2>Abrir caja del día</h2>
-      <form [formGroup]="aperturaForm" (ngSubmit)="abrirCaja()" class="form-inline" data-testid="apertura-form">
-        <label class="field">
-          <span>Saldo inicial</span>
-          <input type="number" step="0.01" formControlName="saldoInicial" data-testid="input-saldo-inicial" />
-        </label>
-        <button type="submit" class="btn btn-primary" data-testid="btn-abrir-caja" [disabled]="aperturaForm.invalid || guardando()">
-          Abrir caja
-        </button>
-      </form>
-    </section>
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Historial de Cajas</h3>
+    @if (puedeCrear()) {
+      <a class="btn btn-sm btn-primary" routerLink="/caja/nuevo" data-testid="btn-abrir-caja">➕ Abrir Caja</a>
+    }
+  </div>
+  @if (cajas().length === 0) {
+    <div class="empty-state" style="padding: 20px;" data-testid="cajas-vacio">
+      <div class="empty-state-text">Sin cajas registradas.</div>
+    </div>
   } @else {
-    <p>No tiene permisos para abrir caja.</p>
-  }
-}
-
-@if (cajas().length > 0) {
-  <section class="panel">
-    <h2>Mis cajas</h2>
-    <table class="table" data-testid="cajas-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Fecha</th>
-          <th>Saldo inicial</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (caja of cajas(); track caja.id) {
-          <tr [class.fila-activa]="seleccionada()?.id === caja.id">
-            <td>{{ caja.id }}</td>
-            <td>{{ caja.fecha }}</td>
-            <td>{{ caja.saldoInicial | number: '1.2-2' }}</td>
-            <td><span class="badge" [class.badge-success]="caja.estado === 'ABIERTA'">{{ caja.estado }}</span></td>
-            <td>
-              <button type="button" class="btn btn-outline btn-sm" (click)="seleccionar(caja)" [attr.data-testid]="'btn-caja-' + caja.id">
-                Ver
-              </button>
-            </td>
+    <div class="table-responsive">
+      <table class="table" data-testid="cajas-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha</th>
+            <th>Saldo Inicial</th>
+            <th>Estado</th>
+            <th style="text-align: right;">Acción</th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </section>
-}
+        </thead>
+        <tbody>
+          @for (caja of cajas(); track caja.id) {
+            <tr [class.fila-activa]="seleccionada()?.id === caja.id">
+              <td><strong>#{{ caja.id }}</strong></td>
+              <td>{{ caja.fecha }}</td>
+              <td>\${{ caja.saldoInicial | number: '1.2-2' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="caja.estado === 'ABIERTA'" [class.badge-secondary]="caja.estado !== 'ABIERTA'">
+                  {{ caja.estado }}
+                </span>
+              </td>
+              <td style="text-align: right;">
+                <app-acciones-menu>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="seleccionar(caja)" [attr.data-testid]="'btn-caja-' + caja.id">
+                    👁 Ver Caja
+                  </button>
+                </app-acciones-menu>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
 
 @if (seleccionada(); as caja) {
-  <section class="panel">
-    <div class="page-header">
-      <h2>Caja #{{ caja.id }} — {{ caja.estado }}</h2>
-      @if (caja.estado === 'ABIERTA' && puedeCrear()) {
-        <button type="button" class="btn btn-danger" data-testid="btn-cerrar-caja" (click)="cerrarCaja()" [disabled]="guardando()">
-          Cerrar caja
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Detalle de Caja #{{ caja.id }} — <span class="badge" [class.badge-success]="caja.estado === 'ABIERTA'">{{ caja.estado }}</span></h3>
+      <div class="header-actions">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-caja-xlsx"
+                [disabled]="exportando()" (click)="exportarExcel()">
+          📊 Exportar Excel
         </button>
-      }
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-caja-pdf"
+                [disabled]="exportando()" (click)="exportarPdf()">
+          📄 Exportar PDF
+        </button>
+        @if (caja.estado === 'ABIERTA' && puedeCrear()) {
+          <button type="button" class="btn btn-sm btn-danger" data-testid="btn-cerrar-caja" (click)="cerrarCaja()" [disabled]="guardando()">
+            🔒 Cerrar caja
+          </button>
+        }
+      </div>
     </div>
 
     @if (saldo(); as s) {
-      <div class="saldo-grid">
-        <div class="saldo-card">
-          <span>Saldo inicial</span>
-          <strong data-testid="saldo-inicial">{{ s.saldoInicial | number: '1.2-2' }}</strong>
+      <div class="form-grid" style="margin-top: 12px;">
+        <div class="kpi">
+          <div class="kpi-icon-wrapper kpi-blue">💰</div>
+          <div class="kpi-info">
+            <span class="kpi-value" data-testid="saldo-inicial">\${{ s.saldoInicial | number: '1.2-2' }}</span>
+            <span class="kpi-label">Saldo inicial</span>
+          </div>
         </div>
-        <div class="saldo-card">
-          <span>Ingresos</span>
-          <strong data-testid="saldo-ingresos">{{ s.totalIngresos | number: '1.2-2' }}</strong>
+        <div class="kpi">
+          <div class="kpi-icon-wrapper kpi-emerald">📥</div>
+          <div class="kpi-info">
+            <span class="kpi-value" data-testid="saldo-ingresos">\${{ s.totalIngresos | number: '1.2-2' }}</span>
+            <span class="kpi-label">Total Ingresos</span>
+          </div>
         </div>
-        <div class="saldo-card">
-          <span>Egresos</span>
-          <strong data-testid="saldo-egresos">{{ s.totalEgresos | number: '1.2-2' }}</strong>
+        <div class="kpi">
+          <div class="kpi-icon-wrapper kpi-rose">📤</div>
+          <div class="kpi-info">
+            <span class="kpi-value" data-testid="saldo-egresos">\${{ s.totalEgresos | number: '1.2-2' }}</span>
+            <span class="kpi-label">Total Egresos</span>
+          </div>
         </div>
-        <div class="saldo-card">
-          <span>Saldo actual</span>
-          <strong data-testid="saldo-actual">{{ s.saldoActual | number: '1.2-2' }}</strong>
+        <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">💰</div>
+        <div class="kpi-info">
+          <span class="kpi-value">$<strong data-testid="saldo-actual">{{ s.saldoActual | number: '1.2-2' }}</strong></span>
+          <span class="kpi-label">Saldo Actual en Caja</span>
         </div>
       </div>
+      </div>
     }
-  </section>
+  </div>
 
   @if (caja.estado === 'ABIERTA') {
-    <section class="panel" data-testid="movimiento-panel">
-      <h2>Registrar movimiento</h2>
+    <div class="card" data-testid="movimiento-panel">
+      <div class="card-header">
+        <h3 class="card-title">Registrar Movimiento de Caja</h3>
+      </div>
       <form [formGroup]="movimientoForm" (ngSubmit)="registrarMovimiento()" class="form-grid" data-testid="movimiento-form">
         <label class="field">
-          <span>Tipo</span>
-          <select formControlName="tipo" data-testid="input-tipo-movimiento">
+          <span>Tipo de Movimiento</span>
+          <select class="form-select form-select-sm" formControlName="tipo" data-testid="input-tipo-movimiento">
             @for (tipo of tipos; track tipo) {
               <option [value]="tipo">{{ tipo }}</option>
             }
           </select>
         </label>
+
         @if (!cobroActivo()) {
           <label class="field">
             <span>Monto</span>
-            <input type="number" step="0.01" formControlName="monto" data-testid="input-monto-movimiento" />
+            <input type="number" step="0.01" class="form-control form-control-sm" formControlName="monto" placeholder="0.00" data-testid="input-monto-movimiento" />
           </label>
         }
         @if (cobroActivo()) {
           <label class="field">
             <span>Capital</span>
-            <input type="number" step="0.01" formControlName="montoCapital" data-testid="input-monto-capital" />
+            <input type="number" step="0.01" class="form-control form-control-sm" formControlName="montoCapital" placeholder="0.00" data-testid="input-monto-capital" />
           </label>
           <label class="field">
             <span>Interés</span>
-            <input type="number" step="0.01" formControlName="montoInteres" data-testid="input-monto-interes" />
+            <input type="number" step="0.01" class="form-control form-control-sm" formControlName="montoInteres" placeholder="0.00" data-testid="input-monto-interes" />
           </label>
           <label class="field">
             <span>Mora</span>
-            <input type="number" step="0.01" formControlName="montoMora" data-testid="input-monto-mora" />
+            <input type="number" step="0.01" class="form-control form-control-sm" formControlName="montoMora" placeholder="0.00" data-testid="input-monto-mora" />
           </label>
         }
-        <label class="field">
-          <span>Descripción</span>
-          <input formControlName="descripcion" data-testid="input-descripcion-movimiento" />
-        </label>
-        <button type="submit" class="btn btn-primary" data-testid="btn-registrar-movimiento" [disabled]="movimientoForm.invalid || guardando()">
-          Registrar
-        </button>
-      </form>
-    </section>
 
-    <section class="panel" data-testid="arqueo-panel">
-      <h2>Arqueo</h2>
+        <label class="field" style="grid-column: 1 / -1;">
+          <span>Descripción / Concepto</span>
+          <input class="form-control form-control-sm" formControlName="descripcion" placeholder="Detalle del movimiento" data-testid="input-descripcion-movimiento" />
+        </label>
+
+        <div class="form-actions" style="grid-column: 1 / -1;">
+          <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-registrar-movimiento" [disabled]="movimientoForm.invalid || guardando()">
+            💾 Registrar Movimiento
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" data-testid="arqueo-panel">
+      <div class="card-header">
+        <h3 class="card-title">Arqueo Físico de Caja</h3>
+      </div>
       <form [formGroup]="arqueoForm" (ngSubmit)="hacerArqueo()" class="form-inline" data-testid="arqueo-form">
         <label class="field">
-          <span>Saldo físico</span>
-          <input type="number" step="0.01" formControlName="saldoFisico" data-testid="input-saldo-fisico" />
+          <span>Saldo Físico Contado *</span>
+          <input type="number" step="0.01" class="form-control form-control-sm" formControlName="saldoFisico" placeholder="0.00" data-testid="input-saldo-fisico" />
         </label>
-        <label class="field">
-          <span>Observación</span>
-          <input formControlName="observacion" data-testid="input-observacion" />
+        <label class="field" style="flex: 1;">
+          <span>Observaciones del Arqueo</span>
+          <input class="form-control form-control-sm" formControlName="observacion" placeholder="Comentarios opcionales" data-testid="input-observacion" />
         </label>
-        <button type="submit" class="btn btn-outline" data-testid="btn-arqueo" [disabled]="arqueoForm.invalid || guardando()">
-          Registrar arqueo
+        <button type="submit" class="btn btn-sm btn-outline-secondary" data-testid="btn-arqueo" [disabled]="arqueoForm.invalid || guardando()">
+          ⚖️ Registrar Arqueo
         </button>
       </form>
+
       @if (arqueoResultado(); as a) {
-        <div class="arqueo-resultado" data-testid="arqueo-resultado">
-          Saldo sistema: <strong>{{ a.saldoSistema | number: '1.2-2' }}</strong> ·
-          Saldo físico: <strong>{{ a.saldoFisico | number: '1.2-2' }}</strong> ·
-          Diferencia: <strong [class.texto-error]="a.diferencia !== 0">{{ a.diferencia | number: '1.2-2' }}</strong>
+        <div class="alert alert-info" style="margin-top: 14px;" data-testid="arqueo-resultado">
+          <span>Saldo Sistema: <strong>\${{ a.saldoSistema | number: '1.2-2' }}</strong></span>
+          <span>· Saldo Físico: <strong>\${{ a.saldoFisico | number: '1.2-2' }}</strong></span>
+          <span>· Diferencia: <strong [class.badge-danger]="a.diferencia !== 0">\${{ a.diferencia | number: '1.2-2' }}</strong></span>
         </div>
       }
-    </section>
+    </div>
   }
 
-  <section class="panel">
-    <h2>Movimientos</h2>
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Movimientos Registrados</h3>
+    </div>
     @if (movimientos().length === 0) {
-      <p data-testid="movimientos-vacio">Sin movimientos registrados.</p>
+      <div class="empty-state" style="padding: 20px;" data-testid="movimientos-vacio">
+        <div class="empty-state-text">Sin movimientos registrados.</div>
+      </div>
     } @else {
-      <table class="table" data-testid="movimientos-table">
-        <thead>
-          <tr>
-            <th>Comprobante</th>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Referencia</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (m of movimientos(); track m.id) {
+      <div class="table-responsive">
+        <table class="table" data-testid="movimientos-table">
+          <thead>
             <tr>
-              <td>{{ m.comprobanteNumero || '—' }}</td>
-              <td>{{ m.tipo }}</td>
-              <td>{{ m.monto | number: '1.2-2' }}</td>
-              <td>{{ m.referenciaTabla ? m.referenciaTabla + ' #' + m.referenciaId : '—' }}</td>
-              <td>{{ m.createdAt | date: 'short' }}</td>
+              <th>Comprobante</th>
+              <th>Tipo</th>
+              <th>Monto</th>
+              <th>Referencia</th>
+              <th>Fecha</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (m of movimientos(); track m.id) {
+              <tr>
+                <td><strong>{{ m.comprobanteNumero || '—' }}</strong></td>
+                <td><span class="badge badge-info">{{ m.tipo }}</span></td>
+                <td><strong>\${{ m.monto | number: '1.2-2' }}</strong></td>
+                <td>{{ m.referenciaTabla ? m.referenciaTabla + ' #' + m.referenciaId : '—' }}</td>
+                <td>{{ m.createdAt | date: 'short' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
-  </section>
+  </div>
 }
+

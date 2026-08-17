@@ -1,85 +1,117 @@
-<h1 class="page-title" data-testid="form-title">{{ esEdicion() ? 'Editar socio' : 'Nuevo socio' }}</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">{{ esEdicion() ? 'Editar Socio' : 'Nuevo Socio' }}</h1>
+    <p class="page-subtitle">Complete la información general y asignación de beneficiarios del socio</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
 
 @if (error()) {
-  <div class="alert alert-error" data-testid="form-error">{{ error() }}</div>
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
 }
 
 @if (loading()) {
-  <p>Cargando…</p>
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando formulario…</div>
+  </div>
 } @else {
   <form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="socio-form">
-    <div class="grid">
-      <label class="field">
-        <span>Identificación *</span>
-        <input formControlName="identificacion" data-testid="input-identificacion" />
-      </label>
-      <label class="field">
-        <span>Nombres *</span>
-        <input formControlName="nombres" data-testid="input-nombres" />
-      </label>
-      <label class="field">
-        <span>Apellidos *</span>
-        <input formControlName="apellidos" data-testid="input-apellidos" />
-      </label>
-      <label class="field">
-        <span>Teléfono</span>
-        <input formControlName="telefono" data-testid="input-telefono" />
-      </label>
-      <label class="field">
-        <span>Email</span>
-        <input formControlName="email" data-testid="input-email" />
-      </label>
-      <label class="field">
-        <span>Dirección</span>
-        <input formControlName="direccion" data-testid="input-direccion" />
-      </label>
-      <label class="field">
-        <span>Fecha de ingreso *</span>
-        <input type="date" formControlName="fechaIngreso" data-testid="input-fecha-ingreso" />
-      </label>
-      <label class="field">
-        <span>Estado</span>
-        <select formControlName="estado" data-testid="input-estado">
-          <option value="ACTIVO">ACTIVO</option>
-          <option value="SUSPENDIDO">SUSPENDIDO</option>
-          <option value="RETIRADO">RETIRADO</option>
-          <option value="FALLECIDO">FALLECIDO</option>
-        </select>
-      </label>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Información Personal</h3>
+      </div>
+      <div class="form-grid">
+        <label class="field">
+          <span>Identificación *</span>
+          <input class="form-control form-control-sm" formControlName="identificacion" placeholder="Ej. 1712345678" data-testid="input-identificacion" />
+        </label>
+
+        <label class="field">
+          <span>Nombres *</span>
+          <input class="form-control form-control-sm" formControlName="nombres" placeholder="Nombres completos" data-testid="input-nombres" />
+        </label>
+
+        <label class="field">
+          <span>Apellidos *</span>
+          <input class="form-control form-control-sm" formControlName="apellidos" placeholder="Apellidos completos" data-testid="input-apellidos" />
+        </label>
+
+        <label class="field">
+          <span>Teléfono</span>
+          <input class="form-control form-control-sm" formControlName="telefono" placeholder="Ej. 0991234567" data-testid="input-telefono" />
+        </label>
+
+        <label class="field">
+          <span>Email</span>
+          <input class="form-control form-control-sm" formControlName="email" type="email" placeholder="correo@ejemplo.com" data-testid="input-email" />
+        </label>
+
+        <label class="field">
+          <span>Fecha de ingreso *</span>
+          <input class="form-control form-control-sm" type="date" formControlName="fechaIngreso" data-testid="input-fecha-ingreso" />
+        </label>
+
+        <label class="field">
+          <span>Estado</span>
+          <select class="form-select form-select-sm" formControlName="estado" data-testid="input-estado">
+            <option value="ACTIVO">ACTIVO</option>
+            <option value="SUSPENDIDO">SUSPENDIDO</option>
+            <option value="RETIRADO">RETIRADO</option>
+            <option value="FALLECIDO">FALLECIDO</option>
+          </select>
+        </label>
+
+        <label class="field" style="grid-column: 1 / -1;">
+          <span>Dirección</span>
+          <input class="form-control form-control-sm" formControlName="direccion" placeholder="Dirección domiciliaria" data-testid="input-direccion" />
+        </label>
+      </div>
     </div>
 
-    <section class="beneficiarios">
-      <div class="page-header">
-        <h2>Beneficiarios</h2>
-        <button type="button" class="btn btn-outline btn-sm" (click)="agregarBeneficiario()">Agregar</button>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Beneficiarios Designados</h3>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="agregarBeneficiario()">+ Agregar Beneficiario</button>
       </div>
 
       @for (grupo of beneficiarios.controls; track $index) {
-        <div class="grid beneficiario" [formGroupName]="$index">
-          <label class="field">
-            <span>Nombres *</span>
-            <input formControlName="nombres" data-testid="input-beneficiario-nombre" />
-          </label>
-          <label class="field">
-            <span>Parentesco</span>
-            <input formControlName="parentesco" data-testid="input-beneficiario-parentesco" />
-          </label>
-          <label class="field">
-            <span>Porcentaje</span>
-            <input type="number" formControlName="porcentaje" data-testid="input-beneficiario-porcentaje" />
-          </label>
-          <div class="field">
-            <button type="button" class="btn btn-danger btn-sm" (click)="quitarBeneficiario($index)">Quitar</button>
+        <div class="beneficiario-row" [formGroupName]="$index">
+          <div class="form-grid">
+            <label class="field">
+              <span>Nombres *</span>
+              <input class="form-control form-control-sm" formControlName="nombres" placeholder="Nombre de beneficiario" data-testid="input-beneficiario-nombre" />
+            </label>
+            <label class="field">
+              <span>Parentesco</span>
+              <input class="form-control form-control-sm" formControlName="parentesco" placeholder="Ej. Hijo / Cónyuge" data-testid="input-beneficiario-parentesco" />
+            </label>
+            <label class="field">
+              <span>Porcentaje (%)</span>
+              <input class="form-control form-control-sm" type="number" formControlName="porcentaje" placeholder="100" data-testid="input-beneficiario-porcentaje" />
+            </label>
+            <div class="field" style="justify-content: flex-end;">
+              <button type="button" class="btn btn-sm btn-danger" (click)="quitarBeneficiario($index)">🗑 Quitar</button>
+            </div>
           </div>
         </div>
+      } @empty {
+        <div class="empty-state" style="padding: 16px;">
+          <span class="empty-state-text">No se han registrado beneficiarios.</span>
+        </div>
       }
-    </section>
+    </div>
 
     <div class="form-actions">
-      <button type="button" class="btn btn-outline" (click)="cancelar()">Cancelar</button>
-      <button type="submit" class="btn btn-primary" data-testid="btn-guardar-socio" [disabled]="form.invalid || guardando()">
-        {{ guardando() ? 'Guardando…' : 'Guardar' }}
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+      <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-guardar-socio" [disabled]="form.invalid || guardando()">
+        {{ guardando() ? 'Guardando…' : 'Guardar Socio' }}
       </button>
     </div>
   </form>
 }
+

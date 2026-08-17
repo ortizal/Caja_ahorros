@@ -1,122 +1,163 @@
-<a class="back-link" [routerLink]="['/bancos']">← Volver a Bancos</a>
-
-<h1 class="page-title" data-testid="cuenta-titulo">
-  {{ cuenta()?.banco }} — {{ cuenta()?.numeroCuenta ?? 'Cargando…' }}
-</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="cuenta-titulo">
+      🏦 {{ cuenta()?.banco }} — {{ cuenta()?.numeroCuenta ?? 'Cargando…' }}
+    </h1>
+    <p class="page-subtitle">Movimientos bancarios y conciliación periódica</p>
+  </div>
+  <div class="header-actions">
+    <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/bancos']">← Volver a Bancos</a>
+  </div>
+</div>
 
 @if (error()) {
-  <div class="alert alert-error" data-testid="detalle-error">{{ error() }}</div>
-}
-@if (ok()) {
-  <div class="alert alert-success" data-testid="detalle-ok">{{ ok() }}</div>
+  <div class="alert alert-error" data-testid="detalle-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
 }
 
 @if (cuenta(); as c) {
-  <section class="panel">
-    <div class="cuenta-info" data-testid="cuenta-info">
-      <div class="saldo-card">
-        <span>Banco</span>
-        <strong>{{ c.banco }}</strong>
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Resumen de la Cuenta</h3>
+    </div>
+    <div class="form-grid" data-testid="cuenta-info">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-sky">🏦</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ c.banco }}</span>
+          <span class="kpi-label">Institución Bancaria</span>
+        </div>
       </div>
-      <div class="saldo-card">
-        <span>Número</span>
-        <strong>{{ c.numeroCuenta }}</strong>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-indigo">🔢</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ c.numeroCuenta }}</span>
+          <span class="kpi-label">Número de Cuenta</span>
+        </div>
       </div>
-      <div class="saldo-card">
-        <span>Tipo</span>
-        <strong>{{ c.tipo }}</strong>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-teal">📋</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ c.tipo }}</span>
+          <span class="kpi-label">Tipo de Cuenta</span>
+        </div>
       </div>
-      <div class="saldo-card">
-        <span>Saldo contable</span>
-        <strong data-testid="cuenta-saldo-contable">{{ c.saldoContable | number: '1.2-2' }}</strong>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">💰</div>
+        <div class="kpi-info">
+          <span class="kpi-value">$<strong data-testid="cuenta-saldo-contable">{{ c.saldoContable | number: '1.2-2' }}</strong></span>
+          <span class="kpi-label">Saldo Contable Actual</span>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" data-testid="movimiento-banco-panel">
-    <h2>Registrar movimiento bancario</h2>
+  @if (puedeCrear()) {
+  <div class="card" data-testid="movimiento-banco-panel">
+    <div class="card-header">
+      <h3 class="card-title">Registrar Movimiento Bancario</h3>
+    </div>
     <form [formGroup]="movimientoForm" (ngSubmit)="registrarMovimiento()" class="form-grid" data-testid="movimiento-banco-form">
       <label class="field">
-        <span>Tipo</span>
-        <select formControlName="tipo" data-testid="input-tipo-banco">
+        <span>Tipo de Movimiento</span>
+        <select class="form-select form-select-sm" formControlName="tipo" data-testid="input-tipo-banco">
           @for (tipo of tipos; track tipo) {
             <option [value]="tipo">{{ tipo }}</option>
           }
         </select>
       </label>
       <label class="field">
-        <span>Monto</span>
-        <input type="number" step="0.01" formControlName="monto" data-testid="input-monto-banco" />
+        <span>Monto ($)</span>
+        <input type="number" step="0.01" class="form-control form-control-sm" formControlName="monto" placeholder="0.00" data-testid="input-monto-banco" />
       </label>
       <label class="field">
         <span>Fecha</span>
-        <input type="date" formControlName="fecha" data-testid="input-fecha-banco" />
+        <input type="date" class="form-control form-control-sm" formControlName="fecha" data-testid="input-fecha-banco" />
       </label>
-      <button type="submit" class="btn btn-primary" data-testid="btn-registrar-banco" [disabled]="movimientoForm.invalid || guardando()">
-        Registrar
-      </button>
+      <div class="form-actions" style="grid-column: 1 / -1;">
+        <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-registrar-banco" [disabled]="movimientoForm.invalid || guardando()">
+          💾 Registrar Movimiento
+        </button>
+      </div>
     </form>
-  </section>
+  </div>
+  }
 
-  <section class="panel" data-testid="conciliacion-panel">
-    <h2>Conciliación bancaria</h2>
+  @if (puedeCrear()) {
+  <div class="card" data-testid="conciliacion-panel">
+    <div class="card-header">
+      <h3 class="card-title">Conciliación Bancaria</h3>
+    </div>
     <form [formGroup]="conciliacionForm" (ngSubmit)="conciliar()" class="form-inline" data-testid="conciliacion-form">
       <label class="field">
-        <span>Periodo</span>
-        <input type="month" formControlName="periodo" data-testid="input-periodo" />
+        <span>Periodo (Mes/Año)</span>
+        <input type="month" class="form-control form-control-sm" formControlName="periodo" data-testid="input-periodo" />
       </label>
       <label class="field">
-        <span>Saldo según banco</span>
-        <input type="number" step="0.01" formControlName="saldoBancario" data-testid="input-saldo-bancario" />
+        <span>Saldo según Estado de Cuenta Banco ($)</span>
+        <input type="number" step="0.01" class="form-control form-control-sm" formControlName="saldoBancario" placeholder="0.00" data-testid="input-saldo-bancario" />
       </label>
-      <button type="submit" class="btn btn-outline" data-testid="btn-conciliar" [disabled]="conciliacionForm.invalid || guardando()">
-        Conciliar
+      <button type="submit" class="btn btn-sm btn-outline-secondary" data-testid="btn-conciliar" [disabled]="conciliacionForm.invalid || guardando()">
+        ⚖️ Conciliar Periodo
       </button>
     </form>
+
     @if (conciliacion(); as cc) {
-      <div class="conciliacion-resultado" data-testid="conciliacion-resultado">
-        Saldo contable: <strong>{{ cc.saldoContable | number: '1.2-2' }}</strong> ·
-        Saldo bancario: <strong>{{ cc.saldoBancario | number: '1.2-2' }}</strong> ·
-        Diferencia: <strong [class.texto-error]="cc.diferencia !== 0">{{ cc.diferencia | number: '1.2-2' }}</strong>
+      <div class="alert alert-info" style="margin-top: 14px;" data-testid="conciliacion-resultado">
+        <span>Saldo Contable: <strong>\${{ cc.saldoContable | number: '1.2-2' }}</strong></span>
+        <span>· Saldo Bancario: <strong>\${{ cc.saldoBancario | number: '1.2-2' }}</strong></span>
+        <span>· Diferencia: <strong [class.badge-danger]="cc.diferencia !== 0">\${{ cc.diferencia | number: '1.2-2' }}</strong></span>
       </div>
     }
-  </section>
+  </div>
+  }
 
-  <section class="panel">
-    <h2>Movimientos</h2>
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Movimientos Registrados</h3>
+    </div>
+
     @if (movimientos().length === 0) {
-      <p data-testid="movimientos-banco-vacio">Sin movimientos registrados.</p>
+      <div class="empty-state" style="padding: 20px;" data-testid="movimientos-banco-vacio">
+        <div class="empty-state-text">Sin movimientos registrados.</div>
+      </div>
     } @else {
-      <table class="table" data-testid="movimientos-banco-table">
-        <thead>
-          <tr>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Fecha</th>
-            <th>Saldo contable</th>
-            <th>Conciliado</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (m of movimientos(); track m.id) {
+      <div class="table-responsive">
+        <table class="table" data-testid="movimientos-banco-table">
+          <thead>
             <tr>
-              <td>{{ m.tipo }}</td>
-              <td>{{ m.monto | number: '1.2-2' }}</td>
-              <td>{{ m.fecha }}</td>
-              <td>{{ m.saldoContable | number: '1.2-2' }}</td>
-              <td>
-                <span class="badge" [class.badge-success]="m.conciliado" [class.badge-neutral]="!m.conciliado">
-                  {{ m.conciliado ? 'SÍ' : 'NO' }}
-                </span>
-              </td>
+              <th>Tipo</th>
+              <th>Monto</th>
+              <th>Fecha</th>
+              <th>Saldo Contable</th>
+              <th>Conciliado</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (m of movimientos(); track m.id) {
+              <tr>
+                <td><span class="badge badge-info">{{ m.tipo }}</span></td>
+                <td><strong>\${{ m.monto | number: '1.2-2' }}</strong></td>
+                <td>{{ m.fecha }}</td>
+                <td>\${{ m.saldoContable | number: '1.2-2' }}</td>
+                <td>
+                  <span class="badge" [class.badge-success]="m.conciliado" [class.badge-secondary]="!m.conciliado">
+                    {{ m.conciliado ? 'SÍ' : 'NO' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
-  </section>
+  </div>
 } @else {
   @if (!cargando()) {
-    <p>Cuenta no encontrada.</p>
+    <div class="empty-state">
+      <div class="empty-state-text">Cuenta bancaria no encontrada.</div>
+    </div>
   }
 }
+

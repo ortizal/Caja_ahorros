@@ -1,81 +1,44 @@
 :host {
   display: block;
-  height: 100%;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
-.shell {
-  display: flex;
-  height: 100%;
-}
-
-.sidebar {
-  width: 220px;
-  background: #1f2937;
-  color: #f9fafb;
+.shell-layout {
   display: flex;
   flex-direction: column;
-  padding: 16px 0;
+  height: 100%;
+  width: 100%;
+  background: var(--color-bg);
 }
 
-.brand {
-  font-size: 18px;
-  font-weight: 700;
-  padding: 8px 20px 20px;
-}
-
-.nav {
+.shell-body {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex: 1;
+  height: calc(100vh - 56px);
+  overflow: hidden;
 }
 
-.nav-link {
-  color: #d1d5db;
-  text-decoration: none;
-  padding: 10px 20px;
-}
-
-.nav-link:hover {
-  background: #374151;
-  color: #fff;
-}
-
-.nav-link.active {
-  background: #2563eb;
-  color: #fff;
-}
-
-.main {
+.shell-content-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow: hidden;
   min-width: 0;
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fff;
-}
-
-.topbar-user {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-name {
-  font-weight: 600;
-}
-
-.user-roles {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.content {
+.shell-main-content {
+  flex: 1;
   padding: 24px;
-  overflow: auto;
+  overflow-y: auto;
+  background: var(--color-bg);
 }
+
+@media (max-width: 768px) {
+  .shell-main-content {
+    padding: 16px;
+  }
+}
+

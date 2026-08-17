@@ -1,26 +1,30 @@
-<div class="shell">
-  <aside class="sidebar">
-    <div class="brand">Caja de Ahorros</div>
-    <nav class="nav">
-      @for (item of visibleMenu(); track item.ruta) {
-        <a class="nav-link" [routerLink]="item.ruta" routerLinkActive="active">
-          {{ item.etiqueta }}
-        </a>
-      }
-    </nav>
-  </aside>
-  <div class="main">
-    <header class="topbar">
-      <div class="topbar-user">
-        @if (user(); as u) {
-          <span class="user-name">{{ u.nombreCompleto || u.username }}</span>
-          <span class="user-roles">{{ u.roles.join(', ') }}</span>
-        }
-      </div>
-      <button type="button" class="btn btn-outline" (click)="logout()">Salir</button>
-    </header>
-    <main class="content">
-      <router-outlet />
-    </main>
+<div class="shell-layout">
+  <app-header
+    [user]="user()"
+    [lista]="lista()"
+    [noLeidas]="noLeidas()"
+    [panelAbierto]="panelAbierto()"
+    (toggleSidebar)="toggleSidebar()"
+    (togglePanel)="togglePanel()"
+    (marcarUna)="marcarUna($event)"
+    (marcarTodas)="marcarTodas()"
+    (logout)="logout()"
+  ></app-header>
+
+  <div class="shell-body">
+    <app-sidebar
+      [menuItems]="visibleMenu()"
+      [collapsed]="sidebarCollapsed()"
+      [mobileOpen]="mobileMenuOpen()"
+      (closeMobile)="closeMobile()"
+    ></app-sidebar>
+
+    <div class="shell-content-wrapper">
+      <main class="shell-main-content">
+        <router-outlet />
+      </main>
+      <app-footer></app-footer>
+    </div>
   </div>
 </div>
+

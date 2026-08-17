@@ -1,0 +1,36 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Apertura de Caja</h1>
+    <p class="page-subtitle">Apertura de caja diaria para el registro de cobros, pagos y arqueos</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="apertura-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos de Apertura</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Saldo Inicial *</span>
+        <input type="number" step="0.01" class="form-control form-control-sm" formControlName="saldoInicial" placeholder="0.00" data-testid="input-saldo-inicial" />
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-confirmar-apertura" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Abriendo…' : '🔓 Abrir Caja' }}
+    </button>
+  </div>
+</form>

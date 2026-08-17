@@ -37,7 +37,8 @@ class ReglaContableRepositoryTest {
             "PAGO_CAPITAL", List.of("1.1.01", "1.3.01"),
             "PAGO_INTERES", List.of("1.1.01", "4.1.01"),
             "PAGO_MORA", List.of("1.1.01", "4.1.02"),
-            "GASTO_PAGADO", List.of("5.1.01", "1.1.01"));
+            "GASTO_PAGADO", List.of("5.1.01", "1.1.01"),
+            "COBRO_CUENTA", List.of("1.1.01", "1.4.01"));
 
     @Test
     void todasLasOperacionesDeLaMatrizTienenReglaVigente() {

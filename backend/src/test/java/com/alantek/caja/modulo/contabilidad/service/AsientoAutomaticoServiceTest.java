@@ -48,7 +48,7 @@ class AsientoAutomaticoServiceTest {
     void cadaOperacionDeLaMatrizGeneraAsientoCuadrado() {
         List<String> operaciones = List.of(
                 "APORTACION", "DEPOSITO_AHORRO", "RETIRO_AHORRO", "DESEMBOLSO_CREDITO",
-                "PAGO_CAPITAL", "PAGO_INTERES", "PAGO_MORA", "GASTO_PAGADO");
+                "PAGO_CAPITAL", "PAGO_INTERES", "PAGO_MORA", "GASTO_PAGADO", "COBRO_CUENTA");
 
         BigDecimal monto = new BigDecimal("125.75");
 

@@ -1,183 +1,181 @@
-<h1 class="page-title">Seguridad</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Administración de Seguridad</h1>
+    <p class="page-subtitle">Gestión de usuarios, roles, matriz de permisos y trazabilidad de auditoría</p>
+  </div>
+</div>
 
 @if (error()) {
-  <div class="alert alert-error" data-testid="seguridad-error">{{ error() }}</div>
-}
-@if (ok()) {
-  <div class="alert alert-success" data-testid="seguridad-ok">{{ ok() }}</div>
+  <div class="alert alert-error" data-testid="seguridad-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
 }
 
-<nav class="tabs" data-testid="seguridad-tabs">
-  <button type="button" class="tab" [class.active]="tab() === 'usuarios'" (click)="tab.set('usuarios')">Usuarios</button>
-  <button type="button" class="tab" [class.active]="tab() === 'roles'"(click)="tab.set('roles')">Roles y permisos</button>
-  <button type="button" class="tab" [class.active]="tab() === 'auditoria'"(click)="tab.set('auditoria')">Auditoría</button>
-</nav>
+<div class="tabs" data-testid="seguridad-tabs">
+  <button type="button" class="tab-btn" [class.active]="tab() === 'usuarios'" (click)="tab.set('usuarios')">Usuarios</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'roles'" (click)="tab.set('roles')">Roles y permisos</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'auditoria'" (click)="tab.set('auditoria')">Auditoría</button>
+</div>
 
 @if (cargando()) {
-  <p>Cargando…</p>
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando seguridad…</div>
+  </div>
 }
 
 @if (tab() === 'usuarios') {
-  <section class="panel" data-testid="usuarios-panel">
-    <div class="page-header">
-      <h2>Usuarios</h2>
+  <div class="card" data-testid="usuarios-panel">
+    <div class="card-header">
+      <h3 class="card-title">Usuarios del Sistema</h3>
       @if (puedeCrear() || puedeEditar()) {
-        <button type="button" class="btn btn-outline" (click)="nuevoUsuario()" data-testid="btn-nuevo-usuario">Nuevo usuario</button>
+        <a class="btn btn-sm btn-primary" routerLink="/seguridad/usuarios/nuevo" data-testid="btn-nuevo-usuario">➕ Nuevo Usuario</a>
       }
     </div>
 
-    @if (puedeCrear() || puedeEditar()) {
-      <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" class="form-grid" data-testid="usuario-form">
-        <label class="field">
-          <span>Usuario</span>
-          <input formControlName="username" data-testid="input-username" />
-        </label>
-        <label class="field">
-          <span>{{ editandoId() ? 'Nueva contraseña (opcional)' : 'Contraseña' }}</span>
-          <input type="password" formControlName="password" data-testid="input-password" />
-        </label>
-        <label class="field">
-          <span>Nombre completo</span>
-          <input formControlName="nombreCompleto" data-testid="input-nombre-completo" />
-        </label>
-        <label class="field">
-          <span>Email</span>
-          <input formControlName="email" data-testid="input-email" />
-        </label>
-        <div class="field rol-cols">
-          <span>Roles</span>
-          <div class="rol-checks" data-testid="roles-checks">
-            @for (rol of roles(); track rol.id) {
-              <label class="check">
-                <input
-                  type="checkbox"
-                  [checked]="rolSeleccionados().includes(rol.id)"
-                  (change)="toggleRol(rol.id)"
-                  [attr.data-testid]="'check-rol-' + rol.nombre"
-                />
-                {{ rol.nombre }}
-              </label>
-            }
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary" data-testid="btn-guardar-usuario" [disabled]="usuarioForm.invalid || guardando()">
-          {{ editandoId() ? 'Actualizar' : 'Crear usuario' }}
-        </button>
-      </form>
-    }
-
-    <table class="table" data-testid="usuarios-table">
-      <thead>
-        <tr>
-          <th>Usuario</th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Roles</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (u of usuarios(); track u.id) {
+    <div class="table-responsive">
+      <table class="table" data-testid="usuarios-table">
+        <thead>
           <tr>
-            <td>{{ u.username }}</td>
-            <td>{{ u.nombreCompleto }}</td>
-            <td>{{ u.email ?? '—' }}</td>
-            <td>{{ u.roles.join(', ') }}</td>
-            <td><span class="badge" [class.badge-success]="u.estado === 'ACTIVO'">{{ u.estado }}</span></td>
-            <td>
-              @if (puedeEditar()) {
-                <button type="button" class="btn btn-outline btn-sm" (click)="editarUsuario(u)" [attr.data-testid]="'btn-editar-usuario-' + u.id">
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm"
-                  [class.btn-danger]="u.estado === 'ACTIVO'"
-                  [class.btn-outline]="u.estado !== 'ACTIVO'"
-                  (click)="cambiarEstado(u)"
-                  [attr.data-testid]="'btn-estado-usuario-' + u.id"
-                >
-                  {{ u.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}
-                </button>
-              }
-            </td>
+            <th>Usuario</th>
+            <th>Nombre Completo</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Estado</th>
+            <th style="text-align: right;">Acciones</th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </section>
+        </thead>
+        <tbody>
+          @for (u of usuarios(); track u.id) {
+            <tr>
+              <td><code>{{ u.username }}</code></td>
+              <td><strong>{{ u.nombreCompleto }}</strong></td>
+              <td>{{ u.email ?? '—' }}</td>
+              <td>
+                <div class="form-inline" style="gap: 4px;">
+                  @for (r of u.roles; track r) {
+                    <span class="badge badge-info">{{ r }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="badge" [class.badge-success]="u.estado === 'ACTIVO'" [class.badge-secondary]="u.estado !== 'ACTIVO'">
+                  {{ u.estado }}
+                </span>
+              </td>
+              <td style="text-align: right;">
+                <app-acciones-menu>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-ver-usuario" (click)="ver(u)">
+                    👁 Ver
+                  </button>
+                  @if (puedeEditar()) {
+                    <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/seguridad', 'usuarios', u.id, 'editar']" [attr.data-testid]="'btn-editar-usuario-' + u.id">
+                      ✏️ Editar
+                    </a>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-danger]="u.estado === 'ACTIVO'"
+                      [class.btn-outline]="u.estado !== 'ACTIVO'"
+                      (click)="cambiarEstado(u)"
+                      [attr.data-testid]="'btn-estado-usuario-' + u.id"
+                    >
+                      {{ u.estado === 'ACTIVO' ? '🚫 Desactivar' : '✅ Activar' }}
+                    </button>
+                  }
+                </app-acciones-menu>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
 }
 
 @if (tab() === 'roles') {
-  <section class="panel" data-testid="roles-panel">
-    <h2>Roles y permisos</h2>
-    <table class="table" data-testid="roles-table">
-      <thead>
-        <tr>
-          <th>Rol</th>
-          <th>Descripción</th>
-          <th>Permisos</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (rol of roles(); track rol.id) {
+  <div class="card" data-testid="roles-panel">
+    <div class="card-header">
+      <h3 class="card-title">Roles del Sistema</h3>
+    </div>
+    <div class="table-responsive">
+      <table class="table" data-testid="roles-table">
+        <thead>
           <tr>
-            <td>{{ rol.nombre }}</td>
-            <td>{{ rol.descripcion }}</td>
-            <td>{{ rol.permisos.length }}</td>
-            <td>
-              @if (puedeEditar()) {
-                <button type="button" class="btn btn-outline btn-sm" (click)="permisoSeleccionadosParaRol(rol)" [attr.data-testid]="'btn-permisos-' + rol.nombre">
-                  Asignar permisos
-                </button>
-              }
-            </td>
+            <th>Rol</th>
+            <th>Descripción</th>
+            <th>Total Permisos</th>
+            <th style="text-align: right;">Acciones</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (rol of roles(); track rol.id) {
+            <tr>
+              <td><strong>🔒 {{ rol.nombre }}</strong></td>
+              <td>{{ rol.descripcion }}</td>
+              <td><span class="badge badge-info">{{ rol.permisos.length }} permisos</span></td>
+              <td style="text-align: right;">
+                @if (puedeEditar()) {
+                  <app-acciones-menu>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="permisoSeleccionadosParaRol(rol)" [attr.data-testid]="'btn-permisos-' + rol.nombre">
+                      ⚙️ Asignar Permisos
+                    </button>
+                  </app-acciones-menu>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-    @if (rolEditando(); as rol) {
-      <div class="permisos-editor" data-testid="permisos-editor">
-        <div class="page-header">
-          <h3>Permisos de {{ rol.nombre }}</h3>
-          <button type="button" class="btn btn-primary" data-testid="btn-guardar-permisos" (click)="guardarPermisos()" [disabled]="guardando()">
-            Guardar permisos
-          </button>
-        </div>
-        @for (modulo of modulos(); track modulo) {
-          <div class="modulo">
-            <h4>{{ modulo }}</h4>
-            <div class="permiso-checks">
-              @for (p of permisos().filter((x) => x.modulo === modulo); track p.id) {
-                <label class="check">
-                  <input
-                    type="checkbox"
-                    [checked]="permisoSeleccionados().includes(p.id)"
-                    (change)="togglePermiso(p.id)"
-                    [attr.data-testid]="'check-permiso-' + p.id"
-                  />
-                  {{ p.accion }}
-                </label>
-              }
-            </div>
+    @if (rolPermisosAbierto() && rolEditando(); as rol) {
+      <app-modal [abierto]="rolPermisosAbierto()" [titulo]="'Permisos del rol ' + rol.nombre" (cerrar)="cerrarPermisos()">
+        <div data-testid="permisos-editor">
+          <div class="card-header" style="padding: 0 0 12px 0;">
+            <button type="button" class="btn btn-sm btn-primary" data-testid="btn-guardar-permisos" (click)="guardarPermisos()" [disabled]="guardando()">
+              💾 Guardar Permisos
+            </button>
           </div>
-        }
-      </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 14px;">
+            @for (modulo of modulos(); track modulo) {
+              <div class="card" style="margin-bottom: 0; background: #ffffff;">
+                <h4 style="margin: 0 0 10px 0; color: var(--color-primary); border-bottom: 1px solid var(--color-border); padding-bottom: 6px;">
+                  📂 {{ modulo }}
+                </h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  @for (p of permisos().filter((x) => x.modulo === modulo); track p.id) {
+                    <label class="checkbox-label">
+                      <input class="form-check-input"
+                        type="checkbox"
+                        [checked]="permisoSeleccionados().includes(p.id)"
+                        (change)="togglePermiso(p.id)"
+                        [attr.data-testid]="'check-permiso-' + p.id"
+                      />
+                      <span>{{ p.accion }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </app-modal>
     }
-  </section>
+  </div>
 }
 
 @if (tab() === 'auditoria') {
-  <section class="panel" data-testid="auditoria-panel">
-    <h2>Auditoría</h2>
-    <form [formGroup]="auditoriaForm" (ngSubmit)="consultarAuditoria()" class="form-inline" data-testid="auditoria-form">
+  <div class="card" data-testid="auditoria-panel">
+    <div class="card-header">
+      <h3 class="card-title">Filtros de Registros de Auditoría</h3>
+    </div>
+    <form [formGroup]="auditoriaForm" (ngSubmit)="consultarAuditoria()" class="form-inline" style="margin-bottom: 16px;" data-testid="auditoria-form">
       <label class="field">
-        <span>Tabla</span>
-        <select formControlName="tabla" data-testid="input-auditoria-tabla">
-          <option value="">Todas</option>
+        <span>Tabla Afectada</span>
+        <select class="form-select form-select-sm" formControlName="tabla" data-testid="input-auditoria-tabla">
+          <option value="">Todas las tablas</option>
           <option value="socios">socios</option>
           <option value="caja_apertura">caja_apertura</option>
           <option value="caja_movimiento">caja_movimiento</option>
@@ -189,42 +187,68 @@
         </select>
       </label>
       <label class="field">
-        <span>Desde</span>
-        <input type="date" formControlName="desde" data-testid="input-auditoria-desde" />
+        <span>Fecha Desde</span>
+        <input type="date" class="form-control form-control-sm" formControlName="desde" data-testid="input-auditoria-desde" />
       </label>
       <label class="field">
-        <span>Hasta</span>
-        <input type="date" formControlName="hasta" data-testid="input-auditoria-hasta" />
+        <span>Fecha Hasta</span>
+        <input type="date" class="form-control form-control-sm" formControlName="hasta" data-testid="input-auditoria-hasta" />
       </label>
-      <button type="submit" class="btn btn-primary" data-testid="btn-consultar-auditoria">Consultar</button>
+      <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-consultar-auditoria">🔍 Consultar Auditoría</button>
     </form>
 
-    <table class="table" data-testid="auditoria-table">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Usuario</th>
-          <th>Tabla</th>
-          <th>Registro</th>
-          <th>Acción</th>
-          <th>IP</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (a of auditoria(); track a.id) {
+    <div class="table-responsive">
+      <table class="table" data-testid="auditoria-table">
+        <thead>
           <tr>
-            <td>{{ a.createdAt | date: 'short' }}</td>
-            <td>{{ a.usuarioId }}</td>
-            <td>{{ a.tablaAfectada }}</td>
-            <td>{{ a.registroId }}</td>
-            <td>{{ a.accion }}</td>
-            <td>{{ a.ip ?? '—' }}</td>
+            <th>Fecha y Hora</th>
+            <th>ID Usuario</th>
+            <th>Tabla Afectada</th>
+            <th>ID Registro</th>
+            <th>Acción</th>
+            <th>Dirección IP</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (a of auditoria(); track a.id) {
+            <tr>
+              <td>{{ a.createdAt | date: 'short' }}</td>
+              <td><strong>User #{{ a.usuarioId }}</strong></td>
+              <td><code>{{ a.tablaAfectada }}</code></td>
+              <td>#{{ a.registroId }}</td>
+              <td>
+                <span class="badge"
+                      [class.badge-info]="a.accion === 'CREAR' || a.accion === 'CONSULTAR'"
+                      [class.badge-warning]="a.accion === 'ACTUALIZAR'"
+                      [class.badge-danger]="a.accion === 'ELIMINAR'">
+                  {{ a.accion }}
+                </span>
+              </td>
+              <td><code>{{ a.ip ?? '—' }}</code></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
     @if (auditoria().length === 0 && !cargando()) {
-      <p data-testid="auditoria-vacio">Sin registros.</p>
+      <div class="empty-state" style="padding: 20px;" data-testid="auditoria-vacio">
+        <div class="empty-state-text">Sin registros de auditoría para los filtros aplicados.</div>
+      </div>
     }
-  </section>
+  </div>
 }
+
+<app-modal [abierto]="infoAbierto()" [titulo]="detalle()?.username ? 'Usuario ' + detalle()!.username : 'Usuario'" (cerrar)="cerrarInfo()">
+  @if (detalle(); as u) {
+    <app-usuario-detalle [usuario]="u" />
+  }
+  @if (detalle(); as u) {
+    <div modal-footer>
+      @if (puedeEditar()) {
+        <a class="btn btn-sm btn-primary" [routerLink]="['/seguridad', 'usuarios', u.id, 'editar']" (click)="cerrarInfo()" data-testid="btn-editar-usuario-modal">✏️ Editar</a>
+      }
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-cerrar-info" (click)="cerrarInfo()">Cerrar</button>
+    </div>
+  }
+</app-modal>
+

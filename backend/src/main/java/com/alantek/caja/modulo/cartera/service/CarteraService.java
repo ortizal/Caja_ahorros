@@ -7,13 +7,16 @@ import com.alantek.caja.modulo.caja.repository.CajaAperturaRepository;
 import com.alantek.caja.modulo.caja.repository.CajaMovimientoRepository;
 import com.alantek.caja.modulo.caja.service.TipoMovimiento;
 import com.alantek.caja.modulo.cartera.dto.CarteraItemResponse;
+import com.alantek.caja.modulo.cartera.dto.DashboardGraficosResponse;
 import com.alantek.caja.modulo.cartera.dto.DashboardResumenResponse;
 import com.alantek.caja.modulo.cartera.dto.MorosidadResponse;
 import com.alantek.caja.modulo.creditos.entity.Credito;
 import com.alantek.caja.modulo.creditos.entity.CuotaCredito;
+import com.alantek.caja.modulo.creditos.entity.PagoCuota;
 import com.alantek.caja.modulo.creditos.entity.ProductoCredito;
 import com.alantek.caja.modulo.creditos.repository.CreditoRepository;
 import com.alantek.caja.modulo.creditos.repository.CuotaCreditoRepository;
+import com.alantek.caja.modulo.creditos.repository.PagoCuotaRepository;
 import com.alantek.caja.modulo.creditos.repository.ProductoCreditoRepository;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
@@ -21,8 +24,16 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +49,7 @@ public class CarteraService {
     private final CuotaCreditoRepository cuotaRepository;
     private final CreditoRepository creditoRepository;
     private final ProductoCreditoRepository productoRepository;
+    private final PagoCuotaRepository pagoCuotaRepository;
     private final SocioRepository socioRepository;
     private final CuentaBancariaRepository cuentaBancariaRepository;
     private final CajaAperturaRepository cajaAperturaRepository;
@@ -46,6 +58,7 @@ public class CarteraService {
     public CarteraService(CuotaCreditoRepository cuotaRepository,
                           CreditoRepository creditoRepository,
                           ProductoCreditoRepository productoRepository,
+                          PagoCuotaRepository pagoCuotaRepository,
                           SocioRepository socioRepository,
                           CuentaBancariaRepository cuentaBancariaRepository,
                           CajaAperturaRepository cajaAperturaRepository,
@@ -53,6 +66,7 @@ public class CarteraService {
         this.cuotaRepository = cuotaRepository;
         this.creditoRepository = creditoRepository;
         this.productoRepository = productoRepository;
+        this.pagoCuotaRepository = pagoCuotaRepository;
         this.socioRepository = socioRepository;
         this.cuentaBancariaRepository = cuentaBancariaRepository;
         this.cajaAperturaRepository = cajaAperturaRepository;
@@ -117,6 +131,93 @@ public class CarteraService {
                 ? saldoVencido.multiply(BigDecimal.valueOf(100)).divide(carteraColocada, 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
         return new MorosidadResponse(vencidas.size(), saldoVencido, carteraColocada, porcentaje, creditosEnMora);
+    }
+
+    public DashboardGraficosResponse graficos() {
+        return new DashboardGraficosResponse(
+                colocacionPorMes(),
+                cobranzaPorMes(),
+                flujoCajaPorMes(),
+                carteraPorEstado());
+    }
+
+    private List<DashboardGraficosResponse.SerieMensual> colocacionPorMes() {
+        Map<String, BigDecimal> porMes = new HashMap<>();
+        for (Credito credito : creditoRepository.findAll()) {
+            if (credito.getFechaDesembolso() != null) {
+                String mes = mesDe(credito.getFechaDesembolso());
+                porMes.merge(mes, credito.getMontoDesembolsado(), BigDecimal::add);
+            }
+        }
+        return ultimosMeses(12).stream()
+                .map(mes -> new DashboardGraficosResponse.SerieMensual(mes, porMes.getOrDefault(mes, BigDecimal.ZERO)))
+                .toList();
+    }
+
+    private List<DashboardGraficosResponse.SerieMensual> cobranzaPorMes() {
+        Map<String, BigDecimal> porMes = new HashMap<>();
+        for (PagoCuota pago : pagoCuotaRepository.findAll()) {
+            String mes = mesDe(pago.getPagadoAt());
+            BigDecimal total = pago.getMontoCapital().add(pago.getMontoInteres()).add(pago.getMontoMora());
+            porMes.merge(mes, total, BigDecimal::add);
+        }
+        return ultimosMeses(12).stream()
+                .map(mes -> new DashboardGraficosResponse.SerieMensual(mes, porMes.getOrDefault(mes, BigDecimal.ZERO)))
+                .toList();
+    }
+
+    private List<DashboardGraficosResponse.FlujoMensual> flujoCajaPorMes() {
+        Map<String, BigDecimal> ingresos = new HashMap<>();
+        Map<String, BigDecimal> egresos = new HashMap<>();
+        for (CajaMovimiento movimiento : cajaMovimientoRepository.findAll()) {
+            String mes = mesDe(movimiento.getCreatedAt());
+            TipoMovimiento tipo = TipoMovimiento.from(movimiento.getTipo());
+            boolean esEgreso = tipo != null && tipo.isEgreso();
+            (esEgreso ? egresos : ingresos).merge(mes, movimiento.getMonto(), BigDecimal::add);
+        }
+        return ultimosMeses(6).stream()
+                .map(mes -> new DashboardGraficosResponse.FlujoMensual(
+                        mes,
+                        ingresos.getOrDefault(mes, BigDecimal.ZERO),
+                        egresos.getOrDefault(mes, BigDecimal.ZERO)))
+                .toList();
+    }
+
+    private List<DashboardGraficosResponse.PorEstado> carteraPorEstado() {
+        Map<String, BigDecimal> saldos = new HashMap<>();
+        Map<String, Long> cantidades = new HashMap<>();
+        for (Credito credito : creditoRepository.findAll()) {
+            saldos.merge(credito.getEstado(), credito.getSaldoCapital(), BigDecimal::add);
+            cantidades.merge(credito.getEstado(), 1L, Long::sum);
+        }
+        return saldos.entrySet().stream()
+                .map(entry -> new DashboardGraficosResponse.PorEstado(
+                        entry.getKey(), entry.getValue(), cantidades.getOrDefault(entry.getKey(), 0L)))
+                .sorted(Comparator.comparing(DashboardGraficosResponse.PorEstado::saldo).reversed())
+                .toList();
+    }
+
+    private List<String> ultimosMeses(int cantidad) {
+        List<String> meses = new ArrayList<>();
+        YearMonth actual = YearMonth.now();
+        for (int i = cantidad - 1; i >= 0; i--) {
+            YearMonth mes = actual.minusMonths(i);
+            meses.add(mes.getYear() + "-" + String.format("%02d", mes.getMonthValue()));
+        }
+        return meses;
+    }
+
+    private String mesDe(LocalDate fecha) {
+        YearMonth mes = YearMonth.from(fecha);
+        return mes.getYear() + "-" + String.format("%02d", mes.getMonthValue());
+    }
+
+    private String mesDe(LocalDateTime fecha) {
+        return mesDe(fecha.toLocalDate());
+    }
+
+    private String mesDe(Instant fecha) {
+        return mesDe(fecha.atZone(ZoneId.systemDefault()).toLocalDate());
     }
 
     public DashboardResumenResponse resumen() {

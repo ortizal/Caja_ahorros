@@ -1,182 +1,173 @@
-<h1 class="page-title">Aportaciones</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Gestión de Aportaciones</h1>
+    <p class="page-subtitle">Configuración de valores, generación periódica y control de cobros de aportes</p>
+  </div>
+</div>
 
 @if (error()) {
-  <div class="alert alert-error" data-testid="aportaciones-error">{{ error() }}</div>
-}
-@if (ok()) {
-  <div class="alert alert-success" data-testid="aportaciones-ok">{{ ok() }}</div>
+  <div class="alert alert-error" data-testid="aportaciones-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
 }
 
-<nav class="tabs" data-testid="aportaciones-tabs">
-  <button type="button" class="tab" [class.active]="tab() === 'config'" (click)="tab.set('config')">Configuracion</button>
-  <button type="button" class="tab" [class.active]="tab() === 'aportaciones'" (click)="tab.set('aportaciones')">Periodos y pagos</button>
-</nav>
+<div class="tabs" data-testid="aportaciones-tabs">
+  <button type="button" class="tab-btn" [class.active]="tab() === 'config'" (click)="tab.set('config')">Configuracion</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'aportaciones'" (click)="tab.set('aportaciones')">Periodos y pagos</button>
+</div>
 
 @if (cargando()) {
-  <p>Cargando…</p>
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando aportaciones…</div>
+  </div>
 }
 
 @if (tab() === 'config') {
-  <section class="panel" data-testid="config-panel">
-    <h2>Configuracion de aportaciones</h2>
+  <div class="card" data-testid="config-panel">
+    <div class="card-header">
+      <h3 class="card-title">Configuración de Aportaciones Obligatorias y Voluntarias</h3>
+      @if (puedeCrear()) {
+        <a class="btn btn-sm btn-primary" routerLink="/aportaciones/nuevo" data-testid="btn-nueva-config">➕ Nueva Configuración</a>
+      }
+    </div>
 
-    @if (puedeCrear()) {
-      <form [formGroup]="configForm" (ngSubmit)="crearConfig()" class="form-grid" data-testid="config-form">
-        <label class="field">
-          <span>Tipo</span>
-          <select formControlName="tipo" data-testid="input-tipo-config">
-            <option value="OBLIGATORIA">OBLIGATORIA</option>
-            <option value="VOLUNTARIA">VOLUNTARIA</option>
-            <option value="EXTRAORDINARIA">EXTRAORDINARIA</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Modo de calculo</span>
-          <select formControlName="modoCalculo" data-testid="input-modo-config">
-            <option value="FIJO">FIJO</option>
-            <option value="PORCENTAJE">PORCENTAJE</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Valor</span>
-          <input type="number" formControlName="valor" data-testid="input-valor-config" />
-        </label>
-        <label class="field">
-          <span>Periodicidad</span>
-          <select formControlName="periodicidad" data-testid="input-periodicidad-config">
-            <option value="MENSUAL">MENSUAL</option>
-            <option value="QUINCENAL">QUINCENAL</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Vigente desde</span>
-          <input type="date" formControlName="vigenteDesde" data-testid="input-vigencia-config" />
-        </label>
-        <button type="submit" class="btn btn-primary" data-testid="btn-crear-config" [disabled]="configForm.invalid || guardando()">
-          Crear
-        </button>
-      </form>
-    }
-
-    <table class="table" data-testid="config-table">
-      <thead>
-        <tr>
-          <th>Tipo</th>
-          <th>Modo</th>
-          <th>Valor</th>
-          <th>Periodicidad</th>
-          <th>Vigente desde</th>
-          <th>Vigente hasta</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (c of configs(); track c.id) {
-          <tr>
-            <td>{{ c.tipo }}</td>
-            <td>{{ c.modoCalculo }}</td>
-            <td>{{ c.valor | number }}</td>
-            <td>{{ c.periodicidad }}</td>
-            <td>{{ c.vigenteDesde }}</td>
-            <td>{{ c.vigenteHasta ?? '-' }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </section>
-}
-
-@if (tab() === 'aportaciones') {
-  <section class="panel" data-testid="periodos-panel">
-    <h2>Generar y pagar</h2>
-
-    @if (puedeCrear()) {
-      <form [formGroup]="generarForm" (ngSubmit)="generarPeriodo()" class="form-inline" data-testid="generar-form">
-        <label class="field">
-          <span>Periodo (YYYY-MM)</span>
-          <input formControlName="periodo" placeholder="2026-09" data-testid="input-periodo" />
-        </label>
-        <button type="submit" class="btn btn-primary" data-testid="btn-generar" [disabled]="generarForm.invalid || guardando()">
-          Generar
-        </button>
-      </form>
-    }
-
-    <label class="field filtro">
-      <span>Filtrar por periodo</span>
-      <input placeholder="2026-09" [value]="filtroPeriodo()" (input)="aplicarFiltro($event)" data-testid="input-filtro-periodo" />
-    </label>
-
-    <table class="table" data-testid="aportaciones-table">
-      <thead>
-        <tr>
-          <th>Socio</th>
-          <th>Periodo</th>
-          <th>Esperado</th>
-          <th>Pagado</th>
-          <th>Mora</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (a of aportaciones(); track a.id) {
-          <tr>
-            <td>{{ a.socioCodigo }} - {{ a.socioNombre }}</td>
-            <td>{{ a.periodo }}</td>
-            <td>{{ a.montoEsperado | number }}</td>
-            <td>{{ a.montoPagado | number }}</td>
-            <td>{{ a.mora | number }}</td>
-            <td>
-              <span class="badge" [class.badge-success]="a.estado === 'PAGADO'">{{ a.estado }}</span>
-            </td>
-            <td>
-              @if (puedeCrear() && a.estado !== 'PAGADA') {
-                <button type="button" class="btn btn-primary btn-sm" data-testid="btn-pagar" (click)="seleccionar(a)">
-                  Pagar
-                </button>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </section>
-}
-
-@if (pagoTarget()) {
-  <section class="panel" data-testid="pago-panel">
-    <h2>Pago - {{ pagoTarget()!.socioNombre }} ({{ pagoTarget()!.periodo }})</h2>
-
-    <form [formGroup]="pagoForm" (ngSubmit)="pagar()" class="form-inline">
-      <label class="field">
-        <span>Monto</span>
-        <input type="number" formControlName="monto" data-testid="input-monto-pago" />
-      </label>
-      <button type="submit" class="btn btn-primary" data-testid="btn-confirmar-pago" [disabled]="pagoForm.invalid || guardando()">
-        Confirmar pago
-      </button>
-      <button type="button" class="btn btn-outline" (click)="pagoTarget.set(null)">Cancelar</button>
-    </form>
-
-    @if (pagos().length > 0) {
-      <table class="table" data-testid="pagos-table">
+    <div class="table-responsive">
+      <table class="table" data-testid="config-table">
         <thead>
           <tr>
-            <th>Comprobante</th>
-            <th>Monto</th>
-            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Modo</th>
+            <th>Valor</th>
+            <th>Periodicidad</th>
+            <th>Vigente Desde</th>
+            <th>Vigente Hasta</th>
           </tr>
         </thead>
         <tbody>
-          @for (p of pagos(); track p.id) {
+          @for (c of configs(); track c.id) {
             <tr>
-              <td>{{ p.comprobanteNumero ?? '-' }}</td>
-              <td>{{ p.monto | number }}</td>
-              <td>{{ p.pagadoAt | date: 'short' }}</td>
+              <td><span class="badge badge-info">{{ c.tipo }}</span></td>
+              <td>{{ c.modoCalculo }}</td>
+              <td><strong>\${{ c.valor | number }}</strong></td>
+              <td>{{ c.periodicidad }}</td>
+              <td>{{ c.vigenteDesde }}</td>
+              <td>{{ c.vigenteHasta ?? '—' }}</td>
             </tr>
           }
         </tbody>
       </table>
-    }
-  </section>
+    </div>
+  </div>
 }
+
+@if (tab() === 'aportaciones') {
+  <div class="card" data-testid="periodos-panel">
+    <div class="card-header">
+      <h3 class="card-title">Generación de Periodo y Cobros</h3>
+    </div>
+
+    @if (puedeCrear()) {
+      <form [formGroup]="generarForm" (ngSubmit)="generarPeriodo()" class="form-inline" style="margin-bottom: 20px;" data-testid="generar-form">
+        <label class="field">
+          <span>Periodo (AAAA-MM) *</span>
+          <input class="form-control form-control-sm" formControlName="periodo" placeholder="2026-09" data-testid="input-periodo" />
+        </label>
+        <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-generar" [disabled]="generarForm.invalid || guardando()">
+          ⚙️ Generar Aportes del Periodo
+        </button>
+      </form>
+    }
+
+    <div style="margin-bottom: 16px;">
+      <label class="field filtro">
+        <span>Filtrar por periodo</span>
+        <input class="form-control form-control-sm" placeholder="Ej. 2026-09" [value]="filtroPeriodo()" (input)="aplicarFiltro($event)" data-testid="input-filtro-periodo" style="max-width: 240px;" />
+      </label>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" data-testid="aportaciones-table">
+        <thead>
+          <tr>
+            <th>Socio</th>
+            <th>Periodo</th>
+            <th>Esperado</th>
+            <th>Pagado</th>
+            <th>Mora</th>
+            <th>Estado</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of aportaciones(); track a.id) {
+            <tr>
+              <td><strong>{{ a.socioCodigo }}</strong> — {{ a.socioNombre }}</td>
+              <td><code>{{ a.periodo }}</code></td>
+              <td>\${{ a.montoEsperado | number }}</td>
+              <td>\${{ a.montoPagado | number }}</td>
+              <td>\${{ a.mora | number }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="a.estado === 'PAGADA'" [class.badge-warning]="a.estado !== 'PAGADA'">
+                  {{ a.estado }}
+                </span>
+              </td>
+              <td style="text-align: right;">
+                @if (puedeCrear() && a.estado !== 'PAGADA') {
+                  <app-acciones-menu>
+                    <button type="button" class="btn btn-sm btn-primary" data-testid="btn-pagar" (click)="seleccionar(a)">
+                      💵 Registrar Pago
+                    </button>
+                  </app-acciones-menu>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+@if (pagoTarget()) {
+  <div class="card" data-testid="pago-panel">
+    <div class="card-header">
+      <h3 class="card-title">Cobro de Aportación — {{ pagoTarget()!.socioNombre }} ({{ pagoTarget()!.periodo }})</h3>
+    </div>
+
+    <form [formGroup]="pagoForm" (ngSubmit)="pagar()" class="form-inline" style="margin-bottom: 16px;">
+      <label class="field">
+        <span>Monto a Pagar ($) *</span>
+        <input class="form-control form-control-sm" type="number" formControlName="monto" placeholder="0.00" data-testid="input-monto-pago" />
+      </label>
+      <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-confirmar-pago" [disabled]="pagoForm.invalid || guardando()">
+        ✅ Confirmar Pago
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="pagoTarget.set(null)">Cancelar</button>
+    </form>
+
+    @if (pagos().length > 0) {
+      <div class="table-responsive">
+        <table class="table" data-testid="pagos-table">
+          <thead>
+            <tr>
+              <th>Comprobante</th>
+              <th>Monto</th>
+              <th>Fecha de Pago</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of pagos(); track p.id) {
+              <tr>
+                <td><code>{{ p.comprobanteNumero ?? '—' }}</code></td>
+                <td><strong>\${{ p.monto | number }}</strong></td>
+                <td>{{ p.pagadoAt | date: 'short' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}
+

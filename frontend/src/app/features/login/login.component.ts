@@ -34,7 +34,7 @@ export class LoginComponent {
       .login(this.form.getRawValue().username, this.form.getRawValue().password)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: () => this.router.navigate([this.auth.hasRol('SOCIO') ? '/portal' : '/dashboard']),
         error: (err: HttpErrorResponse) => {
           const body = err.error as ApiError | undefined;
           this.error.set(body?.message ?? 'No se pudo iniciar sesión. Verifique sus credenciales.');

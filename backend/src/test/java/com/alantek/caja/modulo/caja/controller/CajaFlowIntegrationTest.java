@@ -1,5 +1,7 @@
 package com.alantek.caja.modulo.caja.controller;
 
+import com.alantek.caja.modulo.caja.entity.CajaApertura;
+import com.alantek.caja.modulo.caja.repository.CajaAperturaRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -30,8 +32,12 @@ class CajaFlowIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CajaAperturaRepository cajaAperturaRepository;
+
     @Test
     void aperturaMisCajasMovimientoSaldoYArqueo() throws Exception {
+        cerrarCajasAbiertas();
         String token = loginToken("cajero", "cajero123");
 
         MvcResult apertura = mvc.perform(post("/api/v1/caja/apertura")
@@ -72,6 +78,7 @@ class CajaFlowIntegrationTest {
 
     @Test
     void movimientoSinCajaAbiertaEsRechazado() throws Exception {
+        cerrarCajasAbiertas();
         String token = loginToken("cajero", "cajero123");
 
         mvc.perform(post("/api/v1/caja/999/movimientos")
@@ -79,6 +86,14 @@ class CajaFlowIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"tipo\":\"DEPOSITO\",\"monto\":10.00}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    private void cerrarCajasAbiertas() {
+        for (CajaApertura apertura : cajaAperturaRepository.findByEstadoOrderByOpenedAtAsc("ABIERTA")) {
+            apertura.setEstado("CERRADA");
+            apertura.setClosedAt(java.time.Instant.now());
+            cajaAperturaRepository.save(apertura);
+        }
     }
 
     private String loginToken(String username, String password) throws Exception {

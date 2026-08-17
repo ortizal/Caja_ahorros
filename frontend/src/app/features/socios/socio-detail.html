@@ -1,67 +1,87 @@
 @if (error()) {
-  <div class="alert alert-error" data-testid="detail-error">{{ error() }}</div>
+  <div class="alert alert-error" data-testid="detail-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
 }
 
 @if (socio(); as socio) {
-  <div class="page-header">
-    <h1 class="page-title" data-testid="detail-codigo">{{ socio.codigo }} — {{ socio.nombres }} {{ socio.apellidos }}</h1>
-    <div class="actions">
-      <a class="btn btn-outline" routerLink="/socios">Volver</a>
-      @if (puedeEditar()) {
-        <a class="btn btn-primary" [routerLink]="['/socios', socio.id, 'editar']" data-testid="btn-editar-socio">Editar</a>
-      }
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title" data-testid="detail-codigo">{{ socio.codigo }} — {{ socio.nombres }} {{ socio.apellidos }}</h3>
+      <span
+        class="badge"
+        [class.badge-success]="socio.estado === 'ACTIVO'"
+        [class.badge-secondary]="socio.estado !== 'ACTIVO'"
+        data-testid="detail-estado"
+      >{{ socio.estado }}</span>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <span>Identificación</span>
+        <strong data-testid="detail-identificacion">{{ socio.identificacion }}</strong>
+      </div>
+      <div class="field">
+        <span>Fecha de Ingreso</span>
+        <strong>{{ socio.fechaIngreso }}</strong>
+      </div>
+      <div class="field">
+        <span>Teléfono</span>
+        <strong>{{ socio.telefono || '—' }}</strong>
+      </div>
+      <div class="field">
+        <span>Email</span>
+        <strong>{{ socio.email || '—' }}</strong>
+      </div>
+      <div class="field" style="grid-column: 1 / -1;">
+        <span>Dirección</span>
+        <strong>{{ socio.direccion || '—' }}</strong>
+      </div>
     </div>
   </div>
 
-  <dl class="detail">
-    <dt>Identificación</dt>
-    <dd data-testid="detail-identificacion">{{ socio.identificacion }}</dd>
-    <dt>Estado</dt>
-    <dd><span class="badge" data-testid="detail-estado">{{ socio.estado }}</span></dd>
-    <dt>Fecha de ingreso</dt>
-    <dd>{{ socio.fechaIngreso }}</dd>
-    <dt>Teléfono</dt>
-    <dd>{{ socio.telefono || '—' }}</dd>
-    <dt>Email</dt>
-    <dd>{{ socio.email || '—' }}</dd>
-    <dt>Dirección</dt>
-    <dd>{{ socio.direccion || '—' }}</dd>
-  </dl>
-
-  <section>
-    <h2>Beneficiarios</h2>
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Beneficiarios Registrados</h3>
+    </div>
     @if (socio.beneficiarios.length === 0) {
-      <p>Sin beneficiarios registrados.</p>
+      <div class="empty-state" style="padding: 20px;">
+        <span class="empty-state-text">Sin beneficiarios registrados.</span>
+      </div>
     } @else {
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Nombres</th>
-            <th>Parentesco</th>
-            <th>Porcentaje</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (b of socio.beneficiarios; track b.id) {
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
             <tr>
-              <td>{{ b.nombres }}</td>
-              <td>{{ b.parentesco || '—' }}</td>
-              <td>{{ b.porcentaje ?? '—' }}</td>
+              <th>Nombres</th>
+              <th>Parentesco</th>
+              <th>Porcentaje</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (b of socio.beneficiarios; track b.id) {
+              <tr>
+                <td><strong>{{ b.nombres }}</strong></td>
+                <td>{{ b.parentesco || '—' }}</td>
+                <td><span class="badge badge-info">{{ b.porcentaje ?? '—' }}%</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
-  </section>
+  </div>
 
   @if (puedeEditar()) {
-    <section class="estado-actions">
-      <h2>Cambiar estado</h2>
-      <div class="btn-group">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Acciones de Estado del Socio</h3>
+      </div>
+      <div class="form-inline" style="gap: 8px;">
         @for (estado of estados; track estado) {
           <button
             type="button"
-            class="btn btn-outline btn-sm"
+            class="btn btn-sm btn-outline-secondary"
             [disabled]="cambiandoEstado() || socio.estado === estado"
             (click)="cambiarEstado(estado)"
             [attr.data-testid]="'btn-estado-' + estado">
@@ -69,6 +89,6 @@
           </button>
         }
       </div>
-    </section>
+    </div>
   }
 }

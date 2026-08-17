@@ -16,6 +16,8 @@ import com.alantek.caja.modulo.seguridad.entity.Usuario;
 import com.alantek.caja.modulo.seguridad.repository.PermisoRepository;
 import com.alantek.caja.modulo.seguridad.repository.RolRepository;
 import com.alantek.caja.modulo.seguridad.repository.UsuarioRepository;
+import com.alantek.caja.modulo.socios.entity.Socio;
+import com.alantek.caja.modulo.socios.repository.SocioRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,6 +46,7 @@ public class DataSeeder implements ApplicationRunner {
     private final AportacionConfigRepository aportacionConfigRepository;
     private final ProductoAhorroRepository productoAhorroRepository;
     private final ProductoCreditoRepository productoCreditoRepository;
+    private final SocioRepository socioRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(RolRepository rolRepository,
@@ -54,6 +57,7 @@ public class DataSeeder implements ApplicationRunner {
                       AportacionConfigRepository aportacionConfigRepository,
                       ProductoAhorroRepository productoAhorroRepository,
                       ProductoCreditoRepository productoCreditoRepository,
+                      SocioRepository socioRepository,
                       PasswordEncoder passwordEncoder) {
         this.rolRepository = rolRepository;
         this.permisoRepository = permisoRepository;
@@ -63,6 +67,7 @@ public class DataSeeder implements ApplicationRunner {
         this.aportacionConfigRepository = aportacionConfigRepository;
         this.productoAhorroRepository = productoAhorroRepository;
         this.productoCreditoRepository = productoCreditoRepository;
+        this.socioRepository = socioRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -72,6 +77,7 @@ public class DataSeeder implements ApplicationRunner {
         sembrarPermisos();
         sembrarRoles();
         sembrarUsuarios();
+        sembrarPortal();
         sembrarPlanCuentas();
         sembrarReglasContables();
         sembrarAportacionesYahorros();
@@ -79,7 +85,7 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void sembrarPermisos() {
-        List<String> modulos = List.of("SEGURIDAD", "SOCIOS", "CAJA", "BANCOS", "CONTABILIDAD", "APORTACIONES", "AHORROS", "CREDITOS");
+        List<String> modulos = List.of("SEGURIDAD", "SOCIOS", "CAJA", "BANCOS", "CONTABILIDAD", "APORTACIONES", "AHORROS", "CREDITOS", "TESORERIA", "PORTAL");
         List<String> acciones = List.of("VER", "CREAR", "EDITAR", "APROBAR", "ANULAR");
         for (String modulo : modulos) {
             for (String accion : acciones) {
@@ -101,6 +107,7 @@ public class DataSeeder implements ApplicationRunner {
         roles.put("TESORERO", "Operación diaria de caja: apertura, cobros y depósitos");
         roles.put("CREDITO", "Gestión de cartera y cobranza");
         roles.put("AUDITOR", "Solo consulta y auditoría");
+        roles.put("SOCIO", "Portal de lectura del socio (consulta de ahorro, aportes y créditos)");
 
         for (Map.Entry<String, String> entry : roles.entrySet()) {
             Rol rol = rolRepository.findByNombre(entry.getKey()).orElseGet(() -> {
@@ -124,7 +131,8 @@ public class DataSeeder implements ApplicationRunner {
                     "CONTABILIDAD:APROBAR", "CONTABILIDAD:ANULAR",
                     "BANCOS:VER", "BANCOS:CREAR", "BANCOS:EDITAR", "BANCOS:APROBAR", "BANCOS:ANULAR",
                     "SOCIOS:VER", "CAJA:VER",
-                    "APORTACIONES:VER", "AHORROS:VER", "CREDITOS:VER");
+                    "APORTACIONES:VER", "AHORROS:VER", "CREDITOS:VER",
+                    "TESORERIA:VER", "TESORERIA:CREAR");
             case "TESORERO" -> Set.of(
                     "CAJA:VER", "CAJA:CREAR", "CAJA:EDITAR", "CAJA:APROBAR", "CAJA:ANULAR",
                     "BANCOS:VER", "BANCOS:CREAR", "BANCOS:EDITAR", "BANCOS:APROBAR", "BANCOS:ANULAR",
@@ -132,19 +140,22 @@ public class DataSeeder implements ApplicationRunner {
                     "APORTACIONES:VER", "APORTACIONES:CREAR", "APORTACIONES:EDITAR",
                     "APORTACIONES:APROBAR", "APORTACIONES:ANULAR",
                     "AHORROS:VER", "AHORROS:CREAR", "AHORROS:EDITAR", "AHORROS:APROBAR", "AHORROS:ANULAR",
-                    "CREDITOS:VER", "CREDITOS:CREAR");
+                    "CREDITOS:VER", "CREDITOS:CREAR",
+                    "TESORERIA:VER", "TESORERIA:CREAR", "TESORERIA:EDITAR", "TESORERIA:ANULAR");
             case "GERENTE" -> Set.of(
                     "SOCIOS:VER", "SOCIOS:CREAR", "SOCIOS:EDITAR", "SOCIOS:APROBAR", "SOCIOS:ANULAR",
                     "CONTABILIDAD:VER", "CONTABILIDAD:APROBAR",
                     "CAJA:VER", "BANCOS:VER", "SEGURIDAD:VER",
-                    "APORTACIONES:VER", "AHORROS:VER", "CREDITOS:VER", "CREDITOS:APROBAR");
+                    "APORTACIONES:VER", "AHORROS:VER", "CREDITOS:VER", "CREDITOS:APROBAR",
+                    "TESORERIA:VER", "TESORERIA:APROBAR");
             case "CREDITO" -> Set.of(
                     "SOCIOS:VER", "CAJA:VER", "CAJA:CREAR", "CONTABILIDAD:VER",
                     "CREDITOS:VER", "CREDITOS:CREAR", "CREDITOS:EDITAR",
                     "CREDITOS:APROBAR", "CREDITOS:ANULAR");
             case "AUDITOR" -> Set.of(
                     "SOCIOS:VER", "CAJA:VER", "BANCOS:VER", "CONTABILIDAD:VER", "SEGURIDAD:VER",
-                    "APORTACIONES:VER", "AHORROS:VER", "CREDITOS:VER");
+                    "APORTACIONES:VER", "AHORROS:VER", "CREDITOS:VER", "TESORERIA:VER");
+            case "SOCIO" -> Set.of("PORTAL:VER");
             default -> Set.of();
         };
 
@@ -160,6 +171,7 @@ public class DataSeeder implements ApplicationRunner {
 
     private void sembrarUsuarios() {
         crearUsuarioSiNoExiste("admin", "admin123", "Administrador ALANTEK", Set.of("ADMIN"));
+        crearUsuarioSiNoExiste("gerente", "gerente123", "Gerente General", Set.of("GERENTE"));
         crearUsuarioSiNoExiste("contador", "contador123", "Contador General", Set.of("CONTADOR"));
         crearUsuarioSiNoExiste("cajero", "cajero123", "Cajero Principal", Set.of("TESORERO"));
         crearUsuarioSiNoExiste("credito", "credito123", "Analista de Credito", Set.of("CREDITO"));
@@ -179,6 +191,22 @@ public class DataSeeder implements ApplicationRunner {
                 .collect(Collectors.toSet());
         usuario.setRoles(rolesSet);
         usuarioRepository.save(usuario);
+    }
+
+    private void sembrarPortal() {
+        crearUsuarioSiNoExiste("socio", "socio123", "Maria Perez", Set.of("SOCIO"));
+        if (socioRepository.findByCodigo("SOC-DEMO-01").isEmpty()) {
+            Long usuarioId = usuarioRepository.findByUsername("socio").orElseThrow().getId();
+            Socio socio = new Socio();
+            socio.setCodigo("SOC-DEMO-01");
+            socio.setIdentificacion("9999999999");
+            socio.setNombres("Maria");
+            socio.setApellidos("Perez");
+            socio.setFechaIngreso(LocalDate.now());
+            socio.setEstado("ACTIVO");
+            socio.setUsuarioId(usuarioId);
+            socioRepository.save(socio);
+        }
     }
 
     private void sembrarPlanCuentas() {
@@ -257,6 +285,7 @@ public class DataSeeder implements ApplicationRunner {
         regla("PAGO_INTERES", "1.1.01", "4.1.01");
         regla("PAGO_MORA", "1.1.01", "4.1.02");
         regla("GASTO_PAGADO", "5.1.01", "1.1.01");
+        regla("COBRO_CUENTA", "1.1.01", "1.4.01");
     }
 
     private void regla(String operacion, String codigoDebe, String codigoHaber) {

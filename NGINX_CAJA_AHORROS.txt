@@ -1,0 +1,86 @@
+=============================================================
+ CONFIGURACION NGINX - CAJA DE AHORROS ALANTEK
+ Raiz: http://192.168.1.43/caja-ahorros/
+=============================================================
+
+1. INSTALACION DE PASOS (se hace manualmente en el servidor)
+-------------------------------------------------------------
+   a) Copiar el contenido de "server {" ... "}" (seccion 2)
+      a:  /etc/nginx/sites-available/caja-ahorros
+   b) Habilitar el sitio:
+        sudo ln -s /etc/nginx/sites-available/caja-ahorros /etc/nginx/sites-enabled/caja-ahorros
+   c) Verificar y recargar:
+        sudo nginx -t
+        sudo systemctl reload nginx
+   d) El frontend debe estar en /var/www/caja-ahorros (lo deja deploy.sh).
+   e) El backend Docker debe publicar en el puerto 8083 (lo hace deploy.sh).
+
+   Requisitos previos:
+        sudo apt install nginx
+        sudo mkdir -p /var/www/caja-ahorros
+        sudo chown -R www-data:www-data /var/www/caja-ahorros
+
+2. ARCHIVO DE CONFIGURACION (/etc/nginx/sites-available/caja-ahorros)
+---------------------------------------------------------------------
+
+server {
+    listen 80;
+    server_name 192.168.1.43;
+
+    # ---------------------------------------------------------
+    # API REST -> backend Spring Boot en Docker (puerto 8083)
+    # El frontend consume /api/v1 (mismo origen), asi que aqui
+    # se redirige el trafico al backend sin CORS.
+    # ---------------------------------------------------------
+    location /api/ {
+        proxy_pass http://127.0.0.1:8083;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+    }
+
+    # ---------------------------------------------------------
+    # Aplicacion Angular bajo /caja-ahorros/
+    # El build se hace con --base-href=/caja-ahorros/
+    # ---------------------------------------------------------
+    location /caja-ahorros/ {
+        alias /var/www/caja-ahorros/;
+        index index.html;
+
+        # SPA: cualquier ruta interna (/caja-ahorros/socios, etc.)
+        # cae al index.html para que Angular haga el routing.
+        try_files $uri $uri/ /caja-ahorros/index.html;
+
+        expires 1h;
+        add_header Cache-Control "public";
+    }
+
+    # Redireccion simple de la raiz hacia la aplicacion
+    location = / {
+        return 302 /caja-ahorros/;
+    }
+}
+
+3. NOTAS
+--------
+- Si se usa HTTPS (Let's Encrypt), anadir:
+      listen 443 ssl;
+      ssl_certificate     /etc/letsencrypt/live/192.168.1.43/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/192.168.1.43/privkey.pem;
+  y dentro de location /api/ agregar la linea:
+      proxy_set_header X-Forwarded-Proto $scheme;  (ya esta incluida)
+
+- El servidor escucha en el puerto 80; si hay firewall (ufw):
+      sudo ufw allow 80/tcp
+      sudo ufw allow 8083/tcp   (puerto Docker del backend, opcional)
+
+- Verificar que /var/www/caja-ahorros contenga index.html tras deploy.sh:
+      sudo ls -la /var/www/caja-ahorros
+
+- Prueba rapida de la API a traves de nginx:
+      curl http://192.168.1.43/api/v1/auth/login -X POST \
+           -H "Content-Type: application/json" \
+           -d '{"username":"admin","password":"admin123"}'

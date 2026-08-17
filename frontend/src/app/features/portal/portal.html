@@ -1,0 +1,250 @@
+<div class="page-header" style="justify-content: space-between; flex-wrap: wrap;">
+  <div>
+    <h1 class="page-title">Portal del Socio</h1>
+    @if (user(); as u) {
+      <p class="page-subtitle">
+        Bienvenido(a), <strong>{{ u.nombreCompleto || u.username }}</strong>.
+        @if (resumen(); as r) {
+          <span class="badge badge-info" style="margin-left: 6px;">Código Socio: {{ r.socio.codigo }}</span>
+        }
+      </p>
+    }
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="logout()" data-testid="portal-logout">
+      🚪 Cerrar Sesión
+    </button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="portal-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+@if (resumen(); as r) {
+  <div class="form-grid" style="margin-bottom: 24px;" aria-label="Resumen del socio">
+    <div class="kpi" data-testid="kpi-saldo-ahorro">
+      <div class="kpi-icon-wrapper kpi-emerald">💳</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ formato(r.saldoAhorro) }}</span>
+        <span class="kpi-label">Saldo de Ahorro</span>
+      </div>
+    </div>
+    <div class="kpi" data-testid="kpi-total-aportado">
+      <div class="kpi-icon-wrapper kpi-teal">🪙</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ formato(r.totalAportado) }}</span>
+        <span class="kpi-label">Total Aportado</span>
+      </div>
+    </div>
+    <div class="kpi" data-testid="kpi-aporte-pendiente">
+      <div class="kpi-icon-wrapper kpi-amber">⏳</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ formato(r.aportePendientePeriodo) }}</span>
+        <span class="kpi-label">Aporte Pendiente Periodo</span>
+      </div>
+    </div>
+    <div class="kpi" data-testid="kpi-saldo-credito">
+      <div class="kpi-icon-wrapper kpi-sky">💰</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ formato(r.saldoCreditoVigente) }}</span>
+        <span class="kpi-label">Saldo de Créditos</span>
+      </div>
+    </div>
+    <div class="kpi" data-testid="kpi-cuotas-vencidas">
+      <div class="kpi-icon-wrapper kpi-rose">⚠️</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ r.cuotasVencidas | number }}</span>
+        <span class="kpi-label">Cuotas Vencidas</span>
+      </div>
+    </div>
+    <div class="kpi" data-testid="kpi-cuotas-pendientes">
+      <div class="kpi-icon-wrapper kpi-indigo">📋</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ r.cuotasPendientes | number }}</span>
+        <span class="kpi-label">Cuotas Pendientes</span>
+      </div>
+    </div>
+    <div class="kpi" data-testid="kpi-notificaciones">
+      <div class="kpi-icon-wrapper kpi-indigo">🔔</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ r.notificacionesNoLeidas | number }}</span>
+        <span class="kpi-label">Notificaciones Sin Leer</span>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="card" aria-label="Ahorro" data-testid="seccion-ahorro">
+  <div class="card-header">
+    <h3 class="card-title">💳 Mis Cuentas de Ahorro</h3>
+  </div>
+
+  @if (ahorro().length === 0) {
+    <div class="empty-state" style="padding: 20px;">
+      <div class="empty-state-text">No tiene cuentas de ahorro registradas.</div>
+    </div>
+  }
+  @for (item of ahorro(); track item.cuenta.id) {
+    <div class="card" style="margin-bottom: 16px; background: #f8fafc;">
+      <div class="card-header">
+        <h4 style="margin: 0;">{{ item.cuenta.nombreProducto || 'Cuenta de Ahorros' }} · <code>{{ item.cuenta.numeroCuenta }}</code></h4>
+        <span class="badge badge-success" style="font-size: 14px;">
+          Saldo: <strong data-testid="saldo-cuenta">{{ formato(item.cuenta.saldo) }}</strong>
+        </span>
+      </div>
+      @if (item.movimientos.length > 0) {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha y Hora</th>
+                <th>Tipo</th>
+                <th>Monto</th>
+                <th>Saldo Resultante</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of item.movimientos; track m.id) {
+                <tr>
+                  <td>{{ m.createdAt }}</td>
+                  <td>
+                    <span class="badge" [class.badge-success]="m.tipo === 'DEPOSITO'" [class.badge-danger]="m.tipo === 'RETIRO'">
+                      {{ m.tipo }}
+                    </span>
+                  </td>
+                  <td><strong>{{ formato(m.monto) }}</strong></td>
+                  <td>{{ formato(m.saldoResultante) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<div class="card" aria-label="Aportaciones" data-testid="seccion-aportaciones">
+  <div class="card-header">
+    <h3 class="card-title">🪙 Mis Aportaciones</h3>
+  </div>
+
+  @if (aportaciones().length === 0) {
+    <div class="empty-state" style="padding: 20px;">
+      <div class="empty-state-text">No tiene aportaciones registradas.</div>
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Periodo</th>
+            <th>Monto Esperado</th>
+            <th>Monto Pagado</th>
+            <th>Mora</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of aportaciones(); track item.aportacion.id) {
+            <tr>
+              <td><code>{{ item.aportacion.periodo }}</code></td>
+              <td>{{ formato(item.aportacion.montoEsperado) }}</td>
+              <td><strong>{{ formato(item.aportacion.montoPagado) }}</strong></td>
+              <td>{{ formato(item.aportacion.mora) }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="item.aportacion.estado === 'PAGADO'" [class.badge-warning]="item.aportacion.estado !== 'PAGADO'">
+                  {{ item.aportacion.estado }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<div class="card" aria-label="Créditos" data-testid="seccion-creditos">
+  <div class="card-header">
+    <h3 class="card-title">💰 Mis Créditos</h3>
+  </div>
+
+  @if (creditos().length === 0) {
+    <div class="empty-state" style="padding: 20px;">
+      <div class="empty-state-text">No tiene créditos registrados.</div>
+    </div>
+  }
+  @for (item of creditos(); track item.credito.id) {
+    <div class="card" style="margin-bottom: 16px; background: #f8fafc;">
+      <div class="card-header">
+        <h4 style="margin: 0;">{{ item.credito.nombreProducto || 'Crédito' }} · <span class="badge badge-info">{{ item.credito.estado }}</span></h4>
+        <div style="font-size: 13px;">
+          Desembolsado: <strong>{{ formato(item.credito.montoDesembolsado) }}</strong> · Saldo Capital: <strong data-testid="saldo-credito">{{ formato(item.credito.saldoCapital) }}</strong>
+        </div>
+      </div>
+      @if (item.cuotas.length > 0) {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Cuota</th>
+                <th>Vencimiento</th>
+                <th>Capital</th>
+                <th>Interés</th>
+                <th>Mora</th>
+                <th>Cuota Total</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of item.cuotas; track c.id) {
+                <tr>
+                  <td><strong>#{{ c.numeroCuota }}</strong></td>
+                  <td>{{ c.fechaVencimiento }}</td>
+                  <td>{{ formato(c.capital) }}</td>
+                  <td>{{ formato(c.interes) }}</td>
+                  <td>{{ formato(c.mora) }}</td>
+                  <td><strong>{{ formato(c.cuotaTotal) }}</strong></td>
+                  <td>
+                    <span class="badge" [class.badge-success]="c.estado === 'PAGADA'" [class.badge-warning]="c.estado === 'PENDIENTE'" [class.badge-danger]="c.estado === 'VENCIDA'">
+                      {{ c.estado }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<div class="card" aria-label="Notificaciones" data-testid="seccion-notificaciones">
+  <div class="card-header">
+    <h3 class="card-title">🔔 Notificaciones</h3>
+    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="marcarTodas()">Marcar todas como leídas</button>
+  </div>
+
+  @if (notificaciones().length === 0) {
+    <div class="empty-state" style="padding: 20px;">
+      <div class="empty-state-text">No tiene notificaciones.</div>
+    </div>
+  } @else {
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      @for (n of notificaciones(); track n.id) {
+        <div class="card" style="margin-bottom: 0; padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;" [style.opacity]="n.leida ? '0.6' : '1.0'">
+          <span>{{ n.mensaje }}</span>
+          @if (!n.leida) {
+            <button class="btn btn-sm btn-outline-secondary" type="button" (click)="marcarLeida(n.id)">Marcar leída</button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+

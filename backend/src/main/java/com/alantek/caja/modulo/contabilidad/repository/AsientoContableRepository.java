@@ -5,10 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface AsientoContableRepository extends JpaRepository<AsientoContable, Long> {
 
     List<AsientoContable> findByFechaBetweenOrderByFechaAsc(LocalDate desde, LocalDate hasta);
 
     List<AsientoContable> findByPeriodoIdOrderByFechaAsc(Long periodoId);
+
+    Optional<AsientoContable> findFirstByComprobanteIdOrderByIdAsc(Long comprobanteId);
 }

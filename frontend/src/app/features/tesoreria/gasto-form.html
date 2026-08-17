@@ -1,0 +1,53 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Nuevo Gasto</h1>
+    <p class="page-subtitle">Registro de solicitudes de gastos operativos</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="gasto-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos del Gasto</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Concepto *</span>
+        <input class="form-control form-control-sm" formControlName="concepto" placeholder="Ej. Materiales de oficina" data-testid="input-gasto-concepto" />
+      </label>
+      <label class="field">
+        <span>Descripción</span>
+        <input class="form-control form-control-sm" formControlName="descripcion" placeholder="Detalle adicional" data-testid="input-gasto-descripcion" />
+      </label>
+      <label class="field">
+        <span>Monto ($) *</span>
+        <input type="number" step="0.01" class="form-control form-control-sm" formControlName="monto" placeholder="0.00" data-testid="input-gasto-monto" />
+      </label>
+      <label class="field">
+        <span>Cuenta Contable *</span>
+        <select class="form-select form-select-sm" formControlName="cuentaContableId" data-testid="input-gasto-cuenta">
+          <option [ngValue]="0" disabled>Seleccione cuenta</option>
+          @for (c of planCuentas(); track c.id) {
+            <option [ngValue]="c.id" [disabled]="!c.aceptaMovimiento">{{ c.codigo }} — {{ c.nombre }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-gasto" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando…' : '💸 Solicitar Gasto' }}
+    </button>
+  </div>
+</form>

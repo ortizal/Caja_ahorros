@@ -2,8 +2,10 @@ package com.alantek.caja.modulo.creditos.controller;
 
 import com.alantek.caja.modulo.creditos.entity.CuotaCredito;
 import com.alantek.caja.modulo.creditos.entity.ProductoCredito;
+import com.alantek.caja.modulo.creditos.repository.CreditoRepository;
 import com.alantek.caja.modulo.creditos.repository.CuotaCreditoRepository;
 import com.alantek.caja.modulo.creditos.repository.ProductoCreditoRepository;
+import com.alantek.caja.modulo.creditos.repository.SolicitudCreditoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -45,6 +47,12 @@ class CreditosFlowIntegrationTest {
 
     @Autowired
     private ProductoCreditoRepository productoRepository;
+
+    @Autowired
+    private CreditoRepository creditoRepository;
+
+    @Autowired
+    private SolicitudCreditoRepository solicitudRepository;
 
     @Test
     void cicloCompletoSolicitudDesembolsoYPagoDeCuota() throws Exception {
@@ -480,9 +488,18 @@ class CreditosFlowIntegrationTest {
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         for (JsonNode socio : body) {
-            if ("ACTIVO".equals(socio.get("estado").asText())) {
-                return socio.get("id").asLong();
+            long socioId = socio.get("id").asLong();
+            if (!"ACTIVO".equals(socio.get("estado").asText())) {
+                continue;
             }
+            if (solicitudRepository.existsBySocioIdAndEstadoIn(socioId,
+                    List.of("PENDIENTE", "EVALUACION", "APROBADA"))) {
+                continue;
+            }
+            if (creditoRepository.existsBySocioIdAndEstadoIn(socioId, List.of("VIGENTE", "EN_MORA"))) {
+                continue;
+            }
+            return socioId;
         }
         throw new IllegalStateException("No hay socios ACTIVOS para la prueba");
     }

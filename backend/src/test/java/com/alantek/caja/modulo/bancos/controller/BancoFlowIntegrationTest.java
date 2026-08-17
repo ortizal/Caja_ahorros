@@ -1,6 +1,5 @@
 package com.alantek.caja.modulo.bancos.controller;
 
-import com.alantek.caja.modulo.bancos.entity.BancoMovimiento;
 import com.alantek.caja.modulo.bancos.repository.BancoMovimientoRepository;
 import com.alantek.caja.modulo.seguridad.entity.Auditoria;
 import com.alantek.caja.modulo.seguridad.repository.AuditoriaRepository;
@@ -88,9 +87,7 @@ class BancoFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(movimientoId));
 
-        BancoMovimiento conciliado = movimientoRepository.findById(movimientoId).orElseThrow();
-        conciliado.setConciliado(true);
-        movimientoRepository.save(conciliado);
+        assertThat(movimientoRepository.findById(movimientoId).orElseThrow().getConciliado()).isTrue();
 
         mvc.perform(put("/api/v1/cuentas-bancarias/" + cuentaId + "/movimientos/" + movimientoId)
                         .header("Authorization", "Bearer " + token)

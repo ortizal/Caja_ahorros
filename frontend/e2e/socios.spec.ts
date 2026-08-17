@@ -20,7 +20,12 @@ test.describe('Módulo de socios', () => {
     await page.getByTestId('input-fecha-ingreso').fill('2026-08-01');
     await page.getByTestId('btn-guardar-socio').click();
 
-    await expect(page).toHaveURL(/\/socios\/\d+$/);
+    await expect(page).toHaveURL(/\/socios$/);
+    await expect(page.getByTestId('toast-item')).toContainText('Socio creado correctamente.');
+
+    const fila = page.getByRole('row').filter({ hasText: CEDULA });
+    await fila.getByTestId('btn-acciones-menu').click();
+    await fila.getByTestId('btn-ver-socio').click();
     await expect(page.getByTestId('detail-identificacion')).toHaveText(CEDULA);
     await expect(page.getByTestId('detail-estado')).toHaveText('ACTIVO');
 
@@ -29,6 +34,10 @@ test.describe('Módulo de socios', () => {
     await page.getByTestId('input-nombres').fill('Test Modificado');
     await page.getByTestId('btn-guardar-socio').click();
 
+    await expect(page).toHaveURL(/\/socios$/);
+    const filaEditada = page.getByRole('row').filter({ hasText: CEDULA });
+    await filaEditada.getByTestId('btn-acciones-menu').click();
+    await filaEditada.getByTestId('btn-ver-socio').click();
     await expect(page.getByTestId('detail-codigo')).toContainText('Test Modificado');
   });
 
@@ -37,6 +46,7 @@ test.describe('Módulo de socios', () => {
     await page.goto('/socios');
 
     const fila = page.getByRole('row').filter({ hasText: CEDULA });
+    await fila.getByTestId('btn-acciones-menu').click();
     await fila.getByTestId('btn-ver-socio').click();
 
     await page.getByTestId('btn-estado-SUSPENDIDO').click();
@@ -48,9 +58,29 @@ test.describe('Módulo de socios', () => {
     await page.goto('/socios');
 
     const fila = page.getByRole('row').filter({ hasText: CEDULA });
+    await fila.getByTestId('btn-acciones-menu').click();
     await fila.getByTestId('btn-ver-socio').click();
 
     await expect(page.getByTestId('btn-editar-socio')).toHaveCount(0);
     await expect(page.getByTestId('btn-estado-SUSPENDIDO')).toHaveCount(0);
+  });
+
+  test('exportar listado de socios en Excel y PDF', async ({ page }) => {
+    await loginAs(page, 'admin', 'admin123');
+    await page.goto('/socios');
+
+    await expect(page.getByTestId('socios-table')).toBeVisible();
+
+    const [xlsx] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByTestId('btn-exportar-socios-xlsx').click()
+    ]);
+    expect(xlsx.suggestedFilename()).toBe('socios.xlsx');
+
+    const [pdf] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByTestId('btn-exportar-socios-pdf').click()
+    ]);
+    expect(pdf.suggestedFilename()).toBe('socios.pdf');
   });
 });

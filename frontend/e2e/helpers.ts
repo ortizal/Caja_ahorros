@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 export async function loginAs(page: Page, username: string, password: string) {
   await page.goto('/login');
@@ -8,9 +8,13 @@ export async function loginAs(page: Page, username: string, password: string) {
   await page.waitForURL(/\/dashboard/);
 }
 
-export async function asegurarCajaAbierta(page: Page): Promise<void> {
+export async function asegurarCajaAbierta(
+  page: Page,
+  username = 'admin',
+  password = 'admin123'
+): Promise<void> {
   const login = await page.request.post('http://localhost:8080/api/v1/auth/login', {
-    data: { username: 'admin', password: 'admin123' }
+    data: { username, password }
   });
   const { token } = (await login.json()) as { token: string };
   const headers = { Authorization: `Bearer ${token}` };
@@ -34,12 +38,22 @@ export async function asegurarCajaAbierta(page: Page): Promise<void> {
   }
 }
 
-export async function operarConCaja(page: Page, testIdBtn: string, errorTestId: string): Promise<void> {
+export async function operarConCaja(
+  page: Page,
+  testIdBtn: string,
+  errorTestId: string,
+  username = 'admin',
+  password = 'admin123',
+  abrirMenu?: Locator
+): Promise<void> {
   await page.getByTestId(testIdBtn).click();
   const error = page.getByTestId(errorTestId);
   if (await error.waitFor({ state: 'visible', timeout: 1500 }).then(() => true).catch(() => false)) {
     if (/caja/i.test((await error.textContent()) ?? '')) {
-      await asegurarCajaAbierta(page);
+      await asegurarCajaAbierta(page, username, password);
+      if (abrirMenu) {
+        await abrirMenu.click();
+      }
       await page.getByTestId(testIdBtn).click();
     }
   }

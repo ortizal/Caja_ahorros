@@ -33,3 +33,27 @@ export interface DashboardResumen {
   disponibleCaja: number;
   disponibleBancos: number;
 }
+
+export interface SerieMensual {
+  mes: string;
+  monto: number;
+}
+
+export interface FlujoMensual {
+  mes: string;
+  ingresos: number;
+  egresos: number;
+}
+
+export interface CarteraPorEstado {
+  estado: string;
+  saldo: number;
+  cantidad: number;
+}
+
+export interface DashboardGraficos {
+  colocacionPorMes: SerieMensual[];
+  cobranzaPorMes: SerieMensual[];
+  flujoCajaPorMes: FlujoMensual[];
+  carteraPorEstado: CarteraPorEstado[];
+}

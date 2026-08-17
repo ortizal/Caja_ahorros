@@ -26,15 +26,24 @@ test.describe('Módulo de contabilidad', () => {
     // Periodos
     await expect(page.getByTestId('periodos-table')).toContainText('ABIERTO');
 
-    // Plan de cuentas: crear cuenta
+    // Plan de cuentas: crear cuenta (form ruteado)
     await page.getByRole('button', { name: 'Plan de cuentas' }).click();
+    await page.getByTestId('btn-nueva-cuenta').click();
+    await expect(page).toHaveURL(/\/contabilidad\/cuentas\/nuevo/);
+    await expect(page.getByTestId('cuenta-form')).toBeVisible();
     await page.getByTestId('input-codigo-cuenta').fill(CODIGO);
     await page.getByTestId('input-nombre-cuenta').fill('Cuenta E2E');
     await page.getByTestId('btn-crear-cuenta').click();
+    await expect(page.getByTestId('toast-item').filter({ hasText: 'Cuenta contable creada' })).toBeVisible();
+    await expect(page).toHaveURL(/\/contabilidad$/);
+    await page.getByRole('button', { name: 'Plan de cuentas' }).click();
     await expect(page.getByTestId('plan-table')).toContainText(CODIGO);
 
-    // Asiento manual cuadradado
+    // Asiento manual cuadradado (form ruteado)
     await page.getByRole('button', { name: 'Asiento manual' }).click();
+    await page.getByTestId('btn-nuevo-asiento').click();
+    await expect(page).toHaveURL(/\/contabilidad\/asientos\/nuevo/);
+    await expect(page.getByTestId('asiento-form')).toBeVisible();
     const cuentaA = await cuentaAceptaMovimiento(page);
     await page.getByTestId('input-asiento-fecha').fill('2026-08-12');
     await page.getByTestId('input-asiento-descripcion').fill(`Asiento E2E ${CODIGO}`);
@@ -45,7 +54,8 @@ test.describe('Módulo de contabilidad', () => {
     await page.getByTestId('input-asiento-haber-1').fill('150');
     await page.getByTestId('btn-registrar-asiento').click();
 
-    await expect(page.getByTestId('contabilidad-ok')).toContainText('Asiento registrado');
+    await expect(page.getByTestId('toast-item').filter({ hasText: 'Asiento registrado' })).toBeVisible();
+    await expect(page).toHaveURL(/\/contabilidad$/);
 
     // Libro diario lo muestra
     await page.getByRole('button', { name: 'Libro diario' }).click();
@@ -66,9 +76,7 @@ test.describe('Módulo de contabilidad', () => {
 
     await expect(page).toHaveURL(/\/contabilidad/);
     await expect(page.getByTestId('periodos-table')).toBeVisible();
-    await expect(page.getByTestId('cuenta-form')).toHaveCount(0);
-
-    await page.getByRole('button', { name: 'Asiento manual' }).click();
-    await expect(page.getByText('No tiene permiso para registrar asientos.')).toBeVisible();
+    await expect(page.getByTestId('btn-nueva-cuenta')).toHaveCount(0);
+    await expect(page.getByTestId('btn-nuevo-asiento')).toHaveCount(0);
   });
 });

@@ -1,0 +1,60 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Nueva Cuenta Contable</h1>
+    <p class="page-subtitle">Alta de cuentas en el plan general de cuentas</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="cuenta-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos de la Cuenta</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Código Cuenta *</span>
+        <input class="form-control form-control-sm" formControlName="codigo" placeholder="Ej. 1.1.01" data-testid="input-codigo-cuenta" />
+      </label>
+
+      <label class="field">
+        <span>Nombre de Cuenta *</span>
+        <input class="form-control form-control-sm" formControlName="nombre" placeholder="Nombre contable" data-testid="input-nombre-cuenta" />
+      </label>
+
+      <label class="field">
+        <span>Tipo de Cuenta</span>
+        <select class="form-select form-select-sm" formControlName="tipo" data-testid="input-tipo-cuenta">
+          @for (tipo of tiposCuenta; track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Nivel Jerárquico</span>
+        <input type="number" class="form-control form-control-sm" formControlName="nivel" placeholder="1, 2, 3..." data-testid="input-nivel-cuenta" />
+      </label>
+
+      <label class="checkbox-label" style="align-self: flex-end; padding-bottom: 8px;">
+        <input type="checkbox" class="form-check-input" formControlName="aceptaMovimiento" data-testid="input-acepta-movimiento" />
+        <span>Acepta Movimientos</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-cuenta" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando…' : '➕ Crear Cuenta' }}
+    </button>
+  </div>
+</form>

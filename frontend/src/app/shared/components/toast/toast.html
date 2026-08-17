@@ -1,0 +1,15 @@
+<div class="toast-container" data-testid="toast-container" aria-live="polite" aria-atomic="false">
+  @for (t of toastService.toasts(); track t.id) {
+    <div class="toast-item toast-{{ t.tipo }}" data-testid="toast-item" role="alert">
+      <i class="{{ icono(t.tipo) }} toast-icon" aria-hidden="true"></i>
+      <span class="toast-mensaje">{{ t.mensaje }}</span>
+      <button
+        type="button"
+        class="toast-cerrar"
+        data-testid="toast-cerrar"
+        aria-label="Cerrar"
+        (click)="toastService.quitar(t.id)"
+      >&times;</button>
+    </div>
+  }
+</div>

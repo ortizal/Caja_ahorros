@@ -182,6 +182,10 @@ public class CajaService {
                     "RETIRO_AHORRO", comprobanteId, fecha, request.monto(), descripcion);
             case DESEMBOLSO -> asientoService.generarAsientoSimple(
                     "DESEMBOLSO_CREDITO", comprobanteId, fecha, request.monto(), descripcion);
+            case GASTO -> asientoService.generarAsientoSimple(
+                    "GASTO_PAGADO", comprobanteId, fecha, request.monto(), descripcion);
+            case COBRO_CXC -> asientoService.generarAsientoSimple(
+                    "COBRO_CUENTA", comprobanteId, fecha, request.monto(), descripcion);
             case COBRO_CREDITO -> {
                 BigDecimal capital = request.montoCapital() == null ? BigDecimal.ZERO : request.montoCapital();
                 BigDecimal interes = request.montoInteres() == null ? BigDecimal.ZERO : request.montoInteres();

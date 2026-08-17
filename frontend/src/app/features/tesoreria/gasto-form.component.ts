@@ -1,0 +1,73 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs';
+import { ApiError } from '../../core/models/auth.model';
+import { PlanCuenta } from '../../core/models/contabilidad.model';
+import { ContabilidadService } from '../../core/services/contabilidad.service';
+import { TesoreriaService } from '../../core/services/tesoreria.service';
+import { ToastService } from '../../core/services/toast.service';
+
+@Component({
+  selector: 'app-gasto-form',
+  imports: [ReactiveFormsModule],
+  templateUrl: './gasto-form.html',
+  styleUrl: './gasto-form.css'
+})
+export class GastoFormComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly tesoreriaService = inject(TesoreriaService);
+  private readonly contabilidadService = inject(ContabilidadService);
+  private readonly toast = inject(ToastService);
+
+  protected readonly form = this.fb.nonNullable.group({
+    concepto: ['', [Validators.required]],
+    descripcion: [''],
+    monto: [0, [Validators.required, Validators.min(0.01)]],
+    cuentaContableId: [0, [Validators.required]]
+  });
+  protected readonly planCuentas = signal<PlanCuenta[]>([]);
+  protected readonly guardando = signal(false);
+  protected readonly error = signal('');
+
+  ngOnInit(): void {
+    this.contabilidadService.planCuentas().subscribe({
+      next: (p) => this.planCuentas.set(p),
+      error: () => this.planCuentas.set([])
+    });
+  }
+
+  cancelar(): void {
+    this.router.navigate(['/tesoreria']);
+  }
+
+  submit(): void {
+    if (this.form.invalid || this.guardando()) {
+      return;
+    }
+    const raw = this.form.getRawValue();
+    this.guardando.set(true);
+    this.error.set('');
+    this.tesoreriaService
+      .crearGasto({
+        concepto: raw.concepto,
+        descripcion: raw.descripcion || undefined,
+        monto: Number(raw.monto),
+        cuentaContableId: Number(raw.cuentaContableId)
+      })
+      .pipe(finalize(() => this.guardando.set(false)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Gasto solicitado correctamente.');
+          this.router.navigate(['/tesoreria']);
+        },
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo crear el gasto.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
+      });
+  }
+}

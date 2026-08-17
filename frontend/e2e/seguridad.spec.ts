@@ -10,19 +10,24 @@ test.describe('Módulo de seguridad', () => {
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/seguridad');
 
-    // Crear usuario
+    // Crear usuario (formulario ruteado)
+    await page.getByTestId('btn-nuevo-usuario').click();
+    await expect(page).toHaveURL(/\/seguridad\/usuarios\/nuevo/);
     await page.getByTestId('input-username').fill(USERNAME);
     await page.getByTestId('input-password').fill('clave123');
     await page.getByTestId('input-nombre-completo').fill('Usuario E2E');
     await page.getByTestId('check-rol-AUDITOR').check();
     await page.getByTestId('btn-guardar-usuario').click();
 
-    await expect(page.getByTestId('seguridad-ok')).toContainText('Usuario guardado');
+    await expect(page).toHaveURL(/\/seguridad$/);
+    await expect(page.getByTestId('toast-item')).toContainText('Usuario guardado');
     await expect(page.getByTestId('usuarios-table')).toContainText(USERNAME);
 
     // Asignar permisos al rol CONTADOR (asegurar CONTABILIDAD:VER/CREAR)
     await page.getByRole('button', { name: 'Roles y permisos' }).click();
-    await page.getByTestId('btn-permisos-CONTADOR').click();
+    const filaRol = page.getByTestId('roles-table').locator('tr').filter({ hasText: 'CONTADOR' });
+    await filaRol.getByTestId('btn-acciones-menu').click();
+    await filaRol.getByTestId('btn-permisos-CONTADOR').click();
     await expect(page.getByTestId('permisos-editor')).toBeVisible();
 
     for (const id of ['check-permiso-21', 'check-permiso-22']) {
@@ -32,7 +37,7 @@ test.describe('Módulo de seguridad', () => {
       }
     }
     await page.getByTestId('btn-guardar-permisos').click();
-    await expect(page.getByTestId('seguridad-ok')).toContainText('CONTADOR');
+    await expect(page.getByTestId('toast-item').filter({ hasText: 'CONTADOR' })).toContainText('CONTADOR');
 
     // Auditoría
     await page.getByRole('button', { name: 'Auditoría' }).click();

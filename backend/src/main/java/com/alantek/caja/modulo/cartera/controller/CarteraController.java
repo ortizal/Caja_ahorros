@@ -1,6 +1,7 @@
 package com.alantek.caja.modulo.cartera.controller;
 
 import com.alantek.caja.modulo.cartera.dto.CarteraItemResponse;
+import com.alantek.caja.modulo.cartera.dto.DashboardGraficosResponse;
 import com.alantek.caja.modulo.cartera.dto.DashboardResumenResponse;
 import com.alantek.caja.modulo.cartera.dto.MorosidadResponse;
 import com.alantek.caja.modulo.cartera.service.CarteraService;
@@ -43,6 +44,12 @@ public class CarteraController {
     @PreAuthorize("isAuthenticated()")
     public DashboardResumenResponse resumen() {
         return carteraService.resumen();
+    }
+
+    @GetMapping("/dashboard/graficos")
+    @PreAuthorize("isAuthenticated()")
+    public DashboardGraficosResponse graficos() {
+        return carteraService.graficos();
     }
 
     @GetMapping(value = "/reportes/cartera", produces = "text/csv;charset=UTF-8")

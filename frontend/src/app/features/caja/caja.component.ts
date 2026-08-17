@@ -2,7 +2,8 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize } from 'rxjs';
+import { RouterLink } from '@angular/router';
+import { finalize, Observable } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
 import {
@@ -13,10 +14,13 @@ import {
   TIPOS_MOVIMIENTO_CAJA
 } from '../../core/models/caja.model';
 import { CajaService } from '../../core/services/caja.service';
+import { ReporteService } from '../../core/services/reporte.service';
+import { ToastService } from '../../core/services/toast.service';
+import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
 
 @Component({
   selector: 'app-caja',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent],
   templateUrl: './caja.html',
   styleUrl: './caja.css'
 })
@@ -24,6 +28,8 @@ export class CajaComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cajaService = inject(CajaService);
   private readonly auth = inject(AuthService);
+  private readonly reporteService = inject(ReporteService);
+  private readonly toast = inject(ToastService);
 
   protected readonly cajas = signal<CajaApertura[]>([]);
   protected readonly seleccionada = signal<CajaApertura | null>(null);
@@ -31,14 +37,10 @@ export class CajaComponent implements OnInit {
   protected readonly movimientos = signal<CajaMovimiento[]>([]);
   protected readonly arqueoResultado = signal<CajaArqueo | null>(null);
   protected readonly error = signal('');
-  protected readonly ok = signal('');
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
+  protected readonly exportando = signal(false);
   protected readonly tipos = TIPOS_MOVIMIENTO_CAJA;
-
-  protected readonly aperturaForm = this.fb.nonNullable.group({
-    saldoInicial: [0, [Validators.required, Validators.min(0)]]
-  });
 
   protected readonly movimientoForm = this.fb.nonNullable.group({
     tipo: ['APORTACION', [Validators.required]],
@@ -59,7 +61,6 @@ export class CajaComponent implements OnInit {
   protected readonly cajaAbierta = computed(
     () => this.seleccionada()?.estado === 'ABIERTA' && this.cajas().some((c) => c.id === this.seleccionada()?.id)
   );
-  protected readonly hayAbierta = computed(() => this.cajas().some((c) => c.estado === 'ABIERTA'));
 
   ngOnInit(): void {
     this.cobroActivo.set(this.movimientoForm.getRawValue().tipo === 'COBRO_CREDITO');
@@ -109,24 +110,6 @@ export class CajaComponent implements OnInit {
     });
   }
 
-  abrirCaja(): void {
-    if (this.aperturaForm.invalid || this.guardando()) {
-      return;
-    }
-    this.guardando.set(true);
-    this.error.set('');
-    this.ok.set('');
-    this.cajaService.apertura(this.aperturaForm.getRawValue().saldoInicial).pipe(finalize(() => this.guardando.set(false))).subscribe({
-      next: (caja) => {
-        this.aperturaForm.patchValue({ saldoInicial: 0 });
-        this.ok.set(`Caja #${caja.id} abierta correctamente.`);
-        this.cargarCajas();
-      },
-      error: (err: HttpErrorResponse) =>
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo abrir la caja.')
-    });
-  }
-
   registrarMovimiento(): void {
     if (this.movimientoForm.invalid || this.guardando()) {
       return;
@@ -158,7 +141,6 @@ export class CajaComponent implements OnInit {
     }
     this.guardando.set(true);
     this.error.set('');
-    this.ok.set('');
     this.cajaService.registrarMovimiento(caja.id, request).pipe(finalize(() => this.guardando.set(false))).subscribe({
       next: () => {
         this.movimientoForm.patchValue({
@@ -169,12 +151,15 @@ export class CajaComponent implements OnInit {
           montoInteres: null,
           montoMora: null
         });
-        this.ok.set('Movimiento registrado correctamente.');
+        this.toast.success('Movimiento registrado correctamente.');
         this.cargarSaldo(caja.id);
         this.cargarMovimientos(caja.id);
       },
-      error: (err: HttpErrorResponse) =>
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el movimiento.')
+      error: (err: HttpErrorResponse) => {
+        const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el movimiento.';
+        this.error.set(msg);
+        this.toast.error(msg);
+      }
     });
   }
 
@@ -194,10 +179,13 @@ export class CajaComponent implements OnInit {
       .subscribe({
         next: (arqueo) => {
           this.arqueoResultado.set(arqueo);
-          this.ok.set('Arqueo registrado.');
+          this.toast.success('Arqueo registrado.');
         },
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el arqueo.')
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el arqueo.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
       });
   }
 
@@ -210,11 +198,45 @@ export class CajaComponent implements OnInit {
     this.error.set('');
     this.cajaService.cerrar(caja.id).pipe(finalize(() => this.guardando.set(false))).subscribe({
       next: () => {
-        this.ok.set('Caja cerrada.');
+        this.toast.success('Caja cerrada.');
         this.cargarCajas();
       },
-      error: (err: HttpErrorResponse) =>
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo cerrar la caja.')
+      error: (err: HttpErrorResponse) => {
+        const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo cerrar la caja.';
+        this.error.set(msg);
+        this.toast.error(msg);
+      }
+    });
+  }
+
+  exportarExcel(): void {
+    this.descargar(this.reporteService.exportarCaja('xlsx'), 'caja.xlsx');
+  }
+
+  exportarPdf(): void {
+    this.descargar(this.reporteService.exportarCaja('pdf'), 'caja.pdf');
+  }
+
+  private descargar(obs: Observable<Blob>, nombre: string): void {
+    if (this.exportando()) {
+      return;
+    }
+    this.exportando.set(true);
+    this.error.set('');
+    obs.subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombre;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exportando.set(false);
+      },
+      error: () => {
+        this.exportando.set(false);
+        this.error.set('No se pudo exportar el reporte.');
+      }
     });
   }
 }

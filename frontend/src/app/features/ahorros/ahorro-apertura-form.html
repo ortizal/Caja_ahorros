@@ -1,0 +1,53 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Apertura de Cuenta de Ahorro</h1>
+    <p class="page-subtitle">Apertura de cuentas de ahorro para socios afiliados</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="apertura-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos de Apertura</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Socio Afiliado *</span>
+        <select class="form-select form-select-sm" formControlName="socioId" data-testid="input-socio-apertura">
+          <option [ngValue]="0" disabled>Seleccionar socio</option>
+          @for (s of socios(); track s.id) {
+            <option [ngValue]="s.id">{{ s.codigo }} - {{ s.nombres }} {{ s.apellidos }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Producto de Ahorro *</span>
+        <select class="form-select form-select-sm" formControlName="productoId" data-testid="input-producto-apertura">
+          <option [ngValue]="0" disabled>Seleccionar producto</option>
+          @for (p of productos(); track p.id) {
+            @if (p.activo) {
+              <option [ngValue]="p.id">{{ p.nombre }}</option>
+            }
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-aperturar" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Aperturando…' : '💳 Aperturar Cuenta' }}
+    </button>
+  </div>
+</form>

@@ -7,6 +7,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent)
   },
   {
+    path: 'portal',
+    canActivate: [authGuard, permisoGuard('PORTAL:VER')],
+    loadComponent: () => import('./features/portal/portal.component').then((m) => m.PortalComponent)
+  },
+  {
     path: '',
     loadComponent: () => import('./layout/shell/shell.component').then((m) => m.ShellComponent),
     canActivate: [authGuard],
@@ -24,7 +29,7 @@ export const routes: Routes = [
       {
         path: 'caja',
         canActivate: [permisoGuard('CAJA:VER')],
-        loadComponent: () => import('./features/caja/caja.component').then((m) => m.CajaComponent)
+        loadChildren: () => import('./features/caja/caja.routes').then((m) => m.cajaRoutes)
       },
       {
         path: 'bancos',
@@ -34,27 +39,32 @@ export const routes: Routes = [
       {
         path: 'contabilidad',
         canActivate: [permisoGuard('CONTABILIDAD:VER')],
-        loadComponent: () => import('./features/contabilidad/contabilidad.component').then((m) => m.ContabilidadComponent)
+        loadChildren: () => import('./features/contabilidad/contabilidad.routes').then((m) => m.contabilidadRoutes)
       },
       {
         path: 'aportaciones',
         canActivate: [permisoGuard('APORTACIONES:VER')],
-        loadComponent: () => import('./features/aportaciones/aportaciones.component').then((m) => m.AportacionesComponent)
+        loadChildren: () => import('./features/aportaciones/aportaciones.routes').then((m) => m.aportacionesRoutes)
       },
       {
         path: 'ahorros',
         canActivate: [permisoGuard('AHORROS:VER')],
-        loadComponent: () => import('./features/ahorros/ahorros.component').then((m) => m.AhorrosComponent)
+        loadChildren: () => import('./features/ahorros/ahorros.routes').then((m) => m.ahorrosRoutes)
       },
       {
         path: 'creditos',
         canActivate: [permisoGuard('CREDITOS:VER')],
-        loadComponent: () => import('./features/creditos/creditos.component').then((m) => m.CreditosComponent)
+        loadChildren: () => import('./features/creditos/creditos.routes').then((m) => m.creditosRoutes)
+      },
+      {
+        path: 'tesoreria',
+        canActivate: [permisoGuard('TESORERIA:VER')],
+        loadChildren: () => import('./features/tesoreria/tesoreria.routes').then((m) => m.tesoreriaRoutes)
       },
       {
         path: 'seguridad',
         canActivate: [permisoGuard('SEGURIDAD:VER')],
-        loadComponent: () => import('./features/seguridad/seguridad.component').then((m) => m.SeguridadComponent)
+        loadChildren: () => import('./features/seguridad/seguridad.routes').then((m) => m.seguridadRoutes)
       }
     ]
   },

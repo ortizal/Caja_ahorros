@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CarteraItem, DashboardResumen, Morosidad } from '../models/reporte.model';
+import { CarteraItem, DashboardGraficos, DashboardResumen, Morosidad } from '../models/reporte.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReporteService {
@@ -29,7 +29,31 @@ export class ReporteService {
     return this.http.get<DashboardResumen>(`${this.base}/dashboard/resumen`);
   }
 
+  graficos(): Observable<DashboardGraficos> {
+    return this.http.get<DashboardGraficos>(`${this.base}/dashboard/graficos`);
+  }
+
   exportarCartera(): Observable<Blob> {
     return this.http.get(`${this.base}/reportes/cartera`, { responseType: 'blob' });
+  }
+
+  exportarCarteraExcel(): Observable<Blob> {
+    return this.exportar('cartera', 'xlsx');
+  }
+
+  exportarCarteraPdf(): Observable<Blob> {
+    return this.exportar('cartera', 'pdf');
+  }
+
+  exportarSocios(formato: 'csv' | 'xlsx' | 'pdf'): Observable<Blob> {
+    return this.exportar('socios', formato);
+  }
+
+  exportarCaja(formato: 'csv' | 'xlsx' | 'pdf'): Observable<Blob> {
+    return this.exportar('caja', formato);
+  }
+
+  private exportar(tipo: 'socios' | 'cartera' | 'caja', formato: 'csv' | 'xlsx' | 'pdf'): Observable<Blob> {
+    return this.http.get(`${this.base}/reportes/${tipo}.${formato}`, { responseType: 'blob' });
   }
 }

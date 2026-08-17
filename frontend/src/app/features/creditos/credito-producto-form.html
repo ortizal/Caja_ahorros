@@ -1,0 +1,72 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Nuevo Producto de Crédito</h1>
+    <p class="page-subtitle">Registro de productos crediticios para las solicitudes de crédito</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="producto-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos del Producto</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Nombre del Producto *</span>
+        <input class="form-control form-control-sm" formControlName="nombre" placeholder="Ej. Crédito Consumo" data-testid="input-nombre-producto" />
+      </label>
+      <label class="field">
+        <span>Tasa de Interés (%)</span>
+        <input type="number" class="form-control form-control-sm" formControlName="tasaInteres" placeholder="12.5" data-testid="input-tasa-producto" />
+      </label>
+      <label class="field">
+        <span>Tasa de Mora (%)</span>
+        <input type="number" class="form-control form-control-sm" formControlName="tasaMora" placeholder="2.0" data-testid="input-tasa-mora-producto" />
+      </label>
+      <label class="field">
+        <span>Sistema de Amortización</span>
+        <select class="form-select form-select-sm" formControlName="sistemaAmortizacion" data-testid="input-sistema-producto">
+          <option value="FRANCES">FRANCES</option>
+          <option value="ALEMAN">ALEMAN</option>
+          <option value="AMERICANO">AMERICANO</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Plazo Máximo (meses)</span>
+        <input type="number" class="form-control form-control-sm" formControlName="plazoMaxMeses" placeholder="36" data-testid="input-plazo-producto" />
+      </label>
+      <label class="field">
+        <span>Monto Mínimo ($)</span>
+        <input type="number" class="form-control form-control-sm" formControlName="montoMin" placeholder="100.00" data-testid="input-monto-min-producto" />
+      </label>
+      <label class="field">
+        <span>Monto Máximo ($)</span>
+        <input type="number" class="form-control form-control-sm" formControlName="montoMax" placeholder="5000.00" data-testid="input-monto-max-producto" />
+      </label>
+      <label class="field">
+        <span>Vigente Desde</span>
+        <input type="date" class="form-control form-control-sm" formControlName="vigenteDesde" data-testid="input-vigencia-producto" />
+      </label>
+      <label class="checkbox-label" style="align-self: flex-end; padding-bottom: 8px;">
+        <input type="checkbox" class="form-check-input" formControlName="requiereGarante" data-testid="input-garante-producto" />
+        <span>Requiere Garante</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-producto" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando…' : '➕ Registrar Producto' }}
+    </button>
+  </div>
+</form>

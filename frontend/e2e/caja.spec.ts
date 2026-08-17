@@ -14,12 +14,14 @@ test.describe('Módulo de caja', () => {
       await cerrar.click();
     }
 
-    // Abrir caja con saldo inicial
-    await expect(page.getByTestId('apertura-panel')).toBeVisible();
-    await page.getByTestId('input-saldo-inicial').fill('300');
+    // Abrir caja desde el formulario ruteado
     await page.getByTestId('btn-abrir-caja').click();
+    await expect(page).toHaveURL(/\/caja\/nuevo/);
+    await page.getByTestId('input-saldo-inicial').fill('300');
+    await page.getByTestId('btn-confirmar-apertura').click();
 
-    await expect(page.getByTestId('apertura-panel')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/caja$/);
+    await expect(page.getByTestId('toast-item').filter({ hasText: 'abierta' })).toContainText('Caja');
     await expect(page.getByTestId('saldo-actual')).toHaveText('300.00');
 
     // Registrar una aportación
@@ -35,16 +37,29 @@ test.describe('Módulo de caja', () => {
     await page.getByTestId('btn-arqueo').click();
     await expect(page.getByTestId('arqueo-resultado')).toContainText('0.00');
 
+    // Exportar reporte de caja en Excel y PDF
+    const [xlsx] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByTestId('btn-exportar-caja-xlsx').click()
+    ]);
+    expect(xlsx.suggestedFilename()).toBe('caja.xlsx');
+
+    const [pdf] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByTestId('btn-exportar-caja-pdf').click()
+    ]);
+    expect(pdf.suggestedFilename()).toBe('caja.pdf');
+
     // Cerrar caja
     await page.getByTestId('btn-cerrar-caja').click();
     await expect(page.getByTestId('cajas-table')).toContainText('CERRADA');
-    await expect(page.getByTestId('apertura-panel')).toBeVisible();
+    await expect(page.getByTestId('btn-abrir-caja')).toBeVisible();
   });
 
   test('auditor no puede abrir caja', async ({ page }) => {
     await loginAs(page, 'auditor', 'auditor123');
     await page.goto('/caja');
 
-    await expect(page.getByTestId('apertura-panel')).toHaveCount(0);
+    await expect(page.getByTestId('btn-abrir-caja')).toHaveCount(0);
   });
 });

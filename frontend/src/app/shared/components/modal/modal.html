@@ -1,0 +1,24 @@
+@if (abierto()) {
+  <div class="modal-overlay" data-testid="modal-overlay" (click)="onBackdrop($event)">
+    <div class="modal-dialog" role="dialog" aria-modal="true" [attr.aria-label]="titulo()">
+      <div class="modal-header">
+        <h2 class="modal-title" data-testid="modal-titulo">{{ titulo() }}</h2>
+        <button
+          type="button"
+          class="modal-close"
+          data-testid="modal-cerrar"
+          aria-label="Cerrar"
+          (click)="cerrar.emit()"
+        >&times;</button>
+      </div>
+      <div class="modal-body">
+        <ng-content />
+      </div>
+      @if (footer) {
+        <div class="modal-footer">
+          <ng-content select="[modal-footer]" />
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,34 @@
+<div class="paginador" data-testid="paginador">
+  <span class="paginador-info">
+    Mostrando {{ inicio() }}–{{ fin() }} de {{ totalElements() }}
+  </span>
+
+  <label class="paginador-size">
+    Filas:
+    <select [value]="size()" (change)="cambiarSize($event)" data-testid="paginador-size">
+      @for (tamano of sizes; track tamano) {
+        <option [value]="tamano">{{ tamano }}</option>
+      }
+    </select>
+  </label>
+
+  <nav class="paginador-nav" aria-label="Paginación">
+    <button type="button" class="pag-btn" data-testid="pag-primera" [disabled]="page() === 0" (click)="ir(0)" aria-label="Primera página">«</button>
+    <button type="button" class="pag-btn" data-testid="pag-anterior" [disabled]="page() === 0" (click)="ir(page() - 1)" aria-label="Anterior">‹</button>
+    @for (pagina of paginas(); track $index) {
+      @if (pagina === -1) {
+        <span class="pag-ellipsis">…</span>
+      } @else {
+        <button
+          type="button"
+          class="pag-btn"
+          [class.pag-activa]="pagina === page()"
+          [attr.data-testid]="'pag-' + (pagina + 1)"
+          (click)="ir(pagina)"
+        >{{ pagina + 1 }}</button>
+      }
+    }
+    <button type="button" class="pag-btn" data-testid="pag-siguiente" [disabled]="page() >= totalPages() - 1" (click)="ir(page() + 1)" aria-label="Siguiente">›</button>
+    <button type="button" class="pag-btn" data-testid="pag-ultima" [disabled]="page() >= totalPages() - 1" (click)="ir(totalPages() - 1)" aria-label="Última página">»</button>
+  </nav>
+</div>

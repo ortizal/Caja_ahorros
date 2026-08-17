@@ -1,240 +1,220 @@
-<h1 class="page-title">Ahorros</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Gestión de Ahorros</h1>
+    <p class="page-subtitle">Productos de ahorro, apertura de cuentas, depósitos, retiros e intereses</p>
+  </div>
+</div>
 
 @if (error()) {
-  <div class="alert alert-error" data-testid="ahorros-error">{{ error() }}</div>
-}
-@if (ok()) {
-  <div class="alert alert-success" data-testid="ahorros-ok">{{ ok() }}</div>
+  <div class="alert alert-error" data-testid="ahorros-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
 }
 
-<nav class="tabs" data-testid="ahorros-tabs">
-  <button type="button" class="tab" [class.active]="tab() === 'productos'" (click)="tab.set('productos')">Productos</button>
-  <button type="button" class="tab" [class.active]="tab() === 'cuentas'" (click)="tab.set('cuentas')">Cuentas</button>
-  <button type="button" class="tab" [class.active]="tab() === 'capitalizar'" (click)="tab.set('capitalizar')">Intereses</button>
-</nav>
+<div class="tabs" data-testid="ahorros-tabs">
+  <button type="button" class="tab-btn" [class.active]="tab() === 'productos'" (click)="tab.set('productos')">Productos</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'cuentas'" (click)="tab.set('cuentas')">Cuentas</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'capitalizar'" (click)="tab.set('capitalizar')">Intereses</button>
+</div>
 
 @if (cargando()) {
-  <p>Cargando…</p>
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando ahorros…</div>
+  </div>
 }
 
 @if (tab() === 'productos') {
-  <section class="panel" data-testid="productos-panel">
-    <h2>Productos de ahorro</h2>
-
-    @if (puedeCrear()) {
-      <form [formGroup]="productoForm" (ngSubmit)="crearProducto()" class="form-grid" data-testid="producto-form">
-        <label class="field">
-          <span>Nombre</span>
-          <input formControlName="nombre" data-testid="input-nombre-producto" />
-        </label>
-        <label class="field">
-          <span>Tasa de interes (%)</span>
-          <input type="number" formControlName="tasaInteres" data-testid="input-tasa-producto" />
-        </label>
-        <label class="field">
-          <span>Capitalizacion</span>
-          <select formControlName="periodicidadCapitalizacion" data-testid="input-capitalizacion-producto">
-            <option value="MENSUAL">MENSUAL</option>
-            <option value="TRIMESTRAL">TRIMESTRAL</option>
-            <option value="ANUAL">ANUAL</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Saldo minimo</span>
-          <input type="number" formControlName="saldoMinimo" data-testid="input-saldo-minimo-producto" />
-        </label>
-        <label class="field">
-          <span>Limite de retiros / mes</span>
-          <input type="number" formControlName="limiteRetirosMes" data-testid="input-limite-retiros-producto" />
-        </label>
-        <label class="field">
-          <span>Vigente desde</span>
-          <input type="date" formControlName="vigenteDesde" data-testid="input-vigencia-producto" />
-        </label>
-        <button type="submit" class="btn btn-primary" data-testid="btn-crear-producto" [disabled]="productoForm.invalid || guardando()">
-          Crear
-        </button>
-      </form>
-    }
-
-    <table class="table" data-testid="productos-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Tasa</th>
-          <th>Capitalizacion</th>
-          <th>Saldo minimo</th>
-          <th>Retiros/mes</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (p of productos(); track p.id) {
-          <tr>
-            <td>{{ p.nombre }}</td>
-            <td>{{ p.tasaInteres | number }}%</td>
-            <td>{{ p.periodicidadCapitalizacion }}</td>
-            <td>{{ p.saldoMinimo | number }}</td>
-            <td>{{ p.limiteRetirosMes ?? '-' }}</td>
-            <td>
-              <span class="badge" [class.badge-success]="p.activo">{{ p.activo ? 'ACTIVO' : 'INACTIVO' }}</span>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </section>
-}
-
-@if (tab() === 'cuentas') {
-  <section class="panel" data-testid="cuentas-panel">
-    <h2>Cuentas de ahorro</h2>
-
-    @if (puedeCrear()) {
-      <form [formGroup]="aperturaForm" (ngSubmit)="aperturar()" class="form-inline" data-testid="apertura-form">
-        <label class="field">
-          <span>Socio</span>
-          <select formControlName="socioId" data-testid="input-socio-apertura">
-            <option [ngValue]="0" disabled>Socio</option>
-            @for (s of socios(); track s.id) {
-              <option [ngValue]="s.id">{{ s.codigo }} - {{ s.nombres }} {{ s.apellidos }}</option>
-            }
-          </select>
-        </label>
-        <label class="field">
-          <span>Producto</span>
-          <select formControlName="productoId" data-testid="input-producto-apertura">
-            <option [ngValue]="0" disabled>Producto</option>
-            @for (p of productos(); track p.id) {
-              @if (p.activo) {
-                <option [ngValue]="p.id">{{ p.nombre }}</option>
-              }
-            }
-          </select>
-        </label>
-        <button type="submit" class="btn btn-primary" data-testid="btn-aperturar" [disabled]="aperturaForm.invalid || guardando()">
-          Aperturar
-        </button>
-      </form>
-    }
-
-    <table class="table" data-testid="cuentas-table">
-      <thead>
-        <tr>
-          <th>Numero</th>
-          <th>Socio</th>
-          <th>Producto</th>
-          <th>Saldo</th>
-          <th>Estado</th>
-          <th>Apertura</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (c of cuentas(); track c.id) {
-          <tr>
-            <td>{{ c.numeroCuenta }}</td>
-            <td>{{ c.socioCodigo }} - {{ c.socioNombre }}</td>
-            <td>{{ c.nombreProducto }}</td>
-            <td>{{ c.saldo | number: '1.2-2' }}</td>
-            <td>
-              <span class="badge" [class.badge-success]="c.estado === 'ACTIVA'">{{ c.estado }}</span>
-            </td>
-            <td>{{ c.fechaApertura }}</td>
-            <td>
-              @if (puedeVer()) {
-                <button type="button" class="btn btn-outline btn-sm" data-testid="btn-operar" (click)="seleccionarCuenta(c)">
-                  Operar
-                </button>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </section>
-
-  @if (cuentaSeleccionada()) {
-    <section class="panel" data-testid="operaciones-panel">
-      <div class="page-header">
-        <h2>Operaciones - {{ cuentaSeleccionada()!.numeroCuenta }}</h2>
-        <span class="saldo">Saldo: {{ cuentaSeleccionada()!.saldo | number: '1.2-2' }}</span>
-      </div>
-
+  <div class="card" data-testid="productos-panel">
+    <div class="card-header">
+      <h3 class="card-title">Catálogo de Productos de Ahorro</h3>
       @if (puedeCrear()) {
-        <div class="form-inline">
-          <form [formGroup]="depositoForm" (ngSubmit)="depositar()" class="form-inline">
-            <label class="field">
-              <span>Deposito</span>
-              <input type="number" formControlName="monto" data-testid="input-deposito" />
-            </label>
-            <button type="submit" class="btn btn-primary btn-sm" data-testid="btn-depositar" [disabled]="depositoForm.invalid || guardando()">
-              Depositar
-            </button>
-          </form>
-
-          <form [formGroup]="retiroForm" (ngSubmit)="retirar()" class="form-inline">
-            <label class="field">
-              <span>Retiro</span>
-              <input type="number" formControlName="monto" data-testid="input-retiro" />
-            </label>
-            <button type="submit" class="btn btn-danger btn-sm" data-testid="btn-retirar" [disabled]="retiroForm.invalid || guardando()">
-              Retirar
-            </button>
-          </form>
-        </div>
+        <a class="btn btn-sm btn-primary" routerLink="/ahorros/productos/nuevo" data-testid="btn-nuevo-producto">➕ Nuevo Producto</a>
       }
+    </div>
 
-      <table class="table" data-testid="movimientos-table">
+    <div class="table-responsive">
+      <table class="table" data-testid="productos-table">
         <thead>
           <tr>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Saldo resultante</th>
-            <th>Comprobante</th>
-            <th>Fecha</th>
+            <th>Nombre</th>
+            <th>Tasa Interés</th>
+            <th>Capitalización</th>
+            <th>Saldo Mínimo</th>
+            <th>Límite Retiros</th>
+            <th>Estado</th>
           </tr>
         </thead>
         <tbody>
-          @for (m of movimientos(); track m.id) {
+          @for (p of productos(); track p.id) {
             <tr>
-              <td>{{ m.tipo }}</td>
-              <td>{{ m.monto | number }}</td>
-              <td>{{ m.saldoResultante | number }}</td>
-              <td>{{ m.comprobanteNumero ?? '-' }}</td>
-              <td>{{ m.createdAt | date: 'short' }}</td>
+              <td><strong>{{ p.nombre }}</strong></td>
+              <td><span class="badge badge-info">{{ p.tasaInteres | number }}%</span></td>
+              <td>{{ p.periodicidadCapitalizacion }}</td>
+              <td>\${{ p.saldoMinimo | number }}</td>
+              <td>{{ p.limiteRetirosMes ?? '—' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="p.activo" [class.badge-secondary]="!p.activo">
+                  {{ p.activo ? 'ACTIVO' : 'INACTIVO' }}
+                </span>
+              </td>
             </tr>
           }
         </tbody>
       </table>
-    </section>
+    </div>
+  </div>
+}
+
+@if (tab() === 'cuentas') {
+  <div class="card" data-testid="cuentas-panel">
+    <div class="card-header">
+      <h3 class="card-title">Apertura y Cuentas Activas</h3>
+      @if (puedeCrear()) {
+        <a class="btn btn-sm btn-primary" routerLink="/ahorros/cuentas/nueva" data-testid="btn-nueva-cuenta">💳 Nueva Cuenta</a>
+      }
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" data-testid="cuentas-table">
+        <thead>
+          <tr>
+            <th>Número Cuenta</th>
+            <th>Socio Titular</th>
+            <th>Producto</th>
+            <th>Saldo Disponible</th>
+            <th>Estado</th>
+            <th>Apertura</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of cuentas(); track c.id) {
+            <tr>
+              <td><code>{{ c.numeroCuenta }}</code></td>
+              <td><strong>{{ c.socioCodigo }}</strong> — {{ c.socioNombre }}</td>
+              <td>{{ c.nombreProducto }}</td>
+              <td><strong>\${{ c.saldo | number: '1.2-2' }}</strong></td>
+              <td>
+                <span class="badge" [class.badge-success]="c.estado === 'ACTIVA'" [class.badge-secondary]="c.estado !== 'ACTIVA'">
+                  {{ c.estado }}
+                </span>
+              </td>
+              <td>{{ c.fechaApertura }}</td>
+              <td style="text-align: right;">
+                @if (puedeVer()) {
+                  <app-acciones-menu>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-operar" (click)="seleccionarCuenta(c)">
+                      ⚙️ Operar
+                    </button>
+                  </app-acciones-menu>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (cuentaSeleccionada()) {
+    <div class="card" data-testid="operaciones-panel">
+      <div class="card-header">
+        <h3 class="card-title">Operaciones — Cuenta <code>{{ cuentaSeleccionada()!.numeroCuenta }}</code></h3>
+        <span class="badge badge-success" style="font-size: 14px; padding: 4px 12px;">
+          Saldo Actual: \${{ cuentaSeleccionada()!.saldo | number: '1.2-2' }}
+        </span>
+      </div>
+
+      @if (puedeCrear()) {
+        <div class="form-grid" style="margin-bottom: 20px; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="card" style="margin-bottom: 0; background: var(--color-success-light); border-color: #a7f3d0;">
+            <h4 style="margin: 0 0 10px 0; color: var(--color-success-text);">Depósito de Fondos</h4>
+            <form [formGroup]="depositoForm" (ngSubmit)="depositar()" class="form-inline">
+              <label class="field" style="flex: 1;">
+                <span>Monto a Depositar ($)</span>
+                <input class="form-control form-control-sm" type="number" step="0.01" formControlName="monto" placeholder="0.00" data-testid="input-deposito" />
+              </label>
+              <button type="submit" class="btn btn-sm btn-success" data-testid="btn-depositar" [disabled]="depositoForm.invalid || guardando()">
+                📥 Depositar
+              </button>
+            </form>
+          </div>
+
+          <div class="card" style="margin-bottom: 0; background: var(--color-danger-light); border-color: #fecaca;">
+            <h4 style="margin: 0 0 10px 0; color: var(--color-danger-text);">Retiro de Fondos</h4>
+            <form [formGroup]="retiroForm" (ngSubmit)="retirar()" class="form-inline">
+              <label class="field" style="flex: 1;">
+                <span>Monto a Retirar ($)</span>
+                <input class="form-control form-control-sm" type="number" step="0.01" formControlName="monto" placeholder="0.00" data-testid="input-retiro" />
+              </label>
+              <button type="submit" class="btn btn-sm btn-danger" data-testid="btn-retirar" [disabled]="retiroForm.invalid || guardando()">
+                📤 Retirar
+              </button>
+            </form>
+          </div>
+        </div>
+      }
+
+      <div class="table-responsive">
+        <table class="table" data-testid="movimientos-table">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Monto</th>
+              <th>Saldo Resultante</th>
+              <th>Comprobante</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of movimientos(); track m.id) {
+              <tr>
+                <td>
+                  <span class="badge" [class.badge-success]="m.tipo === 'DEPOSITO'" [class.badge-danger]="m.tipo === 'RETIRO'">
+                    {{ m.tipo }}
+                  </span>
+                </td>
+                <td><strong>\${{ m.monto | number: '1.2-2' }}</strong></td>
+                <td>\${{ m.saldoResultante | number: '1.2-2' }}</td>
+                <td><code>{{ m.comprobanteNumero ?? '—' }}</code></td>
+                <td>{{ m.createdAt | date: 'short' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   }
 }
 
 @if (tab() === 'capitalizar') {
-  <section class="panel" data-testid="capitalizacion-panel">
-    <h2>Capitalizacion de intereses</h2>
+  <div class="card" data-testid="capitalizacion-panel">
+    <div class="card-header">
+      <h3 class="card-title">Proceso Masivo de Capitalización de Intereses</h3>
+    </div>
 
     @if (puedeCrear()) {
-      <form [formGroup]="capitalizarForm" (ngSubmit)="capitalizar()" class="form-inline" data-testid="capitalizar-form">
+      <form [formGroup]="capitalizarForm" (ngSubmit)="capitalizar()" class="form-inline" style="margin-bottom: 16px;" data-testid="capitalizar-form">
         <label class="field">
-          <span>Anio</span>
-          <input type="number" formControlName="anio" data-testid="input-anio-capitalizar" />
+          <span>Año *</span>
+          <input class="form-control form-control-sm" type="number" formControlName="anio" placeholder="2026" data-testid="input-anio-capitalizar" />
         </label>
         <label class="field">
-          <span>Mes</span>
-          <input type="number" formControlName="mes" data-testid="input-mes-capitalizar" />
+          <span>Mes *</span>
+          <input class="form-control form-control-sm" type="number" formControlName="mes" placeholder="1-12" data-testid="input-mes-capitalizar" />
         </label>
-        <button type="submit" class="btn btn-primary" data-testid="btn-capitalizar" [disabled]="capitalizarForm.invalid || guardando()">
-          Capitalizar
+        <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-capitalizar" [disabled]="capitalizarForm.invalid || guardando()">
+          ⚡ Capitalizar Intereses
         </button>
       </form>
     }
 
     @if (capitalizacion()) {
       <div class="alert alert-success" data-testid="capitalizacion-resultado">
-        Cuentas capitalizadas: {{ capitalizacion()!.cuentasCapitalizadas }} - Total de intereses: {{ capitalizacion()!.totalInteres }}
+        <span>✅ Cuentas capitalizadas: <strong>{{ capitalizacion()!.cuentasCapitalizadas }}</strong> · Total intereses abonados: <strong>\${{ capitalizacion()!.totalInteres | number: '1.2-2' }}</strong></span>
       </div>
     }
-  </section>
+  </div>
 }
+

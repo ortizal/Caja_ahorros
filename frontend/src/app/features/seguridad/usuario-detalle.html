@@ -1,0 +1,40 @@
+@if (usuario(); as u) {
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title" data-testid="usuario-detalle-nombre">{{ u.nombreCompleto }} <code>@{{ u.username }}</code></h3>
+      <span
+        class="badge"
+        [class.badge-success]="u.estado === 'ACTIVO'"
+        [class.badge-secondary]="u.estado !== 'ACTIVO'"
+        data-testid="usuario-detalle-estado"
+      >{{ u.estado }}</span>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <span>Usuario</span>
+        <strong data-testid="usuario-detalle-username">{{ u.username }}</strong>
+      </div>
+      <div class="field">
+        <span>Correo Electrónico</span>
+        <strong>{{ u.email || '—' }}</strong>
+      </div>
+      <div class="field">
+        <span>Último Acceso</span>
+        <strong>{{ u.ultimoAcceso ? (u.ultimoAcceso | date : 'short') : '—' }}</strong>
+      </div>
+      <div class="field">
+        <span>Creado</span>
+        <strong>{{ u.createdAt | date : 'short' }}</strong>
+      </div>
+      <div class="field" style="grid-column: 1 / -1;">
+        <span>Roles</span>
+        <div class="form-inline" style="gap: 4px;">
+          @for (r of u.roles; track r) {
+            <span class="badge badge-info">{{ r }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

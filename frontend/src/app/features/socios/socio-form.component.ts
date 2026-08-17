@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { ApiError } from '../../core/models/auth.model';
 import { SocioRequest } from '../../core/models/socio.model';
 import { SocioService } from '../../core/services/socio.service';
+import { ToastService } from '../../core/services/toast.service';
 
 interface BeneficiarioForm {
   nombres: string;
@@ -24,6 +25,7 @@ export class SocioFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly socioService = inject(SocioService);
+  private readonly toast = inject(ToastService);
 
   protected readonly form = this.fb.nonNullable.group({
     identificacion: ['', [Validators.required]],
@@ -69,6 +71,7 @@ export class SocioFormComponent implements OnInit {
         },
         error: () => {
           this.error.set('No se pudo cargar el socio.');
+          this.toast.error('No se pudo cargar el socio.');
           this.loading.set(false);
         }
       });
@@ -124,9 +127,14 @@ export class SocioFormComponent implements OnInit {
         : this.socioService.crear(payload);
 
     request.pipe(finalize(() => this.guardando.set(false))).subscribe({
-      next: (socio) => this.router.navigate(['/socios', socio.id]),
+      next: () => {
+        this.toast.success(this.esEdicion() ? 'Socio actualizado correctamente.' : 'Socio creado correctamente.');
+        this.router.navigate(['/socios']);
+      },
       error: (err: HttpErrorResponse) => {
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo guardar el socio.');
+        const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo guardar el socio.';
+        this.error.set(msg);
+        this.toast.error(msg);
       }
     });
   }

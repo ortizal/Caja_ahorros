@@ -1,0 +1,54 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Nueva Cuenta Bancaria</h1>
+    <p class="page-subtitle">Registro de cuentas corrientes o de ahorro</p>
+  </div>
+  <div class="header-actions">
+    <a class="btn btn-sm btn-outline-secondary" routerLink="/bancos" data-testid="btn-volver">← Volver</a>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="nueva-cuenta-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos de la Cuenta Bancaria</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Banco / Institución *</span>
+        <input class="form-control form-control-sm" formControlName="banco" placeholder="Ej. Banco Pichincha" data-testid="input-banco" />
+      </label>
+
+      <label class="field">
+        <span>Número de Cuenta *</span>
+        <input class="form-control form-control-sm" formControlName="numeroCuenta" placeholder="Ej. 2200123456" data-testid="input-numero-cuenta" />
+      </label>
+
+      <label class="field">
+        <span>Tipo de Cuenta</span>
+        <select class="form-select form-select-sm" formControlName="tipo" data-testid="input-tipo-cuenta">
+          <option value="CORRIENTE">Corriente</option>
+          <option value="AHORROS">Ahorros</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Saldo Contable Inicial</span>
+        <input type="number" step="0.01" class="form-control form-control-sm" formControlName="saldoContable" placeholder="0.00" data-testid="input-saldo-contable" />
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-cuenta" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando…' : '🏦 Crear Cuenta' }}
+    </button>
+  </div>
+</form>

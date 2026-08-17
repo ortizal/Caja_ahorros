@@ -17,4 +17,9 @@ public interface AsientoDetalleRepository extends JpaRepository<AsientoDetalle, 
 
     @Query("SELECT COALESCE(SUM(d.haber), 0) FROM AsientoDetalle d WHERE d.asiento.id = :asientoId")
     BigDecimal sumHaber(@Param("asientoId") Long asientoId);
+
+    @Query(value = "SELECT COALESCE(SUM(d.debe), 0) FROM asiento_detalle d "
+            + "JOIN asiento_contable a ON a.id = d.asiento_id "
+            + "WHERE d.cuenta_id = :cuentaId AND EXTRACT(YEAR FROM a.fecha) = :anio", nativeQuery = true)
+    BigDecimal sumDebePorCuentaYAnio(@Param("cuentaId") Long cuentaId, @Param("anio") int anio);
 }

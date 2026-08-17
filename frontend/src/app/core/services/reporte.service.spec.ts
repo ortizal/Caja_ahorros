@@ -58,6 +58,23 @@ describe('ReporteService', () => {
     req.flush({ sociosActivos: 10, creditosVigentes: 3, carteraColocada: 1000, carteraVencida: 0, porcentajeMorosidad: 0, cajasAbiertas: 1, disponibleCaja: 500, disponibleBancos: 2000 });
   });
 
+  it('graficos hace GET a /dashboard/graficos', () => {
+    service.graficos().subscribe((res) => {
+      expect(res.colocacionPorMes.length).toBe(12);
+      expect(res.carteraPorEstado.length).toBe(1);
+      expect(res.flujoCajaPorMes.length).toBe(6);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/dashboard/graficos`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      colocacionPorMes: Array.from({ length: 12 }, (_, i) => ({ mes: `2026-${String(i + 1).padStart(2, '0')}`, monto: 100 })),
+      cobranzaPorMes: Array.from({ length: 12 }, (_, i) => ({ mes: `2026-${String(i + 1).padStart(2, '0')}`, monto: 50 })),
+      flujoCajaPorMes: Array.from({ length: 6 }, (_, i) => ({ mes: `2026-0${i + 1}`, ingresos: 200, egresos: 80 })),
+      carteraPorEstado: [{ estado: 'VIGENTE', saldo: 900, cantidad: 2 }]
+    });
+  });
+
   it('exportarCartera pide blob de /reportes/cartera', () => {
     service.exportarCartera().subscribe((res) => {
       expect(res.size).toBeGreaterThan(0);
@@ -67,5 +84,53 @@ describe('ReporteService', () => {
     expect(req.request.method).toBe('GET');
     expect(req.request.responseType).toBe('blob');
     req.flush(new Blob(['cuota_id;credito_id'], { type: 'text/csv' }));
+  });
+
+  it('exportarSocios pide blob de /reportes/socios.{formato}', () => {
+    service.exportarSocios('xlsx').subscribe((res) => {
+      expect(res.size).toBeGreaterThan(0);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/reportes/socios.xlsx`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['PK'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  });
+
+  it('exportarSocios pdf apunta a /reportes/socios.pdf', () => {
+    service.exportarSocios('pdf').subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/reportes/socios.pdf`);
+    expect(req.request.method).toBe('GET');
+    req.flush(new Blob(['%PDF'], { type: 'application/pdf' }));
+  });
+
+  it('exportarCarteraExcel apunta a /reportes/cartera.xlsx', () => {
+    service.exportarCarteraExcel().subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/reportes/cartera.xlsx`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['PK']));
+  });
+
+  it('exportarCarteraPdf apunta a /reportes/cartera.pdf', () => {
+    service.exportarCarteraPdf().subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/reportes/cartera.pdf`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['%PDF']));
+  });
+
+  it('exportarCaja pide blob de /reportes/caja.{formato}', () => {
+    service.exportarCaja('csv').subscribe((res) => {
+      expect(res.size).toBeGreaterThan(0);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/reportes/caja.csv`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['Apertura;Fecha'], { type: 'text/csv' }));
   });
 });

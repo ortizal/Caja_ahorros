@@ -1,0 +1,65 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Nuevo Producto de Ahorro</h1>
+    <p class="page-subtitle">Registro de productos de ahorro con tasas y condiciones</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="producto-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos del Producto de Ahorro</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Nombre del Producto *</span>
+        <input class="form-control form-control-sm" formControlName="nombre" placeholder="Ej. Ahorro Programado" data-testid="input-nombre-producto" />
+      </label>
+
+      <label class="field">
+        <span>Tasa de Interés Anual (%)</span>
+        <input class="form-control form-control-sm" type="number" formControlName="tasaInteres" placeholder="5.5" data-testid="input-tasa-producto" />
+      </label>
+
+      <label class="field">
+        <span>Periodicidad Capitalización</span>
+        <select class="form-select form-select-sm" formControlName="periodicidadCapitalizacion" data-testid="input-capitalizacion-producto">
+          <option value="MENSUAL">MENSUAL</option>
+          <option value="TRIMESTRAL">TRIMESTRAL</option>
+          <option value="ANUAL">ANUAL</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Saldo Mínimo Requerido</span>
+        <input class="form-control form-control-sm" type="number" formControlName="saldoMinimo" placeholder="10.00" data-testid="input-saldo-minimo-producto" />
+      </label>
+
+      <label class="field">
+        <span>Límite Retiros / Mes</span>
+        <input class="form-control form-control-sm" type="number" formControlName="limiteRetirosMes" placeholder="0 = Sin límite" data-testid="input-limite-retiros-producto" />
+      </label>
+
+      <label class="field">
+        <span>Vigente Desde</span>
+        <input class="form-control form-control-sm" type="date" formControlName="vigenteDesde" data-testid="input-vigencia-producto" />
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-producto" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando…' : '➕ Registrar Producto' }}
+    </button>
+  </div>
+</form>

@@ -19,6 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Service
@@ -112,8 +116,30 @@ public class BancoService {
 
         ConciliacionBancaria saved = conciliacionRepository.save(conciliacion);
         auditService.registrar("conciliacion_bancaria", saved.getId(), "CREAR", null, request);
+
+        if (diferencia.compareTo(BigDecimal.ZERO) == 0) {
+            marcarMovimientosConciliados(cuentaId, request.periodo());
+        }
+
         return new ConciliacionResponse(saved.getId(), cuentaId, request.periodo(),
                 saldoContable, saldoBancario, diferencia);
+    }
+
+    private void marcarMovimientosConciliados(Long cuentaId, String periodo) {
+        YearMonth yearMonth;
+        try {
+            yearMonth = YearMonth.parse(periodo, DateTimeFormatter.ofPattern("yyyy-MM"));
+        } catch (DateTimeParseException e) {
+            return;
+        }
+        LocalDate inicio = yearMonth.atDay(1);
+        LocalDate fin = yearMonth.atEndOfMonth();
+        for (BancoMovimiento movimiento : movimientoRepository.findByCuentaBancariaIdOrderByFechaAsc(cuentaId)) {
+            if (!movimiento.getConciliado() && !movimiento.getFecha().isBefore(inicio) && !movimiento.getFecha().isAfter(fin)) {
+                movimiento.setConciliado(true);
+                movimientoRepository.save(movimiento);
+            }
+        }
     }
 
     private boolean esIngreso(String tipo) {

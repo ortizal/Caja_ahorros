@@ -7,8 +7,10 @@ public enum TipoMovimiento {
     APORTACION(false),
     DEPOSITO(false),
     COBRO_CREDITO(false),
+    COBRO_CXC(false),
     RETIRO(true),
-    DESEMBOLSO(true);
+    DESEMBOLSO(true),
+    GASTO(true);
 
     private final boolean egreso;
 

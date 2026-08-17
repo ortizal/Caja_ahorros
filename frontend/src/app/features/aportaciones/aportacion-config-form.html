@@ -1,0 +1,66 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Nueva Configuración de Aportaciones</h1>
+    <p class="page-subtitle">Registro de valores y periodicidad para los aportes obligatorios y voluntarios</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="config-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos de la Configuración</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Tipo de Aportación</span>
+        <select class="form-select form-select-sm" formControlName="tipo" data-testid="input-tipo-config">
+          <option value="OBLIGATORIA">OBLIGATORIA</option>
+          <option value="VOLUNTARIA">VOLUNTARIA</option>
+          <option value="EXTRAORDINARIA">EXTRAORDINARIA</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Modo de Cálculo</span>
+        <select class="form-select form-select-sm" formControlName="modoCalculo" data-testid="input-modo-config">
+          <option value="FIJO">FIJO</option>
+          <option value="PORCENTAJE">PORCENTAJE</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Valor / Porcentaje</span>
+        <input class="form-control form-control-sm" type="number" formControlName="valor" placeholder="0.00" data-testid="input-valor-config" />
+      </label>
+
+      <label class="field">
+        <span>Periodicidad</span>
+        <select class="form-select form-select-sm" formControlName="periodicidad" data-testid="input-periodicidad-config">
+          <option value="MENSUAL">MENSUAL</option>
+          <option value="QUINCENAL">QUINCENAL</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Vigente Desde</span>
+        <input class="form-control form-control-sm" type="date" formControlName="vigenteDesde" data-testid="input-vigencia-config" />
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-config" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando…' : '➕ Registrar Configuración' }}
+    </button>
+  </div>
+</form>

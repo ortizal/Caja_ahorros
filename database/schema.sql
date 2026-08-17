@@ -513,6 +513,7 @@ CREATE TABLE IF NOT EXISTS cuentas_por_cobrar (
   deudor VARCHAR(200) NOT NULL,
   concepto VARCHAR(200) NOT NULL,
   monto NUMERIC(14,2) NOT NULL,
+  cuenta_contable_id BIGINT NOT NULL REFERENCES plan_cuentas(id),
   fecha_emision DATE NOT NULL DEFAULT CURRENT_DATE,
   fecha_vencimiento DATE NOT NULL,
   estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, COBRADA
@@ -536,3 +537,19 @@ CREATE INDEX IF NOT EXISTS idx_gasto_estado ON gastos(estado);
 CREATE INDEX IF NOT EXISTS idx_cxp_estado ON cuentas_por_pagar(estado);
 CREATE INDEX IF NOT EXISTS idx_cxc_estado ON cuentas_por_cobrar(estado);
 CREATE INDEX IF NOT EXISTS idx_presupuesto_anio ON presupuesto_partidas(anio);
+
+-- 2.7 Notificaciones y alertas (Fase 6)
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS notificaciones (
+  id BIGSERIAL PRIMARY KEY,
+  usuario_id BIGINT NOT NULL REFERENCES usuarios(id),
+  tipo VARCHAR(40) NOT NULL, -- CUOTA_PROXIMA, CUOTA_VENCIDA, MORA, APORTACION_PENDIENTE, CIERRE_PENDIENTE
+  referencia_tabla VARCHAR(60),
+  referencia_id BIGINT,
+  mensaje VARCHAR(255) NOT NULL,
+  leida BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notificacion_usuario ON notificaciones(usuario_id, leida);

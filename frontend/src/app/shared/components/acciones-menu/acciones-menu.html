@@ -1,0 +1,26 @@
+<div class="acciones-menu">
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-secondary acciones-menu-btn"
+    data-testid="btn-acciones-menu"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="abierto()"
+    title="Acciones"
+    (click)="toggle($event)"
+  >
+    <i class="bi bi-three-dots-vertical"></i>
+  </button>
+
+  @if (abierto()) {
+    <div
+      class="acciones-menu-lista"
+      role="menu"
+      data-testid="acciones-menu-lista"
+      [style.top.px]="posicion().top"
+      [style.left.px]="posicion().left"
+      (click)="cerrar()"
+    >
+      <ng-content />
+    </div>
+  }
+</div>

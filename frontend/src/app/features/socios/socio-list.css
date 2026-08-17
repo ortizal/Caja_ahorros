@@ -7,3 +7,8 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}

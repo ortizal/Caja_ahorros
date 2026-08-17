@@ -514,7 +514,7 @@ CREATE TABLE asiento_detalle (
 ```sql
 CREATE TABLE regla_contable (
   id BIGSERIAL PRIMARY KEY,
-  operacion VARCHAR(60) UNIQUE NOT NULL,  -- 'APORTACION', 'DEPOSITO_AHORRO', 'RETIRO_AHORRO', 'DESEMBOLSO_CREDITO', 'PAGO_CAPITAL', 'PAGO_INTERES', 'PAGO_MORA'
+  operacion VARCHAR(60) UNIQUE NOT NULL,  -- 'APORTACION', 'DEPOSITO_AHORRO', 'RETIRO_AHORRO', 'DESEMBOLSO_CREDITO', 'PAGO_CAPITAL', 'PAGO_INTERES', 'PAGO_MORA', 'GASTO_PAGADO', 'COBRO_CUENTA'
   cuenta_debe_id BIGINT REFERENCES plan_cuentas(id),
   cuenta_haber_id BIGINT REFERENCES plan_cuentas(id),
   vigente_desde DATE NOT NULL,
@@ -526,87 +526,96 @@ CREATE TABLE regla_contable (
 ### 2.13 Tesorería
 
 ```sql
-CREATE TABLE cuenta_por_cobrar (
+CREATE TABLE cuentas_por_pagar (
   id BIGSERIAL PRIMARY KEY,
-  origen_tabla VARCHAR(60),   -- 'credito', 'aportaciones'
-  origen_id BIGINT,
+  proveedor VARCHAR(200) NOT NULL,
+  concepto VARCHAR(200) NOT NULL,
   monto NUMERIC(14,2) NOT NULL,
-  saldo NUMERIC(14,2) NOT NULL,
-  fecha_vencimiento DATE,
-  estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
+  cuenta_contable_id BIGINT NOT NULL REFERENCES plan_cuentas(id),
+  fecha_emision DATE NOT NULL DEFAULT CURRENT_DATE,
+  fecha_vencimiento DATE NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, PAGADA
+  comprobante_id BIGINT REFERENCES comprobantes(id),
+  caja_movimiento_id BIGINT REFERENCES caja_movimiento(id),
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP
 );
 
-CREATE TABLE cuenta_por_pagar (
+CREATE TABLE cuentas_por_cobrar (
   id BIGSERIAL PRIMARY KEY,
-  proveedor_id BIGINT,
-  documento VARCHAR(50),
+  socio_id BIGINT REFERENCES socios(id),
+  deudor VARCHAR(200) NOT NULL,
+  concepto VARCHAR(200) NOT NULL,
   monto NUMERIC(14,2) NOT NULL,
-  saldo NUMERIC(14,2) NOT NULL,
-  fecha_vencimiento DATE,
-  estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
+  cuenta_contable_id BIGINT NOT NULL REFERENCES plan_cuentas(id),
+  fecha_emision DATE NOT NULL DEFAULT CURRENT_DATE,
+  fecha_vencimiento DATE NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, COBRADA
+  comprobante_id BIGINT REFERENCES comprobantes(id),
+  caja_movimiento_id BIGINT REFERENCES caja_movimiento(id),
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP
 );
 ```
 
 ### 2.14 Presupuesto
 
 ```sql
-CREATE TABLE presupuesto (
+CREATE TABLE presupuesto_partidas (
   id BIGSERIAL PRIMARY KEY,
   anio INT NOT NULL,
-  estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
-);
-
-CREATE TABLE presupuesto_partida (
-  id BIGSERIAL PRIMARY KEY,
-  presupuesto_id BIGINT REFERENCES presupuesto(id),
-  cuenta_id BIGINT REFERENCES plan_cuentas(id),
-  monto_inicial NUMERIC(14,2) NOT NULL,
-  monto_reformado NUMERIC(14,2) NOT NULL DEFAULT 0,
-  comprometido NUMERIC(14,2) NOT NULL DEFAULT 0,
-  devengado NUMERIC(14,2) NOT NULL DEFAULT 0,
-  pagado NUMERIC(14,2) NOT NULL DEFAULT 0
+  concepto VARCHAR(200) NOT NULL,
+  cuenta_contable_id BIGINT NOT NULL REFERENCES plan_cuentas(id),
+  monto_presupuestado NUMERIC(14,2) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  UNIQUE(anio, concepto)
 );
 ```
 
 ### 2.15 Gastos
 
 ```sql
-CREATE TABLE proveedor (
+CREATE TABLE gastos (
   id BIGSERIAL PRIMARY KEY,
-  ruc VARCHAR(20),
-  razon_social VARCHAR(150) NOT NULL,
-  telefono VARCHAR(30),
-  email VARCHAR(150)
-);
-
-CREATE TABLE gasto (
-  id BIGSERIAL PRIMARY KEY,
-  proveedor_id BIGINT REFERENCES proveedor(id),
-  categoria VARCHAR(60),
-  centro_costo VARCHAR(60),
+  concepto VARCHAR(200) NOT NULL,
+  descripcion VARCHAR(500),
   monto NUMERIC(14,2) NOT NULL,
-  estado VARCHAR(20) NOT NULL DEFAULT 'SOLICITADO', -- SOLICITADO, APROBADO, PAGADO, RECHAZADO
-  aprobado_por BIGINT,
+  cuenta_contable_id BIGINT NOT NULL REFERENCES plan_cuentas(id),
+  fecha_solicitud DATE NOT NULL DEFAULT CURRENT_DATE,
+  solicitado_por BIGINT NOT NULL REFERENCES usuarios(id),
+  estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, APROBADO, RECHAZADO, PAGADO, ANULADO
+  aprobado_por BIGINT REFERENCES usuarios(id),
+  fecha_aprobacion TIMESTAMP,
+  motivo_rechazo VARCHAR(300),
   comprobante_id BIGINT REFERENCES comprobantes(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_by BIGINT
+  caja_movimiento_id BIGINT REFERENCES caja_movimiento(id),
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP
 );
 ```
 
 ### 2.16 Notificaciones y alertas
 
 ```sql
-CREATE TABLE notificacion (
+CREATE TABLE notificaciones (
   id BIGSERIAL PRIMARY KEY,
-  usuario_id BIGINT REFERENCES usuarios(id),
-  tipo VARCHAR(40) NOT NULL,   -- CUOTA_PROXIMA, CUOTA_VENCIDA, MORA, APORTACION_PENDIENTE, SALDO_BAJO, CIERRE_PENDIENTE
+  usuario_id BIGINT NOT NULL REFERENCES usuarios(id),
+  tipo VARCHAR(40) NOT NULL,   -- CUOTA_PROXIMA, CUOTA_VENCIDA, MORA, APORTACION_PENDIENTE, CIERRE_PENDIENTE
   referencia_tabla VARCHAR(60),
   referencia_id BIGINT,
   mensaje VARCHAR(255) NOT NULL,
   leida BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE INDEX idx_notificacion_usuario ON notificaciones(usuario_id, leida);
 ```
+
+Los mensajes se generan en el job diario (06:00) `generarAlertas()` de
+`NotificacionService` a partir de la tabla de amortización, las aportaciones
+pendientes del periodo y las cajas abiertas de días anteriores. El usuario
+destinatario es el `usuario_id` vinculado al socio (columna `socios.usuario_id`);
+si el socio no tiene usuario vinculado, no se genera la alerta. La
+deduplicación se resuelve por `(usuario_id, tipo, referencia_tabla, referencia_id)`.
 
 ---
 
@@ -782,21 +791,38 @@ POST   /periodos-contables/{id}/cerrar
 POST   /periodos-contables/{id}/reabrir
 
 # Tesorería / presupuesto / gastos
-GET    /cuentas-por-pagar
-GET    /cuentas-por-cobrar
-GET    /presupuesto/{anio}
-POST   /gastos
-PUT    /gastos/{id}/aprobar
+GET    /gastos?estado=              (TESORERIA:VER)
+POST   /gastos                      (TESORERIA:CREAR)
+POST   /gastos/{id}/aprobar         (TESORERIA:APROBAR)  -- {aprobar, motivoRechazo}
+POST   /gastos/{id}/pagar           (TESORERIA:EDITAR)
+POST   /gastos/{id}/anular          (TESORERIA:ANULAR)
+GET    /cuentas-por-pagar?estado=   (TESORERIA:VER)
+POST   /cuentas-por-pagar           (TESORERIA:CREAR)
+POST   /cuentas-por-pagar/{id}/pagar (TESORERIA:EDITAR)
+GET    /cuentas-por-cobrar?estado=  (TESORERIA:VER)
+POST   /cuentas-por-cobrar          (TESORERIA:CREAR)
+POST   /cuentas-por-cobrar/{id}/cobrar (TESORERIA:EDITAR)
+GET    /presupuesto?anio=           (TESORERIA:VER)  -- resumen con ejecutado por cuenta
+POST   /presupuesto/partidas        (TESORERIA:CREAR)
 
 # Reportes / dashboard
-GET    /reportes/socios
-GET    /reportes/cartera
-GET    /reportes/caja
+GET    /reportes/socios.csv            (SOCIOS:VER)
+GET    /reportes/socios.xlsx           (SOCIOS:VER)
+GET    /reportes/socios.pdf            (SOCIOS:VER)
+GET    /reportes/cartera.csv           (CREDITOS:VER)  -- endpoint histórico
+GET    /reportes/cartera.xlsx          (CREDITOS:VER)
+GET    /reportes/cartera.pdf           (CREDITOS:VER)
+GET    /reportes/caja.csv              (CAJA:VER)
+GET    /reportes/caja.xlsx             (CAJA:VER)
+GET    /reportes/caja.pdf              (CAJA:VER)
 GET    /dashboard/resumen
 
 # Notificaciones
-GET    /notificaciones?usuario_id=
-PUT    /notificaciones/{id}/leida
+GET    /notificaciones                (autenticado) -- solo las del usuario
+GET    /notificaciones/no-leidas      (autenticado)
+POST   /notificaciones/{id}/leida     (autenticado) -- solo las propias
+POST   /notificaciones/leidas         (autenticado) -- marcar todas las propias
+POST   /notificaciones/generar        (ADMIN)       -- disparo manual del job
 ```
 
 Todos los endpoints de escritura deben validar el permiso correspondiente (`modulo` + `accion`) vía Spring Security antes de ejecutar la operación, y registrar en `auditoria` cualquier creación, edición, aprobación o anulación.
@@ -876,7 +902,7 @@ src/app/
 
 Cada fase termina con: (a) demo funcional con datos reales o de prueba, (b) manual de usuario breve del módulo, (c) checklist de pruebas de la sección 10 aprobado.
 
-**Estado de avance:** Fases 1–4 implementadas y probadas (backend 56/56 tests, frontend 59/59 unit tests, e2e 26/26). Fase 4 (Créditos y cobranza) incluye módulo completo con simulador, mora y refinanciamiento; la sección 11.9 (cartera, dashboard y reportes CSV) está implementada de extremo a extremo.
+**Estado de avance:** Fases 1–6 implementadas y probadas (backend 77/77 tests, frontend 87/87 unit tests, e2e 38/38). Manual de usuario breve: `MANUAL_USUARIO.md` (puesta en marcha, usuarios demo, módulos, reportes exportables y notas). Checklist de la sección 10 ejecutado: 9/9 ítems cubiertos. Fase 6 (Notificaciones y alertas) implementada: job diario que genera alertas de cuotas próximas/vencidas, mora, aportaciones pendientes y cierres de caja pendientes, con campana en el shell y prueba de extremo a extremo. Fase 6 (Portal del socio) implementada: login de socio que redirige al portal de lectura `/portal` con resumen de ahorro, aportaciones, créditos y notificaciones (rol SOCIO con permiso `PORTAL:VER`, usuario demo `socio`/`socio123` vinculado a `SOC-DEMO-01`). Fase 6 (Reportes PDF/Excel/CSV) implementada: `ReporteService`/`ReporteController` con generación server-side (Apache POI para `.xlsx`, OpenPDF para `.pdf`, CSV con BOM UTF-8) para socios, cartera y caja, con permisos por módulo y botones de exportación en créditos (tab Cartera), socios y caja. Fase 4 (Créditos y cobranza) incluye módulo completo con simulador, mora y refinanciamiento; Fase 5 (Tesorería y presupuesto) incluye gastos con flujo de aprobación, cuentas por pagar/cobrar y presupuesto vs. ejecución; la sección 11.9 (cartera, dashboard y reportes) está implementada de extremo a extremo.
 
 ---
 
@@ -884,15 +910,15 @@ Cada fase termina con: (a) demo funcional con datos reales o de prueba, (b) manu
 
 **Por cada fase, verificar:**
 
-- [ ] Reglas de negocio: cálculo de interés, mora y cuota coincide con fórmulas de la sección 5 (comparar contra cálculo manual en hoja de cálculo de control).
-- [ ] Cuadre contable: todo `asiento_contable` generado automáticamente cumple `SUM(debe) = SUM(haber)`.
-- [ ] Inmutabilidad: intentar eliminar una transacción financiera debe estar bloqueado a nivel de API (solo anulación permitida).
-- [ ] Auditoría: cada creación/edición/aprobación/anulación relevante deja registro en `auditoria` con usuario y timestamp.
-- [ ] Permisos: un usuario sin permiso `APROBAR` en un módulo no puede ejecutar la acción aunque conozca el endpoint.
-- [ ] Separación de funciones: quien crea una solicitud de crédito/gasto no puede aprobarla (salvo excepción autorizada).
-- [ ] Cierre de período: no se pueden crear ni editar movimientos en un período `CERRADO` sin reapertura autorizada.
-- [ ] Histórico de tasas: cambiar una tasa vigente hoy no debe alterar cuotas/intereses ya calculados en el pasado.
-- [ ] Conciliación bancaria: los movimientos marcados `conciliado = true` no deben ser editables.
+- [x] Reglas de negocio: cálculo de interés, mora y cuota coincide con fórmulas de la sección 5 (comparar contra cálculo manual en hoja de cálculo de control).
+- [x] Cuadre contable: todo `asiento_contable` generado automáticamente cumple `SUM(debe) = SUM(haber)`.
+- [x] Inmutabilidad: intentar eliminar una transacción financiera debe estar bloqueado a nivel de API (solo anulación permitida).
+- [x] Auditoría: cada creación/edición/aprobación/anulación relevante deja registro en `auditoria` con usuario y timestamp.
+- [x] Permisos: un usuario sin permiso `APROBAR` en un módulo no puede ejecutar la acción aunque conozca el endpoint.
+- [x] Separación de funciones: quien crea una solicitud de crédito/gasto no puede aprobarla (salvo excepción autorizada).
+- [x] Cierre de período: no se pueden crear ni editar movimientos en un período `CERRADO` sin reapertura autorizada.
+- [x] Histórico de tasas: cambiar una tasa vigente hoy no debe alterar cuotas/intereses ya calculados en el pasado.
+- [x] Conciliación bancaria: los movimientos marcados `conciliado = true` no deben ser editables.
 
 ---
 
@@ -1047,6 +1073,19 @@ créditos (filtros TODOS/PENDIENTE/VENCIDA + exportar CSV) y dashboard de KPIs
 protegidos por permiso. Verificación: backend 52/52, frontend 59/59, e2e 26/26
 (incluye `e2e/dashboard.spec.ts` y test de cartera en `e2e/creditos.spec.ts`).
 
+**Estado (reportes PDF/Excel/CSV):** Implementado. Backend: `ReporteService`
+(generación server-side con Apache POI para `.xlsx` y OpenPDF para `.pdf`,
+CSV con separador `;` y BOM UTF-8) y `ReporteController` con endpoints
+`GET /reportes/socios.{csv,xlsx,pdf}` (permiso `SOCIOS:VER`),
+`GET /reportes/cartera.{xlsx,pdf}` (permiso `CREDITOS:VER`) y
+`GET /reportes/caja.{csv,xlsx,pdf}` (permiso `CAJA:VER`). Frontend:
+`ReporteService.exportarSocios/exportarCaja/exportarCarteraExcel/exportarCarteraPdf`
+con botones de exportación en la tab Cartera de créditos (CSV/Excel/PDF), en el
+listado de socios (Excel/PDF) y en el detalle de caja (Excel/PDF). Verificación:
+backend 77/77 (incluye `ReporteIntegrationTest` 7/7 que valida firma PK del
+`.xlsx`, cabecera `%PDF` y rechazo 403 por permiso), frontend 87/87, e2e 38/38
+(incluye descarga de `cartera.xlsx/pdf`, `socios.xlsx/pdf` y `caja.xlsx/pdf`).
+
 ### 11.10 Pruebas integrales finales (Fase 6)
 
 ```
@@ -1057,7 +1096,7 @@ final de cobertura de pruebas por módulo.
 ```
 
 **Estado:** Checklist de la sección 10 ejecutado. Resultado: 9/9 ítems cubiertos
-por pruebas automatizadas (backend 56/56). Reporte de cobertura por ítem:
+por pruebas automatizadas (backend 67/67). Reporte de cobertura por ítem:
 
 1. **Reglas de negocio (interés, mora, cuota)** — Cubierto. `AmortizacionServiceTest`
    (FRANCES 1000@18% → cuota 91.68, total interés 100.16, suma capital = monto exacto,
@@ -1067,8 +1106,8 @@ por pruebas automatizadas (backend 56/56). Reporte de cobertura por ítem:
    (capital cuota 1 ≈ 92.02 manual y `mora = capital × tasa_mora × dias / 360` con
    valor exacto: 1200@18%, 30 días, 1% → 0.08).
 2. **Cuadre contable SUM(debe) = SUM(haber)** — Cubierto. `AsientoAutomaticoServiceTest`
-   (8 operaciones de la matriz: debe = haber = monto; cobro de cuota 100+20+5 → asiento
-   único con debe = haber = 125.00).
+   (9 operaciones de la matriz —incluye COBRO_CUENTA—: debe = haber = monto; cobro de
+   cuota 100+20+5 → asiento único con debe = haber = 125.00).
 3. **Inmutabilidad (solo anulación)** — Cubierto y reforzado.
    `AuthFlowIntegrationTest.eliminarTransaccionFinancieraEstaBloqueadoEnApi` ahora
    intenta DELETE sobre 7 rutas (socios, creditos, pagos, caja, aportaciones, bancos,
@@ -1083,24 +1122,144 @@ por pruebas automatizadas (backend 56/56). Reporte de cobertura por ítem:
    cajero 403 al evaluar/aprobar).
 6. **Separación de funciones** — Cubierto. `solicitanteNoPuedeEvaluarNiAprobarSuPropiaSolicitud`
    (400) y `cicloCompletoSolicitudDesembolsoYPagoDeCuota` (creador 403; solo admin aprueba).
-7. **Cierre de período** — Cubierto. `AsientoAutomaticoServiceTest.periodoCerradoBloqueaRegistroDeMovimientos`.
+7. **Cierre de período** — Cubierto. `AsientoAutomaticoServiceTest.periodoCerradoBloqueaRegistroDeMovimientos`
+   (unit) + **nuevo** `CierrePeriodoIntegrationTest` vía API: admin cierra el período
+   actual → pago de gasto y asiento manual devuelven 400 "CERRADO" y no dejan asientos;
+   `/reabrir` restaura el flujo (pago → 200); cajero recibe 403 en `cerrar`/`reabrir`.
 8. **Histórico de tasas** — Cubierto. **Nuevo**
    `cambioDeTasaVigenteNoAlteraCuotasYaGeneradas`: la tasa se copia al crédito al aprobar
    (`CreditoService.crearCredito`) y el desembolso la usa desde esa copia; al cambiar la
    tasa del producto, el crédito conserva `tasaInteres` original y las cuotas no varían.
 9. **Conciliación bancaria** — Cubierto. **Nuevo** `BancoFlowIntegrationTest`:
-   conciliación registra diferencia y auditoría; el movimiento marcado `conciliado=true`
-   no admite edición ni borrado (PUT/DELETE → 4xx; no existen endpoints de mutación).
-   Nota: `conciliar` registra la conciliación y su diferencia pero no auto-marca el flag
-   `conciliado` de los movimientos; la inmutabilidad se garantiza igual porque no hay
-   endpoints de edición de movimientos bancarios.
+   conciliación registra diferencia y auditoría; con diferencia 0 `conciliar` marca
+   automáticamente `conciliado=true` los movimientos del período; el movimiento
+   conciliado no admite edición ni borrado (PUT/DELETE → 4xx; no existen endpoints
+   de mutación de movimientos bancarios).
 
-**Reporte de cobertura por módulo:** socios/seguridad (AuthFlow + AuditoriaTest),
-caja (CajaFlowIntegrationTest), bancos (BancoFlowIntegrationTest nuevo),
-aportaciones (AportacionesFlowIntegrationTest), ahorros (AhorrosFlowIntegrationTest),
-contabilidad (AsientoAutomaticoServiceTest + ReglaContableRepositoryTest),
-créditos/cobranza (CreditosFlowIntegrationTest + AmortizacionServiceTest),
-cartera/reportes (CarteraIntegrationTest). Sin issues abiertos.
+**Reporte final de cobertura por módulo** (backend 77, frontend unit 87, e2e 38):
+
+| Módulo | Backend (unit/integración) | Frontend unit | e2e |
+|---|---|---|---|
+| Seguridad | `AuthFlowIntegrationTest` 10 | `auth.service.spec` 4 + `seguridad.service.spec` 6 | `seguridad.spec` 3 + `login.spec` 7 |
+| Socios / auditoría | `AuditoriaTest` 2 | — | `socios.spec` 5 |
+| Aportaciones | `AportacionesFlowIntegrationTest` 4 | `aportacion.service.spec` 5 | `aportaciones.spec` 3 |
+| Ahorros | `AhorrosFlowIntegrationTest` 4 | `ahorro.service.spec` 7 | `ahorros.spec` 3 |
+| Caja | `CajaFlowIntegrationTest` 2 | `caja.service.spec` 6 | `caja.spec` 3 |
+| Bancos | `BancoFlowIntegrationTest` 1 | `banco.service.spec` 4 | `bancos.spec` 3 |
+| Contabilidad | `AsientoAutomaticoServiceTest` 7 + `ReglaContableRepositoryTest` 4 + `CierrePeriodoIntegrationTest` 3 | `contabilidad.service.spec` 6 | `contabilidad.spec` 3 |
+| Créditos / cobranza | `AmortizacionServiceTest` 6 + `CreditosFlowIntegrationTest` 8 | `credito.service.spec` 15 | `creditos.spec` 4 |
+| Cartera / dashboard | `CarteraIntegrationTest` 7 | — | `dashboard.spec` 3 |
+| Reportes (CSV/XLSX/PDF) | `ReporteIntegrationTest` 7 | `reporte.service.spec` 10 | `creditos/caja/socios.spec` (descargas) |
+| Notificaciones | `NotificacionFlowIntegrationTest` 3 | `notificacion.service.spec` 5 | `notificaciones.spec` 3 |
+| Tesorería / presupuesto | `TesoreriaFlowIntegrationTest` 5 | `tesoreria.service.spec` 14 | `tesoreria.spec` 5 |
+| Portal del socio | `PortalFlowIntegrationTest` 3 | `portal.service.spec` 4 | `portal.spec` 6 |
+| Aplicación (raíz) | `CajaAhorrosBackendApplicationTests` 1 | `app.spec` 1 | — |
+| **Total** | **77** | **87** | **38** |
+
+Sin issues abiertos.
+
+### 11.11 Tesorería y presupuesto (Fase 5)
+
+```
+Implementa "tesoreria" completo (secciones 2.13, 2.14 y 2.15): gastos con flujo
+de aprobación, cuentas por pagar y cuentas por cobrar, y presupuesto vs.
+ejecución, todos ligados a la caja y al motor contable.
+Requisitos:
+- Gastos: solicitar (PENDIENTE) → aprobar/rechazar (motivo) → pagar → anular;
+  cada pago crea movimiento de caja (tipo GASTO) y dispara el asiento
+  GASTO_PAGADO (5.1.01 → 1.1.01). Quien solicita no puede aprobar su gasto.
+- Cuentas por pagar: registrar y pagar con asiento y caja; cuentas por cobrar:
+  registrar y cobrar con asiento COBRO_CUENTA (1.1.01 → 1.4.01).
+- Presupuesto: partidas anuales por cuenta contable (UNIQUE anio+concepto) y
+  resumen con ejecutado calculado del debe de la cuenta (sumDebePorCuentaYAnio)
+  y % de ejecución.
+- Permisos TESORERIA:VER/CREAR/APROBAR/EDITAR/ANULAR por rol (GERENTE solo
+  VER+APROBAR, TESORERO VER+CREAR+EDITAR+ANULAR, CONTADOR VER+CREAR, AUDITOR
+  solo VER) y separación de funciones.
+- Frontend: módulo /tesoreria con tabs Gastos, Cuentas por pagar, Cuentas por
+  cobrar y Presupuesto; botones y formularios condicionados al permiso.
+Escribe pruebas integrales del flujo completo y de la matriz de permisos.
+```
+
+**Estado:** Implementado. Backend: entidades `Gasto`, `CuentaPorPagar`,
+`CuentaPorCobrar`, `PresupuestoPartida`; `TesoreriaService` (flujos con caja +
+asiento + auditoría) y `TesoreriaController` con `@PreAuthorize('TESORERIA:...')`;
+tipos de movimiento `GASTO` y `COBRO_CXC` y reglas `GASTO_PAGADO` (5.1.01→1.1.01)
+y `COBRO_CUENTA` (1.1.01→1.4.01); DDL de las 4 tablas en ambos schema.sql y
+aplicado a la base dev. Frontend: módulo `/tesoreria` con 4 tabs, modelo y
+`TesoreriaService` + spec. Verificación: backend 61/61 tests
+(incluye `TesoreriaFlowIntegrationTest` 5/5), frontend 73/73 unit tests,
+e2e 30/30 (incluye `e2e/tesoreria.spec.ts` 4/4: flujo completo, gerente
+aprueba sin pagar, cajero paga sin aprobar, sin permiso → redirect).
+
+### 11.12 Notificaciones y alertas (Fase 6)
+
+```
+Implementa el subsistema de notificaciones y alertas (sección 2.16):
+- Entidad `notificaciones` (usuario_id, tipo, referencia_tabla, referencia_id,
+  mensaje, leida, created_at) con índice por (usuario_id, leida).
+- Job diario @Scheduled (06:00) `NotificacionService.generarAlertas()` que
+  detecta: CUOTA_PROXIMA (vencimiento en los próximos 7 días), CUOTA_VENCIDA,
+  MORA (mora acumulada > 0), APORTACION_PENDIENTE (periodo actual) y
+  CIERRE_PENDIENTE (cajas abiertas de días anteriores). Notifica al usuario
+  vinculado al socio (`socios.usuario_id`); sin usuario vinculado, no notifica.
+- Deduplicación por (usuario_id, tipo, referencia_tabla, referencia_id).
+- Endpoints: GET /notificaciones, GET /no-leidas, POST /{id}/leida,
+  POST /leidas (cualquier usuario autenticado, solo sus propias alertas) y
+  POST /generar (solo ADMIN, para disparo manual).
+- Frontend: campana en el shell con badge de no leídas y panel desplegable
+  con lista, marcar una/todas como leídas.
+Escribe pruebas integrales del job manual, la deduplicación y la propiedad
+de las notificaciones, y un e2e del flujo campana → listado → leído.
+```
+
+**Estado:** Implementado. Backend: `Notificacion` + `NotificacionRepository`
+(cuenta, dedupe, por usuario), `NotificacionService` con `@Scheduled`
+`generarAlertas()` (5 tipos, vinculación socio↔usuario) y
+`NotificacionController` con `@PreAuthorize` (`isAuthenticated()` para las
+propias y `hasRole('ADMIN')` para `/generar`); `@EnableScheduling` habilitado
+en la aplicación; DDL de `notificaciones` en ambos schema.sql y aplicado a la
+base dev. Frontend: modelo `notificacion.model.ts`, `NotificacionService` +
+spec, y campana con badge y panel en el shell. Verificación: backend 64/64
+tests (incluye `NotificacionFlowIntegrationTest` 3/3: generación + dedupe,
+propiedad al marcar leída y matriz de permisos), frontend 78/78 unit tests,
+e2e 32/32 (incluye `e2e/notificaciones.spec.ts` 2/2: campana
+→ listado → marcar todas, y 403 para no-ADMIN en /generar).
+
+### 11.13 Portal del socio (lectura) (Fase 6)
+
+```
+Implementa el portal de consulta de solo lectura para el socio autenticado:
+- Backend: modulo `portal` con endpoints GET /portal/resumen, /ahorro,
+  /aportaciones y /creditos, todos con @PreAuthorize("hasAuthority('PORTAL:VER')").
+  El socio se deriva de la sesion via `socios.usuario_id`
+  (SocioRepository.findByUsuarioId). Si el usuario no tiene socio vinculado o
+  tiene mas de uno, responde 400 con mensaje claro.
+- Permiso nuevo PORTAL:VER y rol SOCIO (solo lectura) sembrados en DataSeeder.
+  Usuario/socio demo: usuario "socio"/"socio123" (Maria Perez) vinculado al
+  socio SOC-DEMO-01.
+- resumen agrega saldos: saldoAhorro, totalAportado, aportePendientePeriodo,
+  saldoCreditoVigente, cuotasVencidas, cuotasPendientes y notificacionesNoLeidas.
+- Frontend: ruta /portal (fuera del shell, con authGuard + permisoGuard
+  PORTAL:VER), PortalService + modelo, y PortalComponent con KPIs, secciones de
+  ahorro (cuentas + movimientos), aportaciones (periodo, montos, estado),
+  creditos (cuotas y pagos) y notificaciones reutilizando NotificacionService.
+- Login redirige a /portal cuando el usuario tiene el rol SOCIO.
+Escribe pruebas integrales (resumen/ahorro/aportaciones/creditos scoped al socio
+autenticado, 403 sin PORTAL:VER, 400 sin socio unico vinculado) y un e2e del
+flujo login socio → portal → logout.
+```
+
+**Estado:** Implementado. Backend: modulo `portal` (`PortalController` +
+`PortalService` + DTOs), permiso `PORTAL:VER`, rol `SOCIO`, usuario demo
+`socio`/`socio123` y socio `SOC-DEMO-01` en `DataSeeder`; `socioAutenticado()`
+valida socio unico vinculado. Frontend: `portal.model.ts`, `PortalService` +
+spec, `PortalComponent` (KPIs, ahorro, aportaciones, creditos y notificaciones),
+ruta `/portal` con guards y redireccion de login por rol. Verificación: backend
+70/70 tests (incluye `PortalFlowIntegrationTest` 3/3), frontend 82/82 unit
+tests, e2e 37/37 (incluye `e2e/portal.spec.ts` 5/5: acceso al portal, codigo del
+socio, cuenta de ahorro y aportaciones, bloqueo de modulos administrativos y
+logout).
 
 ---
 

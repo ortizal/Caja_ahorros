@@ -1,0 +1,57 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Nueva Cuenta por Pagar</h1>
+    <p class="page-subtitle">Registro de obligaciones pendientes con proveedores</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="cxp-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos de la Cuenta por Pagar</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Proveedor *</span>
+        <input class="form-control form-control-sm" formControlName="proveedor" placeholder="Nombre o Razón Social" data-testid="input-cxp-proveedor" />
+      </label>
+      <label class="field">
+        <span>Concepto *</span>
+        <input class="form-control form-control-sm" formControlName="concepto" placeholder="Ej. Factura servicios" data-testid="input-cxp-concepto" />
+      </label>
+      <label class="field">
+        <span>Monto ($) *</span>
+        <input type="number" step="0.01" class="form-control form-control-sm" formControlName="monto" placeholder="0.00" data-testid="input-cxp-monto" />
+      </label>
+      <label class="field">
+        <span>Cuenta Contable *</span>
+        <select class="form-select form-select-sm" formControlName="cuentaContableId" data-testid="input-cxp-cuenta">
+          <option [ngValue]="0" disabled>Seleccione cuenta</option>
+          @for (c of planCuentas(); track c.id) {
+            <option [ngValue]="c.id" [disabled]="!c.aceptaMovimiento">{{ c.codigo }} — {{ c.nombre }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Fecha de Vencimiento *</span>
+        <input type="date" class="form-control form-control-sm" formControlName="fechaVencimiento" data-testid="input-cxp-vencimiento" />
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-cxp" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando…' : '📤 Registrar Cuenta por Pagar' }}
+    </button>
+  </div>
+</form>

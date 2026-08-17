@@ -1,0 +1,64 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">Nueva Solicitud de Crédito</h1>
+    <p class="page-subtitle">Registro de solicitudes de crédito de los socios</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" data-testid="solicitud-form">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Datos de la Solicitud</h3>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>Socio Solicitante *</span>
+        <select class="form-select form-select-sm" formControlName="socioId" data-testid="input-socio-solicitud">
+          <option [ngValue]="0" disabled>Seleccionar socio</option>
+          @for (s of socios(); track s.id) {
+            <option [ngValue]="s.id">{{ s.codigo }} - {{ s.nombres }} {{ s.apellidos }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Producto de Crédito *</span>
+        <select class="form-select form-select-sm" formControlName="productoId" data-testid="input-producto-solicitud">
+          <option [ngValue]="0" disabled>Seleccionar producto</option>
+          @for (p of productos(); track p.id) {
+            @if (p.activo) {
+              <option [ngValue]="p.id">{{ p.nombre }}</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Monto Solicitado ($) *</span>
+        <input type="number" class="form-control form-control-sm" formControlName="montoSolicitado" placeholder="0.00" data-testid="input-monto-solicitud" />
+      </label>
+      <label class="field">
+        <span>Plazo (meses) *</span>
+        <input type="number" class="form-control form-control-sm" formControlName="plazoMeses" placeholder="12" data-testid="input-plazo-solicitud" />
+      </label>
+      <label class="field" style="grid-column: 1 / -1;">
+        <span>Destino / Propósito</span>
+        <input class="form-control form-control-sm" formControlName="destino" placeholder="Motivo del crédito" data-testid="input-destino-solicitud" />
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+    <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-crear-solicitud" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando…' : '📄 Registrar Solicitud' }}
+    </button>
+  </div>
+</form>

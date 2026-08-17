@@ -2,6 +2,8 @@ package com.alantek.caja.modulo.socios.controller;
 
 import com.alantek.caja.modulo.seguridad.entity.Auditoria;
 import com.alantek.caja.modulo.seguridad.repository.AuditoriaRepository;
+import com.alantek.caja.modulo.creditos.repository.CreditoRepository;
+import com.alantek.caja.modulo.creditos.repository.SolicitudCreditoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,12 @@ class AuditoriaTest {
 
     @Autowired
     private AuditoriaRepository auditoriaRepository;
+
+    @Autowired
+    private CreditoRepository creditoRepository;
+
+    @Autowired
+    private SolicitudCreditoRepository solicitudRepository;
 
     @Test
     void crearSocioRegistraAuditoriaConDetalleJson() throws Exception {
@@ -137,9 +145,18 @@ class AuditoriaTest {
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         for (JsonNode socio : body) {
-            if ("ACTIVO".equals(socio.get("estado").asText())) {
-                return socio.get("id").asLong();
+            long socioId = socio.get("id").asLong();
+            if (!"ACTIVO".equals(socio.get("estado").asText())) {
+                continue;
             }
+            if (solicitudRepository.existsBySocioIdAndEstadoIn(socioId,
+                    List.of("PENDIENTE", "EVALUACION", "APROBADA"))) {
+                continue;
+            }
+            if (creditoRepository.existsBySocioIdAndEstadoIn(socioId, List.of("VIGENTE", "EN_MORA"))) {
+                continue;
+            }
+            return socioId;
         }
         throw new IllegalStateException("No hay socios ACTIVOS para la prueba");
     }

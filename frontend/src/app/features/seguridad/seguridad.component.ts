@@ -1,22 +1,28 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
 import { Auditoria, Permiso, Rol, Usuario } from '../../core/models/seguridad.model';
 import { SeguridadService } from '../../core/services/seguridad.service';
+import { ToastService } from '../../core/services/toast.service';
+import { ModalComponent, ModalFooterDirective } from '../../shared/components/modal/modal.component';
+import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
+import { UsuarioDetalleComponent } from './usuario-detalle.component';
 
 @Component({
   selector: 'app-seguridad',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink, AccionesMenuComponent, ModalComponent, ModalFooterDirective, UsuarioDetalleComponent],
   templateUrl: './seguridad.html',
   styleUrl: './seguridad.css'
 })
 export class SeguridadComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly seguridadService = inject(SeguridadService);
+  private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
 
   protected readonly puedeCrear = computed(() => this.auth.hasPermiso('SEGURIDAD:CREAR'));
@@ -28,20 +34,14 @@ export class SeguridadComponent implements OnInit {
   protected readonly permisos = signal<Permiso[]>([]);
   protected readonly auditoria = signal<Auditoria[]>([]);
   protected readonly error = signal('');
-  protected readonly ok = signal('');
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
 
-  protected readonly editandoId = signal<number | null>(null);
-  protected readonly usuarioForm = this.fb.nonNullable.group({
-    username: ['', [Validators.required]],
-    password: [''],
-    nombreCompleto: ['', [Validators.required]],
-    email: ['']
-  });
-  protected readonly rolSeleccionados = signal<number[]>([]);
+  protected readonly detalle = signal<Usuario | null>(null);
+  protected readonly infoAbierto = signal(false);
 
   protected readonly rolEditando = signal<Rol | null>(null);
+  protected readonly rolPermisosAbierto = signal(false);
   protected readonly permisoSeleccionados = signal<number[]>([]);
   protected readonly modulos = signal<string[]>([]);
 
@@ -60,7 +60,10 @@ export class SeguridadComponent implements OnInit {
   cargarUsuarios(): void {
     this.seguridadService.usuarios().subscribe({
       next: (u) => this.usuarios.set(u),
-      error: () => this.usuarios.set([])
+      error: () => {
+        this.usuarios.set([]);
+        this.error.set('No se pudieron cargar los usuarios.');
+      }
     });
   }
 
@@ -81,9 +84,25 @@ export class SeguridadComponent implements OnInit {
     });
   }
 
+  ver(usuario: Usuario): void {
+    this.detalle.set(usuario);
+    this.infoAbierto.set(true);
+  }
+
+  cerrarInfo(): void {
+    this.infoAbierto.set(false);
+    this.detalle.set(null);
+  }
+
   permisoSeleccionadosParaRol(rol: Rol): void {
     this.rolEditando.set(rol);
     this.permisoSeleccionados.set(rol.permisos.map((p) => p.id));
+    this.rolPermisosAbierto.set(true);
+  }
+
+  cerrarPermisos(): void {
+    this.rolPermisosAbierto.set(false);
+    this.rolEditando.set(null);
   }
 
   togglePermiso(id: number): void {
@@ -99,74 +118,20 @@ export class SeguridadComponent implements OnInit {
     }
     this.guardando.set(true);
     this.error.set('');
-    this.ok.set('');
     this.seguridadService.asignarPermisos(rol.id, this.permisoSeleccionados())
       .pipe(finalize(() => this.guardando.set(false)))
       .subscribe({
         next: (actualizado) => {
-          this.ok.set(`Permisos de ${actualizado.nombre} actualizados.`);
+          this.toast.success(`Permisos de ${actualizado.nombre} actualizados.`);
           this.cargarRoles();
+          this.cerrarPermisos();
         },
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudieron asignar los permisos.')
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudieron asignar los permisos.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
       });
-  }
-
-  nuevoUsuario(): void {
-    this.editandoId.set(null);
-    this.usuarioForm.reset({ username: '', password: '', nombreCompleto: '', email: '' });
-    this.rolSeleccionados.set([]);
-  }
-
-  editarUsuario(usuario: Usuario): void {
-    this.editandoId.set(usuario.id);
-    this.usuarioForm.patchValue({
-      username: usuario.username,
-      password: '',
-      nombreCompleto: usuario.nombreCompleto,
-      email: usuario.email ?? ''
-    });
-    const ids = this.roles()
-      .filter((r) => usuario.roles.includes(r.nombre))
-      .map((r) => r.id);
-    this.rolSeleccionados.set(ids);
-  }
-
-  toggleRol(id: number): void {
-    this.rolSeleccionados.update((actual) =>
-      actual.includes(id) ? actual.filter((x) => x !== id) : [...actual, id]
-    );
-  }
-
-  guardarUsuario(): void {
-    if (this.usuarioForm.invalid || this.guardando()) {
-      return;
-    }
-    const raw = this.usuarioForm.getRawValue();
-    const request = {
-      username: raw.username,
-      password: raw.password || undefined,
-      nombreCompleto: raw.nombreCompleto,
-      email: raw.email || undefined,
-      rolIds: this.rolSeleccionados()
-    };
-
-    this.guardando.set(true);
-    this.error.set('');
-    this.ok.set('');
-    const id = this.editandoId();
-    const llamada = id
-      ? this.seguridadService.actualizarUsuario(id, request)
-      : this.seguridadService.crearUsuario(request);
-    llamada.pipe(finalize(() => this.guardando.set(false))).subscribe({
-      next: () => {
-        this.ok.set('Usuario guardado correctamente.');
-        this.nuevoUsuario();
-        this.cargarUsuarios();
-      },
-      error: (err: HttpErrorResponse) =>
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo guardar el usuario.')
-    });
   }
 
   cambiarEstado(usuario: Usuario): void {
@@ -177,11 +142,14 @@ export class SeguridadComponent implements OnInit {
       .pipe(finalize(() => this.guardando.set(false)))
       .subscribe({
         next: () => {
-          this.ok.set(`Usuario ${nuevoEstado.toLowerCase()}.`);
+          this.toast.success(`Usuario ${nuevoEstado.toLowerCase()}.`);
           this.cargarUsuarios();
         },
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo cambiar el estado.')
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo cambiar el estado.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
       });
   }
 
@@ -194,8 +162,11 @@ export class SeguridadComponent implements OnInit {
       .pipe(finalize(() => this.cargando.set(false)))
       .subscribe({
         next: (a) => this.auditoria.set(a),
-        error: (err: HttpErrorResponse) =>
-          this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudo consultar la auditoría.')
+        error: (err: HttpErrorResponse) => {
+          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo consultar la auditoría.';
+          this.error.set(msg);
+          this.toast.error(msg);
+        }
       });
   }
 }
