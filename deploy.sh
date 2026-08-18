@@ -48,7 +48,8 @@ deploy_frontend() {
 
   step "Frontend: copiando $FRONTEND_DIST a $WEB_ROOT"
   $SUDO mkdir -p "$WEB_ROOT"
-  $SUDO rsync -a --delete "$FRONTEND_DIR/$FRONTEND_DIST/" "$WEB_ROOT/"
+  $SUDO rm -rf "$WEB_ROOT"/*
+  $SUDO cp -r "$FRONTEND_DIR/$FRONTEND_DIST/"* "$WEB_ROOT/"
   $SUDO chown -R www-data:www-data "$WEB_ROOT"
   echo "Frontend desplegado en $WEB_ROOT (raiz http://192.168.1.43/caja-ahorros/)"
 }
