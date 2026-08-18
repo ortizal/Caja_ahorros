@@ -57,6 +57,7 @@ deploy_frontend() {
 deploy_backend() {
   step "Backend: compilando JAR (skip tests)"
   cd "$BACKEND_DIR"
+  chmod +x ./mvnw
   ./mvnw -q -DskipTests package
 
   step "Backend: construyendo imagen Docker ($IMAGE_NAME)"
