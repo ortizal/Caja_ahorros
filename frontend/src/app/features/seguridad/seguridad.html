@@ -15,6 +15,7 @@
   <button type="button" class="tab-btn" [class.active]="tab() === 'usuarios'" (click)="tab.set('usuarios')">Usuarios</button>
   <button type="button" class="tab-btn" [class.active]="tab() === 'roles'" (click)="tab.set('roles')">Roles y permisos</button>
   <button type="button" class="tab-btn" [class.active]="tab() === 'auditoria'" (click)="tab.set('auditoria')">Auditoría</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'correo'" (click)="tab.set('correo')">Correo</button>
 </div>
 
 @if (cargando()) {
@@ -28,9 +29,19 @@
   <div class="card" data-testid="usuarios-panel">
     <div class="card-header">
       <h3 class="card-title">Usuarios del Sistema</h3>
-      @if (puedeCrear() || puedeEditar()) {
-        <a class="btn btn-sm btn-primary" routerLink="/seguridad/usuarios/nuevo" data-testid="btn-nuevo-usuario">➕ Nuevo Usuario</a>
-      }
+      <div class="header-actions">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-usuarios-pdf"
+                [disabled]="exportando()" (click)="exportarPdf('usuarios')">
+          PDF
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-usuarios-xlsx"
+                [disabled]="exportando()" (click)="exportarExcel('usuarios')">
+          Excel
+        </button>
+        @if (puedeCrear() || puedeEditar()) {
+          <a class="btn btn-sm btn-primary" routerLink="/seguridad/usuarios/nuevo" data-testid="btn-nuevo-usuario">➕ Nuevo Usuario</a>
+        }
+      </div>
     </div>
 
     <div class="table-responsive">
@@ -241,6 +252,37 @@
         <div class="empty-state-text">Sin registros de auditoría para los filtros aplicados.</div>
       </div>
     }
+  </div>
+}
+
+@if (tab() === 'correo') {
+  <div class="card" data-testid="correo-panel">
+    <div class="card-header">
+      <h3 class="card-title">Prueba de Configuración de Correo</h3>
+    </div>
+    <div style="padding: 16px;">
+      <p style="margin: 0 0 16px 0; color: var(--color-text-secondary);">
+        Envía un correo de prueba para verificar la configuración SMTP del servidor.
+      </p>
+      <div class="form-inline" style="gap: 8px;">
+        <label class="field" style="flex: 1;">
+          <span>Dirección de correo destino</span>
+          <input class="form-control form-control-sm" type="email" placeholder="correo@ejemplo.com"
+                 [value]="correoEmail()" (input)="correoEmail.set($any($event.target).value)"
+                 data-testid="input-correo-email" />
+        </label>
+        <div style="display: flex; align-items: flex-end; padding-bottom: 2px;">
+          <button type="button" class="btn btn-sm btn-primary" data-testid="btn-enviar-correo"
+                  [disabled]="enviando() || !correoEmail()" (click)="testCorreo()">
+            @if (enviando()) {
+              Enviando…
+            } @else {
+              Enviar correo de prueba
+            }
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 }
 

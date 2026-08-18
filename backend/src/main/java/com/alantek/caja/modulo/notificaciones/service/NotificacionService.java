@@ -11,11 +11,16 @@ import com.alantek.caja.modulo.creditos.repository.CuotaCreditoRepository;
 import com.alantek.caja.modulo.notificaciones.dto.NotificacionResponse;
 import com.alantek.caja.modulo.notificaciones.entity.Notificacion;
 import com.alantek.caja.modulo.notificaciones.repository.NotificacionRepository;
+import com.alantek.caja.modulo.seguridad.entity.Usuario;
+import com.alantek.caja.modulo.seguridad.repository.UsuarioRepository;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
 import com.alantek.caja.shared.PageResponse;
+import com.alantek.caja.shared.email.EmailService;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,6 +34,8 @@ import java.util.List;
 @Service
 public class NotificacionService {
 
+    private static final Logger log = LoggerFactory.getLogger(NotificacionService.class);
+
     private final NotificacionRepository notificacionRepository;
     private final SocioRepository socioRepository;
     private final CreditoRepository creditoRepository;
@@ -36,6 +43,8 @@ public class NotificacionService {
     private final AportacionRepository aportacionRepository;
     private final CajaAperturaRepository cajaAperturaRepository;
     private final CurrentUserService currentUserService;
+    private final UsuarioRepository usuarioRepository;
+    private final EmailService emailService;
 
     public NotificacionService(NotificacionRepository notificacionRepository,
                                SocioRepository socioRepository,
@@ -43,7 +52,9 @@ public class NotificacionService {
                                CuotaCreditoRepository cuotaRepository,
                                AportacionRepository aportacionRepository,
                                CajaAperturaRepository cajaAperturaRepository,
-                               CurrentUserService currentUserService) {
+                               CurrentUserService currentUserService,
+                               UsuarioRepository usuarioRepository,
+                               EmailService emailService) {
         this.notificacionRepository = notificacionRepository;
         this.socioRepository = socioRepository;
         this.creditoRepository = creditoRepository;
@@ -51,6 +62,8 @@ public class NotificacionService {
         this.aportacionRepository = aportacionRepository;
         this.cajaAperturaRepository = cajaAperturaRepository;
         this.currentUserService = currentUserService;
+        this.usuarioRepository = usuarioRepository;
+        this.emailService = emailService;
     }
 
     @Transactional(readOnly = true)
@@ -92,6 +105,19 @@ public class NotificacionService {
         notificacion.setReferenciaId(referenciaId);
         notificacion.setMensaje(mensaje);
         notificacionRepository.save(notificacion);
+        enviarEmailNotificacion(usuarioId, tipo, mensaje);
+    }
+
+    private void enviarEmailNotificacion(Long usuarioId, String tipo, String mensaje) {
+        try {
+            Usuario usuario = usuarioRepository.findById(usuarioId).orElse(null);
+            if (usuario == null || usuario.getEmail() == null || usuario.getEmail().isBlank()) {
+                return;
+            }
+            emailService.enviarNotificacion(usuario.getEmail(), usuario.getNombreCompleto(), tipo, mensaje);
+        } catch (Exception e) {
+            log.error("Error al enviar email de notificacion para usuario {}: {}", usuarioId, e.getMessage());
+        }
     }
 
     @Transactional

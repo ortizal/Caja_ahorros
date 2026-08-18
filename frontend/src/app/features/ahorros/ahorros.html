@@ -3,6 +3,16 @@
     <h1 class="page-title">Gestión de Ahorros</h1>
     <p class="page-subtitle">Productos de ahorro, apertura de cuentas, depósitos, retiros e intereses</p>
   </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-ahorros-pdf"
+            [disabled]="exportando()" (click)="exportarPdf('ahorros')">
+      PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-ahorros-xlsx"
+            [disabled]="exportando()" (click)="exportarExcel('ahorros')">
+      Excel
+    </button>
+  </div>
 </div>
 
 @if (error()) {

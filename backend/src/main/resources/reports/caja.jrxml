@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="caja" pageWidth="595" pageHeight="842"
+              columnWidth="555" leftMargin="20" rightMargin="20"
+              topMargin="20" bottomMargin="20">
+    <parameter name="subtitle" class="java.lang.String"/>
+    <parameter name="title" class="java.lang.String"/>
+    <field name="cajero" class="java.lang.String"/>
+    <field name="fechaApertura" class="java.lang.String"/>
+    <field name="saldoInicial" class="java.lang.String"/>
+    <field name="totalIngresos" class="java.lang.String"/>
+    <field name="totalEgresos" class="java.lang.String"/>
+    <field name="saldoFinal" class="java.lang.String"/>
+    <field name="estado" class="java.lang.String"/>
+    <title>
+        <band height="50">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="25"/>
+                <textElement>
+                    <font size="14" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Reporte de Caja]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="0" y="25" width="555" height="20"/>
+                <textElement>
+                    <font size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{subtitle}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+    <columnHeader>
+        <band height="25">
+            <staticText>
+                <reportElement x="0" y="0" width="100" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Cajero]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="100" y="0" width="75" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Fecha Apertura]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="175" y="0" width="65" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Saldo Inicial]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="240" y="0" width="65" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Ingresos]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="305" y="0" width="65" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Egresos]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="370" y="0" width="70" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Saldo Final]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="440" y="0" width="50" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Estado]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="100" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{cajero}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="100" y="0" width="75" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{fechaApertura}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="175" y="0" width="65" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{saldoInicial}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="240" y="0" width="65" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{totalIngresos}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="305" y="0" width="65" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{totalEgresos}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="370" y="0" width="70" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{saldoFinal}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="440" y="0" width="50" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{estado}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+</jasperReport>

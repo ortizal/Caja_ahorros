@@ -41,6 +41,10 @@ export class SeguridadService {
     return this.http.post<Rol>(`${this.base}/roles/${rolId}/permisos`, permisoIds);
   }
 
+  testEmail(to: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/config/email/test`, { to });
+  }
+
   auditoria(tabla?: string, desde?: string, hasta?: string, paginacion?: Paginacion): Observable<Paginated<Auditoria>> {
     const params: Record<string, string | number> = paginar(paginacion);
     if (tabla) {

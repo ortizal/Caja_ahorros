@@ -1,15 +1,29 @@
 package com.alantek.caja.modulo.reportes.service;
 
+import com.alantek.caja.modulo.ahorros.entity.CuentaAhorro;
+import com.alantek.caja.modulo.ahorros.entity.ProductoAhorro;
+import com.alantek.caja.modulo.ahorros.repository.CuentaAhorroRepository;
+import com.alantek.caja.modulo.ahorros.repository.ProductoAhorroRepository;
+import com.alantek.caja.modulo.aportaciones.entity.Aportacion;
+import com.alantek.caja.modulo.aportaciones.repository.AportacionRepository;
 import com.alantek.caja.modulo.caja.entity.CajaApertura;
 import com.alantek.caja.modulo.caja.entity.CajaMovimiento;
 import com.alantek.caja.modulo.caja.repository.CajaAperturaRepository;
 import com.alantek.caja.modulo.caja.repository.CajaMovimientoRepository;
 import com.alantek.caja.modulo.caja.service.TipoMovimiento;
 import com.alantek.caja.modulo.cartera.service.CarteraService;
+import com.alantek.caja.modulo.creditos.entity.Credito;
+import com.alantek.caja.modulo.creditos.entity.ProductoCredito;
+import com.alantek.caja.modulo.creditos.repository.CreditoRepository;
+import com.alantek.caja.modulo.creditos.repository.ProductoCreditoRepository;
+import com.alantek.caja.modulo.seguridad.entity.Rol;
 import com.alantek.caja.modulo.seguridad.entity.Usuario;
 import com.alantek.caja.modulo.seguridad.repository.UsuarioRepository;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
+import com.alantek.caja.shared.exception.BusinessException;
+import com.alantek.caja.shared.reports.JasperReportService;
+import com.alantek.caja.shared.reports.ReportBeans;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.FontFactory;
@@ -18,6 +32,7 @@ import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -27,6 +42,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -45,17 +61,35 @@ public class ReporteService {
     private final CajaAperturaRepository cajaAperturaRepository;
     private final CajaMovimientoRepository cajaMovimientoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final JasperReportService jasperReportService;
+    private final CuentaAhorroRepository cuentaAhorroRepository;
+    private final ProductoAhorroRepository productoAhorroRepository;
+    private final AportacionRepository aportacionRepository;
+    private final CreditoRepository creditoRepository;
+    private final ProductoCreditoRepository productoCreditoRepository;
 
     public ReporteService(SocioRepository socioRepository,
                           CarteraService carteraService,
                           CajaAperturaRepository cajaAperturaRepository,
                           CajaMovimientoRepository cajaMovimientoRepository,
-                          UsuarioRepository usuarioRepository) {
+                          UsuarioRepository usuarioRepository,
+                          JasperReportService jasperReportService,
+                          CuentaAhorroRepository cuentaAhorroRepository,
+                          ProductoAhorroRepository productoAhorroRepository,
+                          AportacionRepository aportacionRepository,
+                          CreditoRepository creditoRepository,
+                          ProductoCreditoRepository productoCreditoRepository) {
         this.socioRepository = socioRepository;
         this.carteraService = carteraService;
         this.cajaAperturaRepository = cajaAperturaRepository;
         this.cajaMovimientoRepository = cajaMovimientoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.jasperReportService = jasperReportService;
+        this.cuentaAhorroRepository = cuentaAhorroRepository;
+        this.productoAhorroRepository = productoAhorroRepository;
+        this.aportacionRepository = aportacionRepository;
+        this.creditoRepository = creditoRepository;
+        this.productoCreditoRepository = productoCreditoRepository;
     }
 
     public TablaReporte socios() {
@@ -183,6 +217,188 @@ public class ReporteService {
         document.add(table);
         document.close();
         return out.toByteArray();
+    }
+
+    public byte[] generarReporteJasper(String nombre, Map<String, Object> params, String formato) {
+        JRBeanCollectionDataSource dataSource;
+        switch (nombre) {
+            case "socios" -> dataSource = prepareSocios();
+            case "cartera" -> dataSource = prepareCartera(params);
+            case "caja" -> dataSource = prepareCaja();
+            case "ahorros" -> dataSource = prepareAhorros(params);
+            case "aportaciones" -> dataSource = prepareAportaciones(params);
+            case "creditos" -> dataSource = prepareCreditos(params);
+            case "usuarios" -> dataSource = prepareUsuarios();
+            default -> throw new BusinessException("Reporte no encontrado: " + nombre);
+        }
+        return jasperReportService.generarReporte(nombre, dataSource, params != null ? params : Map.of(), formato);
+    }
+
+    private JRBeanCollectionDataSource prepareSocios() {
+        List<ReportBeans.SocioData> data = socioRepository.findAll().stream()
+                .sorted(Comparator.comparing(Socio::getCodigo))
+                .map(s -> new ReportBeans.SocioData(
+                        nvl(s.getCodigo()), nvl(s.getIdentificacion()), nvl(s.getNombres()),
+                        nvl(s.getApellidos()), nvl(s.getTelefono()), nvl(s.getEmail()),
+                        nvl(s.getEstado()),
+                        s.getFechaIngreso() == null ? "" : s.getFechaIngreso().toString()))
+                .toList();
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    @SuppressWarnings("unchecked")
+    private JRBeanCollectionDataSource prepareCartera(Map<String, Object> params) {
+        String estado = params != null ? (String) params.get("estado") : null;
+        Long socioId = null;
+        if (params != null && params.get("socioId") != null) {
+            socioId = Long.valueOf(params.get("socioId").toString());
+        }
+        List<ReportBeans.CarteraData> data = carteraService.listarCartera(estado, socioId).stream()
+                .map(c -> new ReportBeans.CarteraData(
+                        nvl(c.socioCodigo()) + " " + nvl(c.socioNombre()),
+                        nvl(c.nombreProducto()),
+                        String.valueOf(c.numeroCuota()),
+                        c.fechaVencimiento() == null ? "" : c.fechaVencimiento().toString(),
+                        c.saldoCapital().toPlainString(),
+                        c.cuotaTotal().toPlainString(),
+                        c.mora().toPlainString(),
+                        c.totalPagar().toPlainString(),
+                        nvl(c.estado()),
+                        String.valueOf(c.diasVencido())))
+                .toList();
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    private JRBeanCollectionDataSource prepareCaja() {
+        List<CajaApertura> aperturas = cajaAperturaRepository.findAll();
+        Map<Long, List<CajaMovimiento>> movimientos = cajaMovimientoRepository.findAll().stream()
+                .collect(Collectors.groupingBy(CajaMovimiento::getCajaAperturaId));
+        Map<Long, Usuario> usuarios = usuarioRepository.findAll().stream()
+                .collect(Collectors.toMap(Usuario::getId, u -> u));
+        List<ReportBeans.CajaData> data = new ArrayList<>();
+        for (CajaApertura apertura : aperturas) {
+            BigDecimal ingresos = BigDecimal.ZERO;
+            BigDecimal egresos = BigDecimal.ZERO;
+            for (CajaMovimiento movimiento : movimientos.getOrDefault(apertura.getId(), List.of())) {
+                TipoMovimiento tipo = TipoMovimiento.from(movimiento.getTipo());
+                if (tipo != null && tipo.isEgreso()) {
+                    egresos = egresos.add(movimiento.getMonto());
+                } else {
+                    ingresos = ingresos.add(movimiento.getMonto());
+                }
+            }
+            BigDecimal saldoFinal = apertura.getSaldoInicial().add(ingresos).subtract(egresos);
+            Usuario cajero = apertura.getCajeroId() == null ? null : usuarios.get(apertura.getCajeroId());
+            data.add(new ReportBeans.CajaData(
+                    cajero == null ? "" : nvl(cajero.getNombreCompleto()) + " (" + nvl(cajero.getUsername()) + ")",
+                    apertura.getFecha() == null ? "" : apertura.getFecha().toString(),
+                    apertura.getSaldoInicial().toPlainString(),
+                    ingresos.toPlainString(),
+                    egresos.toPlainString(),
+                    saldoFinal.toPlainString(),
+                    nvl(apertura.getEstado())));
+        }
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    private JRBeanCollectionDataSource prepareAhorros(Map<String, Object> params) {
+        Long socioId = null;
+        if (params != null && params.get("socioId") != null) {
+            socioId = Long.valueOf(params.get("socioId").toString());
+        }
+        List<CuentaAhorro> cuentas = socioId != null
+                ? cuentaAhorroRepository.findBySocioIdOrderByFechaAperturaDesc(socioId)
+                : cuentaAhorroRepository.findAllByOrderByFechaAperturaDesc();
+        List<ReportBeans.AhorroData> data = new ArrayList<>();
+        for (CuentaAhorro cuenta : cuentas) {
+            Socio socio = socioRepository.findById(cuenta.getSocioId()).orElse(null);
+            ProductoAhorro producto = productoAhorroRepository.findById(cuenta.getProductoId()).orElse(null);
+            String socioNombre = socio == null ? ""
+                    : nvl(socio.getCodigo()) + " " + nvl(socio.getNombres()) + " " + nvl(socio.getApellidos());
+            data.add(new ReportBeans.AhorroData(
+                    nvl(cuenta.getNumeroCuenta()),
+                    socioNombre,
+                    producto == null ? "" : nvl(producto.getNombre()),
+                    cuenta.getSaldo().toPlainString(),
+                    nvl(cuenta.getEstado()),
+                    cuenta.getFechaApertura() == null ? "" : cuenta.getFechaApertura().toString()));
+        }
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    private JRBeanCollectionDataSource prepareAportaciones(Map<String, Object> params) {
+        Long socioId = null;
+        if (params != null && params.get("socioId") != null) {
+            socioId = Long.valueOf(params.get("socioId").toString());
+        }
+        List<Aportacion> aportaciones = socioId != null
+                ? aportacionRepository.findBySocioIdOrderByPeriodoDesc(socioId)
+                : aportacionRepository.findAllByOrderByPeriodoDesc();
+        List<ReportBeans.AportacionData> data = new ArrayList<>();
+        for (Aportacion aportacion : aportaciones) {
+            Socio socio = socioRepository.findById(aportacion.getSocioId()).orElse(null);
+            String socioNombre = socio == null ? ""
+                    : nvl(socio.getCodigo()) + " " + nvl(socio.getNombres()) + " " + nvl(socio.getApellidos());
+            data.add(new ReportBeans.AportacionData(
+                    socioNombre,
+                    nvl(aportacion.getPeriodo()),
+                    aportacion.getMontoEsperado().toPlainString(),
+                    nvl(aportacion.getEstado()),
+                    aportacion.getMontoPagado().toPlainString()));
+        }
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    private JRBeanCollectionDataSource prepareCreditos(Map<String, Object> params) {
+        Long socioId = null;
+        if (params != null && params.get("socioId") != null) {
+            socioId = Long.valueOf(params.get("socioId").toString());
+        }
+        List<Credito> creditos = socioId != null
+                ? creditoRepository.findBySocioIdOrderByCreatedAtDesc(socioId)
+                : creditoRepository.findAllByOrderByCreatedAtDesc();
+        List<ReportBeans.CreditoData> data = new ArrayList<>();
+        for (Credito credito : creditos) {
+            Socio socio = socioRepository.findById(credito.getSocioId()).orElse(null);
+            ProductoCredito producto = productoCreditoRepository.findById(credito.getProductoId()).orElse(null);
+            String socioNombre = socio == null ? ""
+                    : nvl(socio.getCodigo()) + " " + nvl(socio.getNombres()) + " " + nvl(socio.getApellidos());
+            data.add(new ReportBeans.CreditoData(
+                    socioNombre,
+                    producto == null ? "" : nvl(producto.getNombre()),
+                    credito.getMontoDesembolsado().toPlainString(),
+                    credito.getTasaInteres().toPlainString(),
+                    String.valueOf(credito.getPlazoMeses()),
+                    calcularCuotaMensual(credito.getMontoDesembolsado(), credito.getTasaInteres(), credito.getPlazoMeses()),
+                    nvl(credito.getEstado()),
+                    credito.getFechaDesembolso() == null ? "" : credito.getFechaDesembolso().toString()));
+        }
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    private JRBeanCollectionDataSource prepareUsuarios() {
+        List<ReportBeans.UsuarioData> data = usuarioRepository.findAll().stream()
+                .map(u -> new ReportBeans.UsuarioData(
+                        nvl(u.getUsername()),
+                        nvl(u.getNombreCompleto()),
+                        nvl(u.getEmail()),
+                        nvl(u.getEstado()),
+                        u.getRoles().stream().map(Rol::getNombre).sorted().collect(Collectors.joining(", ")),
+                        u.getUltimoAcceso() == null ? "" : u.getUltimoAcceso().toString()))
+                .toList();
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    private String calcularCuotaMensual(BigDecimal monto, BigDecimal tasaAnualPct, int plazoMeses) {
+        if (tasaAnualPct == null || tasaAnualPct.signum() == 0 || plazoMeses <= 0) {
+            return monto == null ? "0.00" : monto.divide(BigDecimal.valueOf(plazoMeses), 2, RoundingMode.HALF_UP).toPlainString();
+        }
+        BigDecimal tasaMensual = tasaAnualPct.divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP)
+                .divide(new BigDecimal("12"), 10, RoundingMode.HALF_UP);
+        BigDecimal factor = BigDecimal.ONE.add(tasaMensual).pow(plazoMeses);
+        BigDecimal numerador = monto.multiply(tasaMensual).multiply(factor);
+        BigDecimal denominador = factor.subtract(BigDecimal.ONE);
+        return numerador.divide(denominador, 2, RoundingMode.HALF_UP).toPlainString();
     }
 
     private String nvl(String valor) {

@@ -3,11 +3,12 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize } from 'rxjs';
+import { Observable, finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
 import { Auditoria, Permiso, Rol, Usuario } from '../../core/models/seguridad.model';
 import { SeguridadService } from '../../core/services/seguridad.service';
+import { ReporteService } from '../../core/services/reporte.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SortState } from '../../core/models/paginado.model';
 import { ModalComponent, ModalFooterDirective } from '../../shared/components/modal/modal.component';
@@ -27,6 +28,7 @@ export class SeguridadComponent implements OnInit {
   private readonly seguridadService = inject(SeguridadService);
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
+  private readonly reporteService = inject(ReporteService);
 
   protected readonly puedeCrear = computed(() => this.auth.hasPermiso('SEGURIDAD:CREAR'));
   protected readonly puedeEditar = computed(() => this.auth.hasPermiso('SEGURIDAD:EDITAR'));
@@ -65,6 +67,10 @@ export class SeguridadComponent implements OnInit {
   protected readonly rolPermisosAbierto = signal(false);
   protected readonly permisoSeleccionados = signal<number[]>([]);
   protected readonly modulos = signal<string[]>([]);
+
+  protected readonly correoEmail = signal('');
+  protected readonly enviando = signal(false);
+  protected readonly exportando = signal(false);
 
   protected readonly auditoriaForm = this.fb.nonNullable.group({
     tabla: [''],
@@ -221,6 +227,59 @@ export class SeguridadComponent implements OnInit {
           this.toast.error(msg);
         }
       });
+  }
+
+  testCorreo(): void {
+    const email = this.correoEmail();
+    if (!email || this.enviando()) {
+      return;
+    }
+    this.enviando.set(true);
+    this.seguridadService.testEmail(email).subscribe({
+      next: (res) => {
+        this.toast.success(res.message);
+        this.enviando.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo enviar el correo de prueba.';
+        this.toast.error(msg);
+        this.enviando.set(false);
+      }
+    });
+  }
+
+  exportarPdf(nombre: string): void {
+    this.descargar(this.reporteService.descargarReporte(nombre, 'pdf'), `${nombre}.pdf`);
+  }
+
+  exportarExcel(nombre: string): void {
+    this.descargar(this.reporteService.descargarReporte(nombre, 'xlsx'), `${nombre}.xlsx`);
+  }
+
+  private descargar(obs: Observable<Blob>, nombre: string): void {
+    if (this.exportando()) {
+      return;
+    }
+    this.exportando.set(true);
+    this.error.set('');
+    obs.subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombre;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exportando.set(false);
+        this.toast.success(`Reporte ${nombre} descargado.`);
+      },
+      error: () => {
+        this.exportando.set(false);
+        const msg = 'No se pudo exportar el reporte.';
+        this.error.set(msg);
+        this.toast.error(msg);
+      }
+    });
   }
 
   cambiarPaginaUsuarios(p: number): void {

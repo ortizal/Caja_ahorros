@@ -8,11 +8,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/reportes")
@@ -73,6 +77,56 @@ public class ReporteController {
     @PreAuthorize("hasAuthority('CAJA:VER')")
     public ResponseEntity<byte[]> cajaPdf() throws DocumentException {
         return pdf(reporteService.caja(), "caja.pdf");
+    }
+
+    @GetMapping("/{nombre}/{formato}")
+    @PreAuthorize("hasAuthority('SEGURIDAD:VER')")
+    public ResponseEntity<byte[]> jasperReport(
+            @PathVariable String nombre,
+            @PathVariable String formato,
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) Long socioId) {
+        Map<String, Object> params = new HashMap<>();
+        if (desde != null) params.put("desde", desde);
+        if (hasta != null) params.put("hasta", hasta);
+        if (estado != null) params.put("estado", estado);
+        if (socioId != null) params.put("socioId", socioId);
+        params.put("subtitle", buildSubtitle(nombre, estado, socioId));
+
+        byte[] bytes = reporteService.generarReporteJasper(nombre, params, formato);
+
+        MediaType mediaType = "xlsx".equalsIgnoreCase(formato) ? XLSX : MediaType.APPLICATION_PDF;
+        String extension = "xlsx".equalsIgnoreCase(formato) ? ".xlsx" : ".pdf";
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nombre + extension + "\"")
+                .body(bytes);
+    }
+
+    private String buildSubtitle(String nombre, String estado, Long socioId) {
+        StringBuilder sb = new StringBuilder();
+        if (estado != null) sb.append("Estado: ").append(estado);
+        if (socioId != null) {
+            if (!sb.isEmpty()) sb.append(" | ");
+            sb.append("Socio ID: ").append(socioId);
+        }
+        return sb.isEmpty() ? getDefaultSubtitle(nombre) : sb.toString();
+    }
+
+    private String getDefaultSubtitle(String nombre) {
+        return switch (nombre) {
+            case "socios" -> "Todos los socios";
+            case "cartera" -> "Cartera completa";
+            case "caja" -> "Resumen de caja";
+            case "ahorros" -> "Todas las cuentas de ahorro";
+            case "aportaciones" -> "Todas las aportaciones";
+            case "creditos" -> "Todos los creditos";
+            case "usuarios" -> "Todos los usuarios";
+            default -> "";
+        };
     }
 
     private ResponseEntity<byte[]> csv(TablaReporte tabla, String nombre) {

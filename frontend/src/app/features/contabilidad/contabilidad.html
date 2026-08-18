@@ -3,6 +3,16 @@
     <h1 class="page-title">Módulo de Contabilidad</h1>
     <p class="page-subtitle">Plan de cuentas, periodos contables, libros diario/mayor, balance de comprobación y asientos</p>
   </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-usuarios-pdf"
+            [disabled]="exportando()" (click)="exportarPdf('usuarios')">
+      PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-usuarios-xlsx"
+            [disabled]="exportando()" (click)="exportarExcel('usuarios')">
+      Excel
+    </button>
+  </div>
 </div>
 
 @if (error()) {

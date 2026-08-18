@@ -3,6 +3,16 @@
     <h1 class="page-title">Gestión de Tesorería</h1>
     <p class="page-subtitle">Solicitudes de gasto, cuentas por pagar/cobrar y control presupuestario anual</p>
   </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-caja-pdf"
+            [disabled]="exportando()" (click)="exportarPdf('caja')">
+      PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-caja-xlsx"
+            [disabled]="exportando()" (click)="exportarExcel('caja')">
+      Excel
+    </button>
+  </div>
 </div>
 
 @if (error()) {

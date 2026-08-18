@@ -53,6 +53,12 @@ export class ReporteService {
     return this.exportar('caja', formato);
   }
 
+  descargarReporte(nombre: string, formato: 'pdf' | 'xlsx'): Observable<Blob> {
+    return this.http.get(`${this.base}/reportes/${nombre}/${formato}`, {
+      responseType: 'blob'
+    });
+  }
+
   private exportar(tipo: 'socios' | 'cartera' | 'caja', formato: 'csv' | 'xlsx' | 'pdf'): Observable<Blob> {
     return this.http.get(`${this.base}/reportes/${tipo}.${formato}`, { responseType: 'blob' });
   }

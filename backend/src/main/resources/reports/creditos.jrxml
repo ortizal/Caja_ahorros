@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="creditos" pageWidth="842" pageHeight="595"
+              columnWidth="802" leftMargin="20" rightMargin="20"
+              topMargin="20" bottomMargin="20">
+    <parameter name="subtitle" class="java.lang.String"/>
+    <parameter name="title" class="java.lang.String"/>
+    <field name="socio" class="java.lang.String"/>
+    <field name="producto" class="java.lang.String"/>
+    <field name="monto" class="java.lang.String"/>
+    <field name="tasa" class="java.lang.String"/>
+    <field name="plazo" class="java.lang.String"/>
+    <field name="cuotaMensual" class="java.lang.String"/>
+    <field name="estado" class="java.lang.String"/>
+    <field name="fechaDesembolso" class="java.lang.String"/>
+    <title>
+        <band height="50">
+            <staticText>
+                <reportElement x="0" y="0" width="802" height="25"/>
+                <textElement>
+                    <font size="14" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Reporte de Créditos]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="0" y="25" width="802" height="20"/>
+                <textElement>
+                    <font size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{subtitle}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+    <columnHeader>
+        <band height="25">
+            <staticText>
+                <reportElement x="0" y="0" width="130" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Socio]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="130" y="0" width="90" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Producto]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="220" y="0" width="85" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Monto]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="305" y="0" width="55" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Tasa]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="360" y="0" width="55" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Plazo]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="415" y="0" width="90" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Cuota Mensual]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="505" y="0" width="70" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Estado]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="575" y="0" width="80" height="25"/>
+                <textElement>
+                    <font size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Fecha Desembolso]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="130" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{socio}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="130" y="0" width="90" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{producto}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="220" y="0" width="85" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{monto}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="305" y="0" width="55" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{tasa}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="360" y="0" width="55" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{plazo}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="415" y="0" width="90" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{cuotaMensual}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="505" y="0" width="70" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{estado}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="575" y="0" width="80" height="20"/>
+                <textElement>
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{fechaDesembolso}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+</jasperReport>

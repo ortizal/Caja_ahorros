@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { Observable, finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
 import {
@@ -13,6 +13,7 @@ import {
   ProductoAhorro
 } from '../../core/models/ahorro.model';
 import { AhorroService } from '../../core/services/ahorro.service';
+import { ReporteService } from '../../core/services/reporte.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
 import { SortState } from '../../core/models/paginado.model';
@@ -30,6 +31,7 @@ export class AhorrosComponent implements OnInit {
   private readonly ahorroService = inject(AhorroService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly reporteService = inject(ReporteService);
 
   protected readonly tab = signal<'productos' | 'cuentas' | 'capitalizar'>('productos');
   protected readonly productos = signal<ProductoAhorro[]>([]);
@@ -40,6 +42,7 @@ export class AhorrosComponent implements OnInit {
   protected readonly error = signal('');
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
+  protected readonly exportando = signal(false);
 
   protected readonly pageProductos = signal(0);
   protected readonly sizeProductos = signal(10);
@@ -296,6 +299,40 @@ export class AhorrosComponent implements OnInit {
           this.toast.error(msg);
         }
       });
+  }
+
+  exportarPdf(nombre: string): void {
+    this.descargar(this.reporteService.descargarReporte(nombre, 'pdf'), `${nombre}.pdf`);
+  }
+
+  exportarExcel(nombre: string): void {
+    this.descargar(this.reporteService.descargarReporte(nombre, 'xlsx'), `${nombre}.xlsx`);
+  }
+
+  private descargar(obs: Observable<Blob>, nombre: string): void {
+    if (this.exportando()) {
+      return;
+    }
+    this.exportando.set(true);
+    this.error.set('');
+    obs.subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombre;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exportando.set(false);
+        this.toast.success(`Reporte ${nombre} descargado.`);
+      },
+      error: () => {
+        this.exportando.set(false);
+        const msg = 'No se pudo exportar el reporte.';
+        this.error.set(msg);
+        this.toast.error(msg);
+      }
+    });
   }
 }
 

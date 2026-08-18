@@ -3,6 +3,16 @@
     <h1 class="page-title">Gestión de Aportaciones</h1>
     <p class="page-subtitle">Configuración de valores, generación periódica y control de cobros de aportes</p>
   </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-aportaciones-pdf"
+            [disabled]="exportando()" (click)="exportarPdf('aportaciones')">
+      PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-aportaciones-xlsx"
+            [disabled]="exportando()" (click)="exportarExcel('aportaciones')">
+      Excel
+    </button>
+  </div>
 </div>
 
 @if (error()) {
