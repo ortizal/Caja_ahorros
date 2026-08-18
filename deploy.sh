@@ -51,6 +51,7 @@ deploy_frontend() {
   $SUDO rm -rf "$WEB_ROOT"/*
   $SUDO cp -r "$FRONTEND_DIR/$FRONTEND_DIST/"* "$WEB_ROOT/"
   $SUDO chown -R www-data:www-data "$WEB_ROOT"
+  $SUDO chmod -R 755 "$WEB_ROOT"
   echo "Frontend desplegado en $WEB_ROOT (raiz http://192.168.1.43/caja-ahorros/)"
 }
 
