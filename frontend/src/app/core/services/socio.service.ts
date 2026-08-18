@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Socio, SocioRequest } from '../models/socio.model';
+import { Paginated, Paginacion, paginar } from '../models/paginado.model';
 
 @Injectable({ providedIn: 'root' })
 export class SocioService {
@@ -10,8 +11,8 @@ export class SocioService {
 
   constructor(private http: HttpClient) {}
 
-  listar(estado?: string): Observable<Socio[]> {
-    return this.http.get<Socio[]>(this.base, { params: estado ? { estado } : {} });
+  listar(paginacion?: Paginacion & { estado?: string }): Observable<Paginated<Socio>> {
+    return this.http.get<Paginated<Socio>>(this.base, { params: paginar(paginacion) });
   }
 
   obtener(id: number): Observable<Socio> {

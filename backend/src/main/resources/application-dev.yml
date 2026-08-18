@@ -1,0 +1,8 @@
+spring:
+  sql:
+    init:
+      mode: always
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:caja-ahorros-dev-only-jwt-secret-not-for-production-min32bytes}

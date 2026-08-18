@@ -7,7 +7,10 @@ import com.alantek.caja.modulo.bancos.dto.ConciliacionResponse;
 import com.alantek.caja.modulo.bancos.dto.CuentaBancariaRequest;
 import com.alantek.caja.modulo.bancos.dto.CuentaBancariaResponse;
 import com.alantek.caja.modulo.bancos.service.BancoService;
+import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -33,8 +34,8 @@ public class BancoController {
 
     @GetMapping("/cuentas-bancarias")
     @PreAuthorize("hasAuthority('BANCOS:VER')")
-    public List<CuentaBancariaResponse> listarCuentas() {
-        return bancoService.listarCuentas();
+    public PageResponse<CuentaBancariaResponse> listarCuentas(@PageableDefault(size = 10) Pageable pageable) {
+        return bancoService.listarCuentas(pageable);
     }
 
     @PostMapping("/cuentas-bancarias")
@@ -45,8 +46,9 @@ public class BancoController {
 
     @GetMapping("/cuentas-bancarias/{id}/movimientos")
     @PreAuthorize("hasAuthority('BANCOS:VER')")
-    public List<BancoMovimientoResponse> listarMovimientos(@PathVariable Long id) {
-        return bancoService.listarMovimientos(id);
+    public PageResponse<BancoMovimientoResponse> listarMovimientos(@PathVariable Long id,
+                                                                    @PageableDefault(size = 10) Pageable pageable) {
+        return bancoService.listarMovimientos(id, pageable);
     }
 
     @PostMapping("/cuentas-bancarias/{id}/movimientos")

@@ -18,8 +18,10 @@ import com.alantek.caja.modulo.portal.dto.PortalResumenResponse;
 import com.alantek.caja.modulo.portal.dto.PortalSocioResponse;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,13 +69,13 @@ public class PortalService {
     public PortalResumenResponse resumen() {
         Socio socio = socioAutenticado();
 
-        List<CuentaAhorroResponse> cuentas = ahorroService.listarCuentas(socio.getId());
+        List<CuentaAhorroResponse> cuentas = ahorroService.listarCuentas(socio.getId(), Pageable.unpaged()).content();
         BigDecimal saldoAhorro = cuentas.stream()
                 .map(CuentaAhorroResponse::saldo)
                 .filter(c -> c != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        List<AportacionResponse> aportaciones = aportacionService.listarAportaciones(null, socio.getId());
+        List<AportacionResponse> aportaciones = aportacionService.listarAportaciones(null, socio.getId(), Pageable.unpaged()).content();
         BigDecimal totalAportado = aportaciones.stream()
                 .map(AportacionResponse::montoPagado)
                 .filter(a -> a != null)
@@ -85,7 +87,7 @@ public class PortalService {
                 .map(a -> a.montoEsperado().subtract(nvl(a.montoPagado())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        List<CreditoResponse> creditos = creditoService.listarCreditos(socio.getId());
+        List<CreditoResponse> creditos = creditoService.listarCreditos(socio.getId(), Pageable.unpaged()).content();
         BigDecimal saldoCreditoVigente = creditos.stream()
                 .filter(c -> "VIGENTE".equals(c.estado()) || "EN_MORA".equals(c.estado()))
                 .map(CreditoResponse::saldoCapital)
@@ -95,7 +97,7 @@ public class PortalService {
         int cuotasVencidas = 0;
         int cuotasPendientes = 0;
         for (CreditoResponse credito : creditos) {
-            for (CuotaCreditoResponse cuota : creditoService.listarCuotas(credito.id())) {
+            for (CuotaCreditoResponse cuota : creditoService.listarCuotas(credito.id(), Pageable.unpaged()).content()) {
                 if ("VENCIDA".equals(cuota.estado())) {
                     cuotasVencidas++;
                 } else if ("PENDIENTE".equals(cuota.estado())) {
@@ -116,37 +118,43 @@ public class PortalService {
     }
 
     @Transactional(readOnly = true)
-    public List<PortalAhorroResponse> ahorro() {
+    public PageResponse<PortalAhorroResponse> ahorro(Pageable pageable) {
         Socio socio = socioAutenticado();
-        return ahorroService.listarCuentas(socio.getId()).stream()
+        PageResponse<CuentaAhorroResponse> page = ahorroService.listarCuentas(socio.getId(), pageable);
+        List<PortalAhorroResponse> content = page.content().stream()
                 .map(cuenta -> new PortalAhorroResponse(cuenta, movimientos(cuenta.id())))
                 .toList();
+        return new PageResponse<>(content, page.page(), page.size(), page.totalElements(), page.totalPages());
     }
 
     @Transactional(readOnly = true)
-    public List<PortalAportacionResponse> aportaciones() {
+    public PageResponse<PortalAportacionResponse> aportaciones(Pageable pageable) {
         Socio socio = socioAutenticado();
-        return aportacionService.listarAportaciones(null, socio.getId()).stream()
+        PageResponse<AportacionResponse> page = aportacionService.listarAportaciones(null, socio.getId(), pageable);
+        List<PortalAportacionResponse> content = page.content().stream()
                 .map(aportacion -> new PortalAportacionResponse(aportacion, pagos(aportacion.id())))
                 .toList();
+        return new PageResponse<>(content, page.page(), page.size(), page.totalElements(), page.totalPages());
     }
 
     @Transactional(readOnly = true)
-    public List<PortalCreditoResponse> creditos() {
+    public PageResponse<PortalCreditoResponse> creditos(Pageable pageable) {
         Socio socio = socioAutenticado();
-        return creditoService.listarCreditos(socio.getId()).stream()
+        PageResponse<CreditoResponse> page = creditoService.listarCreditos(socio.getId(), pageable);
+        List<PortalCreditoResponse> content = page.content().stream()
                 .map(credito -> new PortalCreditoResponse(credito,
-                        creditoService.listarCuotas(credito.id()),
-                        creditoService.listarPagos(credito.id())))
+                        creditoService.listarCuotas(credito.id(), Pageable.unpaged()).content(),
+                        creditoService.listarPagos(credito.id(), Pageable.unpaged()).content()))
                 .toList();
+        return new PageResponse<>(content, page.page(), page.size(), page.totalElements(), page.totalPages());
     }
 
     private List<MovimientoAhorroResponse> movimientos(Long cuentaId) {
-        return ahorroService.listarMovimientos(cuentaId);
+        return ahorroService.listarMovimientos(cuentaId, Pageable.unpaged()).content();
     }
 
     private List<AportacionPagoResponse> pagos(Long aportacionId) {
-        return aportacionService.listarPagos(aportacionId);
+        return aportacionService.listarPagos(aportacionId, Pageable.unpaged()).content();
     }
 
     private PortalSocioResponse toSocioResponse(Socio socio) {

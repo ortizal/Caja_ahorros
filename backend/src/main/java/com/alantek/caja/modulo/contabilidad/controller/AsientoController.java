@@ -5,7 +5,10 @@ import com.alantek.caja.modulo.contabilidad.dto.AsientoResponse;
 import com.alantek.caja.modulo.contabilidad.dto.BalanceLinea;
 import com.alantek.caja.modulo.contabilidad.dto.MayorLinea;
 import com.alantek.caja.modulo.contabilidad.service.AsientoContableService;
+import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -38,24 +40,29 @@ public class AsientoController {
 
     @GetMapping("/libro-diario")
     @PreAuthorize("hasAuthority('CONTABILIDAD:VER')")
-    public List<AsientoResponse> libroDiario(
+    public PageResponse<AsientoResponse> libroDiario(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
-        return asientoService.libroDiario(desde, hasta);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return asientoService.libroDiario(desde, hasta, pageable);
     }
 
     @GetMapping("/libro-mayor")
     @PreAuthorize("hasAuthority('CONTABILIDAD:VER')")
-    public List<MayorLinea> libroMayor(
+    public PageResponse<MayorLinea> libroMayor(
             @RequestParam Long cuentaId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
-        return asientoService.libroMayor(cuentaId, desde, hasta);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return asientoService.libroMayor(cuentaId, desde, hasta, pageable);
     }
 
     @GetMapping("/balance-comprobacion")
     @PreAuthorize("hasAuthority('CONTABILIDAD:VER')")
-    public List<BalanceLinea> balanceComprobacion(@RequestParam Integer anio, @RequestParam Integer mes) {
-        return asientoService.balanceComprobacion(anio, mes);
+    public PageResponse<BalanceLinea> balanceComprobacion(
+            @RequestParam Integer anio,
+            @RequestParam Integer mes,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return asientoService.balanceComprobacion(anio, mes, pageable);
     }
 }

@@ -37,12 +37,12 @@
       <table class="table" data-testid="productos-table">
         <thead>
           <tr>
-            <th>Nombre</th>
-            <th>Tasa Interés</th>
-            <th>Capitalización</th>
-            <th>Saldo Mínimo</th>
+            <th appSortable sortKey="nombre" [sort]="sortProductos()" (sortChange)="ordenarProductos($event)">Nombre</th>
+            <th appSortable sortKey="tasaInteres" [sort]="sortProductos()" (sortChange)="ordenarProductos($event)">Tasa Interés</th>
+            <th appSortable sortKey="periodicidadCapitalizacion" [sort]="sortProductos()" (sortChange)="ordenarProductos($event)">Capitalización</th>
+            <th appSortable sortKey="saldoMinimo" [sort]="sortProductos()" (sortChange)="ordenarProductos($event)">Saldo Mínimo</th>
             <th>Límite Retiros</th>
-            <th>Estado</th>
+            <th appSortable sortKey="activo" [sort]="sortProductos()" (sortChange)="ordenarProductos($event)">Estado</th>
           </tr>
         </thead>
         <tbody>
@@ -63,6 +63,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="pageProductos()" [size]="sizeProductos()" [totalElements]="totalElementsProductos()" [totalPages]="totalPagesProductos()"
+                   (pageChange)="cambiarPaginaProductos($event)" (sizeChange)="cambiarTamanoProductos($event)" />
   </div>
 }
 
@@ -79,12 +81,12 @@
       <table class="table" data-testid="cuentas-table">
         <thead>
           <tr>
-            <th>Número Cuenta</th>
+            <th appSortable sortKey="numeroCuenta" [sort]="sortCuentas()" (sortChange)="ordenarCuentas($event)">Número Cuenta</th>
             <th>Socio Titular</th>
             <th>Producto</th>
-            <th>Saldo Disponible</th>
-            <th>Estado</th>
-            <th>Apertura</th>
+            <th appSortable sortKey="saldo" [sort]="sortCuentas()" (sortChange)="ordenarCuentas($event)">Saldo Disponible</th>
+            <th appSortable sortKey="estado" [sort]="sortCuentas()" (sortChange)="ordenarCuentas($event)">Estado</th>
+            <th appSortable sortKey="fechaApertura" [sort]="sortCuentas()" (sortChange)="ordenarCuentas($event)">Apertura</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -115,6 +117,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="pageCuentas()" [size]="sizeCuentas()" [totalElements]="totalElementsCuentas()" [totalPages]="totalPagesCuentas()"
+                   (pageChange)="cambiarPaginaCuentas($event)" (sizeChange)="cambiarTamanoCuentas($event)" />
   </div>
 
   @if (cuentaSeleccionada()) {
@@ -160,11 +164,11 @@
         <table class="table" data-testid="movimientos-table">
           <thead>
             <tr>
-              <th>Tipo</th>
-              <th>Monto</th>
+              <th appSortable sortKey="tipo" [sort]="sortMovimientos()" (sortChange)="ordenarMovimientos($event)">Tipo</th>
+              <th appSortable sortKey="monto" [sort]="sortMovimientos()" (sortChange)="ordenarMovimientos($event)">Monto</th>
               <th>Saldo Resultante</th>
               <th>Comprobante</th>
-              <th>Fecha</th>
+              <th appSortable sortKey="createdAt" [sort]="sortMovimientos()" (sortChange)="ordenarMovimientos($event)">Fecha</th>
             </tr>
           </thead>
           <tbody>
@@ -184,6 +188,8 @@
           </tbody>
         </table>
       </div>
+      <app-paginador [page]="pageMovimientos()" [size]="sizeMovimientos()" [totalElements]="totalElementsMovimientos()" [totalPages]="totalPagesMovimientos()"
+                     (pageChange)="cambiarPaginaMovimientos($event)" (sizeChange)="cambiarTamanoMovimientos($event)" />
     </div>
   }
 }

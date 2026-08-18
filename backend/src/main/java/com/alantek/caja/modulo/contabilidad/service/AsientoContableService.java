@@ -12,9 +12,11 @@ import com.alantek.caja.modulo.contabilidad.repository.AsientoContableRepository
 import com.alantek.caja.modulo.contabilidad.repository.AsientoDetalleRepository;
 import com.alantek.caja.modulo.contabilidad.repository.PeriodoContableRepository;
 import com.alantek.caja.modulo.contabilidad.repository.PlanCuentaRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,14 +105,16 @@ public class AsientoContableService {
     }
 
     @Transactional(readOnly = true)
-    public List<AsientoResponse> libroDiario(LocalDate desde, LocalDate hasta) {
-        return asientoRepository.findByFechaBetweenOrderByFechaAsc(desde, hasta).stream()
+    public PageResponse<AsientoResponse> libroDiario(LocalDate desde, LocalDate hasta, Pageable pageable) {
+        List<AsientoResponse> list = asientoRepository.findByFechaBetweenOrderByFechaAsc(desde, hasta).stream()
                 .map(this::toResponse)
                 .toList();
+        return PageResponse.ofList(list, pageable.getPageNumber(), pageable.getPageSize(),
+                Comparator.comparing(AsientoResponse::fecha).thenComparing(AsientoResponse::id));
     }
 
     @Transactional(readOnly = true)
-    public List<MayorLinea> libroMayor(Long cuentaId, LocalDate desde, LocalDate hasta) {
+    public PageResponse<MayorLinea> libroMayor(Long cuentaId, LocalDate desde, LocalDate hasta, Pageable pageable) {
         planCuentaRepository.findById(cuentaId)
                 .orElseThrow(() -> new BusinessException("Cuenta contable no encontrada: " + cuentaId));
 
@@ -127,11 +131,11 @@ public class AsientoContableService {
                 }
             }
         }
-        return lineas;
+        return PageResponse.ofList(lineas, pageable.getPageNumber(), pageable.getPageSize(), null);
     }
 
     @Transactional(readOnly = true)
-    public List<BalanceLinea> balanceComprobacion(Integer anio, Integer mes) {
+    public PageResponse<BalanceLinea> balanceComprobacion(Integer anio, Integer mes, Pageable pageable) {
         PeriodoContable periodo = periodoRepository.findByAnioAndMes(anio, mes)
                 .orElseThrow(() -> new BusinessException("Período contable no encontrado: " + anio + "-" + mes));
 
@@ -145,7 +149,7 @@ public class AsientoContableService {
             }
         }
 
-        return porCuenta.entrySet().stream()
+        List<BalanceLinea> lineas = porCuenta.entrySet().stream()
                 .map(entry -> {
                     PlanCuenta cuenta = planCuentaRepository.findById(entry.getKey()).orElseThrow();
                     return new BalanceLinea(cuenta.getCodigo(), cuenta.getNombre(),
@@ -153,6 +157,7 @@ public class AsientoContableService {
                 })
                 .sorted(Comparator.comparing(BalanceLinea::cuentaCodigo))
                 .toList();
+        return PageResponse.ofList(lineas, pageable.getPageNumber(), pageable.getPageSize(), null);
     }
 
     private AsientoResponse toResponse(AsientoContable asiento) {

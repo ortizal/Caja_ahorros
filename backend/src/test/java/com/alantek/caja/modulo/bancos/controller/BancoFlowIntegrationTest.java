@@ -85,7 +85,7 @@ class BancoFlowIntegrationTest {
         mvc.perform(get("/api/v1/cuentas-bancarias/" + cuentaId + "/movimientos")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(movimientoId));
+                .andExpect(jsonPath("$.content[0].id").value(movimientoId));
 
         assertThat(movimientoRepository.findById(movimientoId).orElseThrow().getConciliado()).isTrue();
 

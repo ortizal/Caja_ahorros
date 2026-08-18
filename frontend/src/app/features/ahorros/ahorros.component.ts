@@ -15,10 +15,13 @@ import {
 import { AhorroService } from '../../core/services/ahorro.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
+import { SortState } from '../../core/models/paginado.model';
+import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
+import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
 
 @Component({
   selector: 'app-ahorros',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './ahorros.html',
   styleUrl: './ahorros.css'
 })
@@ -37,6 +40,24 @@ export class AhorrosComponent implements OnInit {
   protected readonly error = signal('');
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
+
+  protected readonly pageProductos = signal(0);
+  protected readonly sizeProductos = signal(10);
+  protected readonly sortProductos = signal<SortState | null>(null);
+  protected readonly totalElementsProductos = signal(0);
+  protected readonly totalPagesProductos = signal(0);
+
+  protected readonly pageCuentas = signal(0);
+  protected readonly sizeCuentas = signal(10);
+  protected readonly sortCuentas = signal<SortState | null>(null);
+  protected readonly totalElementsCuentas = signal(0);
+  protected readonly totalPagesCuentas = signal(0);
+
+  protected readonly pageMovimientos = signal(0);
+  protected readonly sizeMovimientos = signal(10);
+  protected readonly sortMovimientos = signal<SortState | null>(null);
+  protected readonly totalElementsMovimientos = signal(0);
+  protected readonly totalPagesMovimientos = signal(0);
 
   protected readonly puedeVer = computedPermiso(this.auth, 'AHORROS:VER');
   protected readonly puedeCrear = computedPermiso(this.auth, 'AHORROS:CREAR');
@@ -64,16 +85,44 @@ export class AhorrosComponent implements OnInit {
   }
 
   cargarProductos(): void {
-    this.ahorroService.productos().subscribe({
-      next: (p) => this.productos.set(p),
-      error: () => this.productos.set([])
+    this.cargando.set(true);
+    this.error.set('');
+    this.ahorroService.productosPag({
+      page: this.pageProductos(),
+      size: this.sizeProductos(),
+      sort: this.sortProductos() ? `${this.sortProductos()!.key},${this.sortProductos()!.dir}` : undefined
+    }).subscribe({
+      next: (p) => {
+        this.productos.set(p.content);
+        this.totalElementsProductos.set(p.totalElements);
+        this.totalPagesProductos.set(p.totalPages);
+        this.cargando.set(false);
+      },
+      error: () => {
+        this.productos.set([]);
+        this.cargando.set(false);
+      }
     });
   }
 
   cargarCuentas(): void {
-    this.ahorroService.cuentas().subscribe({
-      next: (c) => this.cuentas.set(c),
-      error: () => this.cuentas.set([])
+    this.cargando.set(true);
+    this.error.set('');
+    this.ahorroService.cuentas(undefined, {
+      page: this.pageCuentas(),
+      size: this.sizeCuentas(),
+      sort: this.sortCuentas() ? `${this.sortCuentas()!.key},${this.sortCuentas()!.dir}` : undefined
+    }).subscribe({
+      next: (c) => {
+        this.cuentas.set(c.content);
+        this.totalElementsCuentas.set(c.totalElements);
+        this.totalPagesCuentas.set(c.totalPages);
+        this.cargando.set(false);
+      },
+      error: () => {
+        this.cuentas.set([]);
+        this.cargando.set(false);
+      }
     });
   }
 
@@ -81,14 +130,83 @@ export class AhorrosComponent implements OnInit {
     this.cuentaSeleccionada.set(cuenta);
     this.depositoForm.patchValue({ monto: 0 });
     this.retiroForm.patchValue({ monto: 0 });
+    this.pageMovimientos.set(0);
     this.cargarMovimientos(cuenta.id);
   }
 
   cargarMovimientos(cuentaId: number): void {
-    this.ahorroService.movimientos(cuentaId).subscribe({
-      next: (m) => this.movimientos.set(m),
+    this.ahorroService.movimientos(cuentaId, {
+      page: this.pageMovimientos(),
+      size: this.sizeMovimientos(),
+      sort: this.sortMovimientos() ? `${this.sortMovimientos()!.key},${this.sortMovimientos()!.dir}` : undefined
+    }).subscribe({
+      next: (m) => {
+        this.movimientos.set(m.content);
+        this.totalElementsMovimientos.set(m.totalElements);
+        this.totalPagesMovimientos.set(m.totalPages);
+      },
       error: () => this.movimientos.set([])
     });
+  }
+
+  cambiarPaginaProductos(p: number): void {
+    this.pageProductos.set(p);
+    this.cargarProductos();
+  }
+
+  cambiarTamanoProductos(t: number): void {
+    this.sizeProductos.set(t);
+    this.pageProductos.set(0);
+    this.cargarProductos();
+  }
+
+  ordenarProductos(s: SortState): void {
+    this.sortProductos.set(s);
+    this.pageProductos.set(0);
+    this.cargarProductos();
+  }
+
+  cambiarPaginaCuentas(p: number): void {
+    this.pageCuentas.set(p);
+    this.cargarCuentas();
+  }
+
+  cambiarTamanoCuentas(t: number): void {
+    this.sizeCuentas.set(t);
+    this.pageCuentas.set(0);
+    this.cargarCuentas();
+  }
+
+  ordenarCuentas(s: SortState): void {
+    this.sortCuentas.set(s);
+    this.pageCuentas.set(0);
+    this.cargarCuentas();
+  }
+
+  cambiarPaginaMovimientos(p: number): void {
+    this.pageMovimientos.set(p);
+    const cuenta = this.cuentaSeleccionada();
+    if (cuenta) {
+      this.cargarMovimientos(cuenta.id);
+    }
+  }
+
+  cambiarTamanoMovimientos(t: number): void {
+    this.sizeMovimientos.set(t);
+    this.pageMovimientos.set(0);
+    const cuenta = this.cuentaSeleccionada();
+    if (cuenta) {
+      this.cargarMovimientos(cuenta.id);
+    }
+  }
+
+  ordenarMovimientos(s: SortState): void {
+    this.sortMovimientos.set(s);
+    this.pageMovimientos.set(0);
+    const cuenta = this.cuentaSeleccionada();
+    if (cuenta) {
+      this.cargarMovimientos(cuenta.id);
+    }
   }
 
   depositar(): void {
@@ -107,7 +225,9 @@ export class AhorrosComponent implements OnInit {
           this.toast.success(`Deposito registrado en ${cuenta.numeroCuenta}.`);
           this.depositoForm.patchValue({ monto: 0 });
           this.actualizarSaldoSeleccionada(Number(res.saldoResultante));
+          this.pageCuentas.set(0);
           this.cargarCuentas();
+          this.pageMovimientos.set(0);
           this.cargarMovimientos(cuenta.id);
         },
         error: (err: HttpErrorResponse) => {
@@ -134,7 +254,9 @@ export class AhorrosComponent implements OnInit {
           this.toast.success(`Retiro registrado en ${cuenta.numeroCuenta}.`);
           this.retiroForm.patchValue({ monto: 0 });
           this.actualizarSaldoSeleccionada(Number(res.saldoResultante));
+          this.pageCuentas.set(0);
           this.cargarCuentas();
+          this.pageMovimientos.set(0);
           this.cargarMovimientos(cuenta.id);
         },
         error: (err: HttpErrorResponse) => {

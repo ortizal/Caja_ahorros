@@ -1,6 +1,8 @@
 package com.alantek.caja.modulo.creditos.repository;
 
 import com.alantek.caja.modulo.creditos.entity.Credito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -14,6 +16,10 @@ public interface CreditoRepository extends JpaRepository<Credito, Long> {
     List<Credito> findBySocioIdOrderByCreatedAtDesc(Long socioId);
 
     List<Credito> findByEstadoOrderByCreatedAtDesc(String estado);
+
+    Page<Credito> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    Page<Credito> findBySocioId(Long socioId, Pageable pageable);
 
     boolean existsBySocioIdAndEstadoIn(Long socioId, List<String> estados);
 

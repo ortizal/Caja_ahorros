@@ -52,9 +52,9 @@ class AportacionesFlowIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .param("periodo", PERIODO))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].periodo").value(PERIODO))
+                .andExpect(jsonPath("$.content[0].periodo").value(PERIODO))
                 .andReturn();
-        JsonNode primera = objectMapper.readTree(lista.getResponse().getContentAsString()).get(0);
+        JsonNode primera = objectMapper.readTree(lista.getResponse().getContentAsString()).get("content").get(0);
         Long aportacionId = primera.get("id").asLong();
         String montoEsperado = primera.get("montoEsperado").decimalValue().toPlainString();
 
@@ -69,13 +69,14 @@ class AportacionesFlowIntegrationTest {
         mvc.perform(get("/api/v1/aportaciones/" + aportacionId + "/pagos")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.totalElements").value(1));
 
         mvc.perform(get("/api/v1/aportaciones")
                         .header("Authorization", "Bearer " + token)
-                        .param("periodo", PERIODO))
+                        .param("periodo", PERIODO)
+                        .param("socioId", String.valueOf(primera.get("socioId").asLong())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].estado").value("PAGADA"));
+                .andExpect(jsonPath("$.content[0].estado").value("PAGADA"));
     }
 
     @Test
@@ -94,7 +95,7 @@ class AportacionesFlowIntegrationTest {
                         .param("periodo", "2026-10"))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode primera = objectMapper.readTree(lista.getResponse().getContentAsString()).get(0);
+        JsonNode primera = objectMapper.readTree(lista.getResponse().getContentAsString()).get("content").get(0);
         Long aportacionId = primera.get("id").asLong();
         String montoEsperado = primera.get("montoEsperado").decimalValue().toPlainString();
 

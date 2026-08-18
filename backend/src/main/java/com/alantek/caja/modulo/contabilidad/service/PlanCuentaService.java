@@ -4,12 +4,12 @@ import com.alantek.caja.modulo.contabilidad.dto.PlanCuentaRequest;
 import com.alantek.caja.modulo.contabilidad.dto.PlanCuentaResponse;
 import com.alantek.caja.modulo.contabilidad.entity.PlanCuenta;
 import com.alantek.caja.modulo.contabilidad.repository.PlanCuentaRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class PlanCuentaService {
@@ -22,11 +22,9 @@ public class PlanCuentaService {
         this.auditService = auditService;
     }
 
-    public List<PlanCuentaResponse> listar() {
-        return planCuentaRepository.findAll().stream()
-                .sorted(java.util.Comparator.comparing(PlanCuenta::getCodigo))
-                .map(this::toResponse)
-                .toList();
+    @Transactional(readOnly = true)
+    public PageResponse<PlanCuentaResponse> listar(Pageable pageable) {
+        return PageResponse.of(planCuentaRepository.findAll(pageable), this::toResponse);
     }
 
     @Transactional

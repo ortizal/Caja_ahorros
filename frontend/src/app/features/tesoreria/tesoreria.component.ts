@@ -7,6 +7,7 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
 import { PlanCuenta } from '../../core/models/contabilidad.model';
+import { SortState } from '../../core/models/paginado.model';
 import {
   CuentaPorCobrar,
   CuentaPorPagar,
@@ -17,10 +18,12 @@ import { ContabilidadService } from '../../core/services/contabilidad.service';
 import { TesoreriaService } from '../../core/services/tesoreria.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
+import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
+import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
 
 @Component({
   selector: 'app-tesoreria',
-  imports: [ReactiveFormsModule, FormsModule, DecimalPipe, RouterLink, AccionesMenuComponent],
+  imports: [ReactiveFormsModule, FormsModule, DecimalPipe, RouterLink, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './tesoreria.html',
   styleUrl: './tesoreria.css'
 })
@@ -44,6 +47,24 @@ export class TesoreriaComponent implements OnInit {
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
 
+  protected readonly pageGastos = signal(0);
+  protected readonly sizeGastos = signal(10);
+  protected readonly sortGastos = signal<SortState | null>(null);
+  protected readonly totalElementsGastos = signal(0);
+  protected readonly totalPagesGastos = signal(0);
+
+  protected readonly pageCxp = signal(0);
+  protected readonly sizeCxp = signal(10);
+  protected readonly sortCxp = signal<SortState | null>(null);
+  protected readonly totalElementsCxp = signal(0);
+  protected readonly totalPagesCxp = signal(0);
+
+  protected readonly pageCxc = signal(0);
+  protected readonly sizeCxc = signal(10);
+  protected readonly sortCxc = signal<SortState | null>(null);
+  protected readonly totalElementsCxc = signal(0);
+  protected readonly totalPagesCxc = signal(0);
+
   protected readonly puedeCrear = computed(() => this.auth.hasPermiso('TESORERIA:CREAR'));
   protected readonly puedeAprobar = computed(() => this.auth.hasPermiso('TESORERIA:APROBAR'));
   protected readonly puedeEditar = computed(() => this.auth.hasPermiso('TESORERIA:EDITAR'));
@@ -65,8 +86,8 @@ export class TesoreriaComponent implements OnInit {
   }
 
   cargarPlanCuentas(): void {
-    this.contabilidadService.planCuentas().subscribe({
-      next: (p) => this.planCuentas.set(p),
+    this.contabilidadService.planCuentas({ size: 500 }).subscribe({
+      next: (p) => this.planCuentas.set(p.content),
       error: () => this.planCuentas.set([])
     });
   }
@@ -77,10 +98,23 @@ export class TesoreriaComponent implements OnInit {
   }
 
   cargarGastos(): void {
-    this.tesoreriaService.gastos().subscribe({
-      next: (g) => this.gastos.set(g),
-      error: (err: HttpErrorResponse) =>
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudieron cargar los gastos.')
+    this.cargando.set(true);
+    this.error.set('');
+    this.tesoreriaService.gastos(undefined, {
+      page: this.pageGastos(),
+      size: this.sizeGastos(),
+      sort: this.sortGastos() ? `${this.sortGastos()!.key},${this.sortGastos()!.dir}` : undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.gastos.set(paginated.content);
+        this.totalElementsGastos.set(paginated.totalElements);
+        this.totalPagesGastos.set(paginated.totalPages);
+        this.cargando.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudieron cargar los gastos.');
+        this.cargando.set(false);
+      }
     });
   }
 
@@ -143,10 +177,23 @@ export class TesoreriaComponent implements OnInit {
   }
 
   cargarCuentasPagar(): void {
-    this.tesoreriaService.cuentasPorPagar().subscribe({
-      next: (c) => this.cuentasPagar.set(c),
-      error: (err: HttpErrorResponse) =>
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudieron cargar las cuentas por pagar.')
+    this.cargando.set(true);
+    this.error.set('');
+    this.tesoreriaService.cuentasPorPagar(undefined, {
+      page: this.pageCxp(),
+      size: this.sizeCxp(),
+      sort: this.sortCxp() ? `${this.sortCxp()!.key},${this.sortCxp()!.dir}` : undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.cuentasPagar.set(paginated.content);
+        this.totalElementsCxp.set(paginated.totalElements);
+        this.totalPagesCxp.set(paginated.totalPages);
+        this.cargando.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudieron cargar las cuentas por pagar.');
+        this.cargando.set(false);
+      }
     });
   }
 
@@ -167,10 +214,23 @@ export class TesoreriaComponent implements OnInit {
   }
 
   cargarCuentasCobrar(): void {
-    this.tesoreriaService.cuentasPorCobrar().subscribe({
-      next: (c) => this.cuentasCobrar.set(c),
-      error: (err: HttpErrorResponse) =>
-        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudieron cargar las cuentas por cobrar.')
+    this.cargando.set(true);
+    this.error.set('');
+    this.tesoreriaService.cuentasPorCobrar(undefined, {
+      page: this.pageCxc(),
+      size: this.sizeCxc(),
+      sort: this.sortCxc() ? `${this.sortCxc()!.key},${this.sortCxc()!.dir}` : undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.cuentasCobrar.set(paginated.content);
+        this.totalElementsCxc.set(paginated.totalElements);
+        this.totalPagesCxc.set(paginated.totalPages);
+        this.cargando.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set((err.error as ApiError | undefined)?.message ?? 'No se pudieron cargar las cuentas por cobrar.');
+        this.cargando.set(false);
+      }
     });
   }
 
@@ -188,6 +248,57 @@ export class TesoreriaComponent implements OnInit {
         this.toast.error(msg);
       }
     });
+  }
+
+  cambiarPaginaGastos(p: number): void {
+    this.pageGastos.set(p);
+    this.cargarGastos();
+  }
+
+  cambiarTamanoGastos(t: number): void {
+    this.sizeGastos.set(t);
+    this.pageGastos.set(0);
+    this.cargarGastos();
+  }
+
+  ordenarGastos(s: SortState): void {
+    this.sortGastos.set(s);
+    this.pageGastos.set(0);
+    this.cargarGastos();
+  }
+
+  cambiarPaginaCxp(p: number): void {
+    this.pageCxp.set(p);
+    this.cargarCuentasPagar();
+  }
+
+  cambiarTamanoCxp(t: number): void {
+    this.sizeCxp.set(t);
+    this.pageCxp.set(0);
+    this.cargarCuentasPagar();
+  }
+
+  ordenarCxp(s: SortState): void {
+    this.sortCxp.set(s);
+    this.pageCxp.set(0);
+    this.cargarCuentasPagar();
+  }
+
+  cambiarPaginaCxc(p: number): void {
+    this.pageCxc.set(p);
+    this.cargarCuentasCobrar();
+  }
+
+  cambiarTamanoCxc(t: number): void {
+    this.sizeCxc.set(t);
+    this.pageCxc.set(0);
+    this.cargarCuentasCobrar();
+  }
+
+  ordenarCxc(s: SortState): void {
+    this.sortCxc.set(s);
+    this.pageCxc.set(0);
+    this.cargarCuentasCobrar();
   }
 
   cambiarAnio(value: string): void {

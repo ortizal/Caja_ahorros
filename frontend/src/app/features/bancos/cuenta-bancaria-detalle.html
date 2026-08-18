@@ -127,9 +127,9 @@
         <table class="table" data-testid="movimientos-banco-table">
           <thead>
             <tr>
-              <th>Tipo</th>
-              <th>Monto</th>
-              <th>Fecha</th>
+              <th appSortable sortKey="tipo" [sort]="sort()" (sortChange)="ordenar($event)">Tipo</th>
+              <th appSortable sortKey="monto" [sort]="sort()" (sortChange)="ordenar($event)">Monto</th>
+              <th appSortable sortKey="fecha" [sort]="sort()" (sortChange)="ordenar($event)">Fecha</th>
               <th>Saldo Contable</th>
               <th>Conciliado</th>
             </tr>
@@ -151,6 +151,8 @@
           </tbody>
         </table>
       </div>
+      <app-paginador [page]="page()" [size]="size()" [totalElements]="totalElements()" [totalPages]="totalPages()"
+                     (pageChange)="cambiarPagina($event)" (sizeChange)="cambiarTamano($event)" />
     }
   </div>
 } @else {

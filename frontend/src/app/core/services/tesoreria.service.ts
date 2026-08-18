@@ -13,6 +13,7 @@ import {
   PresupuestoPartidaRequest,
   PresupuestoResumen
 } from '../models/tesoreria.model';
+import { Paginated, Paginacion, paginar } from '../models/paginado.model';
 
 @Injectable({ providedIn: 'root' })
 export class TesoreriaService {
@@ -20,10 +21,12 @@ export class TesoreriaService {
 
   constructor(private readonly http: HttpClient) {}
 
-  gastos(estado?: string): Observable<Gasto[]> {
-    return this.http.get<Gasto[]>(`${this.api}/gastos`, {
-      params: estado ? { estado } : {}
-    });
+  gastos(estado?: string, paginacion?: Paginacion): Observable<Paginated<Gasto>> {
+    const params: Record<string, string | number> = paginar(paginacion);
+    if (estado) {
+      params['estado'] = estado;
+    }
+    return this.http.get<Paginated<Gasto>>(`${this.api}/gastos`, { params });
   }
 
   crearGasto(request: GastoRequest): Observable<Gasto> {
@@ -42,10 +45,12 @@ export class TesoreriaService {
     return this.http.post<Gasto>(`${this.api}/gastos/${id}/anular`, {});
   }
 
-  cuentasPorPagar(estado?: string): Observable<CuentaPorPagar[]> {
-    return this.http.get<CuentaPorPagar[]>(`${this.api}/cuentas-por-pagar`, {
-      params: estado ? { estado } : {}
-    });
+  cuentasPorPagar(estado?: string, paginacion?: Paginacion): Observable<Paginated<CuentaPorPagar>> {
+    const params: Record<string, string | number> = paginar(paginacion);
+    if (estado) {
+      params['estado'] = estado;
+    }
+    return this.http.get<Paginated<CuentaPorPagar>>(`${this.api}/cuentas-por-pagar`, { params });
   }
 
   crearCuentaPorPagar(request: CuentaPorPagarRequest): Observable<CuentaPorPagar> {
@@ -56,10 +61,12 @@ export class TesoreriaService {
     return this.http.post<CuentaPorPagar>(`${this.api}/cuentas-por-pagar/${id}/pagar`, {});
   }
 
-  cuentasPorCobrar(estado?: string): Observable<CuentaPorCobrar[]> {
-    return this.http.get<CuentaPorCobrar[]>(`${this.api}/cuentas-por-cobrar`, {
-      params: estado ? { estado } : {}
-    });
+  cuentasPorCobrar(estado?: string, paginacion?: Paginacion): Observable<Paginated<CuentaPorCobrar>> {
+    const params: Record<string, string | number> = paginar(paginacion);
+    if (estado) {
+      params['estado'] = estado;
+    }
+    return this.http.get<Paginated<CuentaPorCobrar>>(`${this.api}/cuentas-por-cobrar`, { params });
   }
 
   crearCuentaPorCobrar(request: CuentaPorCobrarRequest): Observable<CuentaPorCobrar> {

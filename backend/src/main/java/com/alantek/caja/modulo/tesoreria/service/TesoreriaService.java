@@ -24,9 +24,12 @@ import com.alantek.caja.modulo.tesoreria.repository.CuentaPorCobrarRepository;
 import com.alantek.caja.modulo.tesoreria.repository.CuentaPorPagarRepository;
 import com.alantek.caja.modulo.tesoreria.repository.GastoRepository;
 import com.alantek.caja.modulo.tesoreria.repository.PresupuestoPartidaRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -135,11 +138,12 @@ public class TesoreriaService {
         return toResponse(saved);
     }
 
-    public List<GastoResponse> listarGastos(String estado) {
-        List<Gasto> gastos = estado == null || estado.isBlank()
-                ? gastoRepository.findAllByOrderByCreatedAtDesc()
-                : gastoRepository.findByEstadoOrderByCreatedAtDesc(estado.toUpperCase());
-        return gastos.stream().map(this::toResponse).toList();
+    @Transactional(readOnly = true)
+    public PageResponse<GastoResponse> listarGastos(String estado, Pageable pageable) {
+        Page<Gasto> page = (estado == null || estado.isBlank())
+                ? gastoRepository.findAll(pageable)
+                : gastoRepository.findByEstado(estado.toUpperCase(), pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional
@@ -174,11 +178,12 @@ public class TesoreriaService {
         return toResponse(saved);
     }
 
-    public List<CuentaPorPagarResponse> listarCuentasPorPagar(String estado) {
-        List<CuentaPorPagar> cuentas = estado == null || estado.isBlank()
-                ? cxpRepository.findAllByOrderByCreatedAtDesc()
-                : cxpRepository.findByEstadoOrderByCreatedAtDesc(estado.toUpperCase());
-        return cuentas.stream().map(this::toResponse).toList();
+    @Transactional(readOnly = true)
+    public PageResponse<CuentaPorPagarResponse> listarCuentasPorPagar(String estado, Pageable pageable) {
+        Page<CuentaPorPagar> page = (estado == null || estado.isBlank())
+                ? cxpRepository.findAll(pageable)
+                : cxpRepository.findByEstado(estado.toUpperCase(), pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional
@@ -214,11 +219,12 @@ public class TesoreriaService {
         return toResponse(saved);
     }
 
-    public List<CuentaPorCobrarResponse> listarCuentasPorCobrar(String estado) {
-        List<CuentaPorCobrar> cuentas = estado == null || estado.isBlank()
-                ? cxcRepository.findAllByOrderByCreatedAtDesc()
-                : cxcRepository.findByEstadoOrderByCreatedAtDesc(estado.toUpperCase());
-        return cuentas.stream().map(this::toResponse).toList();
+    @Transactional(readOnly = true)
+    public PageResponse<CuentaPorCobrarResponse> listarCuentasPorCobrar(String estado, Pageable pageable) {
+        Page<CuentaPorCobrar> page = (estado == null || estado.isBlank())
+                ? cxcRepository.findAll(pageable)
+                : cxcRepository.findByEstado(estado.toUpperCase(), pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional

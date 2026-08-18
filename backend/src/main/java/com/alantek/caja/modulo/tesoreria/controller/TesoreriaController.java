@@ -11,7 +11,10 @@ import com.alantek.caja.modulo.tesoreria.dto.PresupuestoPartidaRequest;
 import com.alantek.caja.modulo.tesoreria.dto.PresupuestoPartidaResponse;
 import com.alantek.caja.modulo.tesoreria.dto.PresupuestoResumenResponse;
 import com.alantek.caja.modulo.tesoreria.service.TesoreriaService;
+import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,8 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -37,8 +38,8 @@ public class TesoreriaController {
 
     @GetMapping("/gastos")
     @PreAuthorize("hasAuthority('TESORERIA:VER')")
-    public List<GastoResponse> listarGastos(@RequestParam(required = false) String estado) {
-        return tesoreriaService.listarGastos(estado);
+    public PageResponse<GastoResponse> listarGastos(@RequestParam(required = false) String estado, @PageableDefault(size = 10) Pageable pageable) {
+        return tesoreriaService.listarGastos(estado, pageable);
     }
 
     @PostMapping("/gastos")
@@ -67,8 +68,8 @@ public class TesoreriaController {
 
     @GetMapping("/cuentas-por-pagar")
     @PreAuthorize("hasAuthority('TESORERIA:VER')")
-    public List<CuentaPorPagarResponse> listarCuentasPorPagar(@RequestParam(required = false) String estado) {
-        return tesoreriaService.listarCuentasPorPagar(estado);
+    public PageResponse<CuentaPorPagarResponse> listarCuentasPorPagar(@RequestParam(required = false) String estado, @PageableDefault(size = 10) Pageable pageable) {
+        return tesoreriaService.listarCuentasPorPagar(estado, pageable);
     }
 
     @PostMapping("/cuentas-por-pagar")
@@ -85,8 +86,8 @@ public class TesoreriaController {
 
     @GetMapping("/cuentas-por-cobrar")
     @PreAuthorize("hasAuthority('TESORERIA:VER')")
-    public List<CuentaPorCobrarResponse> listarCuentasPorCobrar(@RequestParam(required = false) String estado) {
-        return tesoreriaService.listarCuentasPorCobrar(estado);
+    public PageResponse<CuentaPorCobrarResponse> listarCuentasPorCobrar(@RequestParam(required = false) String estado, @PageableDefault(size = 10) Pageable pageable) {
+        return tesoreriaService.listarCuentasPorCobrar(estado, pageable);
     }
 
     @PostMapping("/cuentas-por-cobrar")

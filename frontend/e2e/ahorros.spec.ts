@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { loginAs, operarConCaja } from './helpers';
+import { interceptLargePage, loginAs, operarConCaja } from './helpers';
 
 const NOMBRE = `E2E ${Date.now().toString().slice(-5)}`;
 const MES = (new Date().getDate() % 12) + 1;
@@ -9,6 +9,8 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Modulo de ahorros', () => {
   test('crear producto, aperturar cuenta, operar y capitalizar intereses', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/productos-ahorro*');
+    await interceptLargePage(page, '**/api/v1/cuentas-ahorro*');
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/ahorros');
 

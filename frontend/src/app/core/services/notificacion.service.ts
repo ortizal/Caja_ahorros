@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Notificacion } from '../models/notificacion.model';
+import { Paginated, Paginacion, paginar } from '../models/paginado.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificacionService {
@@ -10,8 +11,8 @@ export class NotificacionService {
 
   constructor(private readonly http: HttpClient) {}
 
-  listar(): Observable<Notificacion[]> {
-    return this.http.get<Notificacion[]>(`${this.api}/notificaciones`);
+  listar(paginacion?: Paginacion): Observable<Paginated<Notificacion>> {
+    return this.http.get<Paginated<Notificacion>>(`${this.api}/notificaciones`, { params: paginar(paginacion) });
   }
 
   contarNoLeidas(): Observable<number> {

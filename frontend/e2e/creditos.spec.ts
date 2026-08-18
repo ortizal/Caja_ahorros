@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { asegurarCajaAbierta, loginAs } from './helpers';
+import { asegurarCajaAbierta, interceptLargePage, loginAs } from './helpers';
 
 const NOMBRE = `E2E CR ${Date.now().toString().slice(-5)}`;
 
@@ -51,6 +51,12 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Modulo de creditos', () => {
   test('crear producto, solicitar, evaluar, aprobar, desembolsar, cobrar cuota, mora y refinanciar', async ({ page }) => {
     const socio = await socioDisponible(page);
+
+    await interceptLargePage(page, '**/api/v1/productos-credito*');
+    await interceptLargePage(page, '**/api/v1/socios*');
+    await interceptLargePage(page, '**/api/v1/solicitudes-credito*');
+    await interceptLargePage(page, '**/api/v1/creditos?*');
+    await interceptLargePage(page, '**/api/v1/creditos/**');
 
     // El cajero (TESORERO) registra el producto y la solicitud
     await loginAs(page, 'cajero', 'cajero123');

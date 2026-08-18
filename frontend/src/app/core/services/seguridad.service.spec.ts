@@ -22,12 +22,12 @@ describe('SeguridadService', () => {
 
   it('usuarios hace GET a /usuarios', () => {
     service.usuarios().subscribe((res) => {
-      expect(res[0].username).toBe('admin');
+      expect(res.content[0].username).toBe('admin');
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/usuarios`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, username: 'admin', nombreCompleto: 'Administrador', email: null, estado: 'ACTIVO', roles: ['ADMIN'], ultimoAcceso: null, createdAt: '2026-08-01T00:00:00Z' }]);
+    req.flush({ content: [{ id: 1, username: 'admin', nombreCompleto: 'Administrador', email: null, estado: 'ACTIVO', roles: ['ADMIN'], ultimoAcceso: null, createdAt: '2026-08-01T00:00:00Z' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('crearUsuario hace POST con cuerpo', () => {
@@ -57,12 +57,12 @@ describe('SeguridadService', () => {
 
   it('permisos hace GET a /permisos', () => {
     service.permisos().subscribe((res) => {
-      expect(res[0].modulo).toBe('BANCOS');
+      expect(res.content[0].modulo).toBe('BANCOS');
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/permisos`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, modulo: 'BANCOS', accion: 'ANULAR' }]);
+    req.flush({ content: [{ id: 1, modulo: 'BANCOS', accion: 'ANULAR' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('asignarPermisos hace POST con el array de ids', () => {
@@ -78,7 +78,7 @@ describe('SeguridadService', () => {
 
   it('auditoria hace GET con filtros opcionales', () => {
     service.auditoria('socios', '2026-08-01T00:00:00Z', '2026-08-31T23:59:59Z').subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(
@@ -88,6 +88,6 @@ describe('SeguridadService', () => {
         r.params.get('tabla') === 'socios' &&
         r.params.get('desde') === '2026-08-01T00:00:00Z'
     );
-    req.flush([{ id: 1, usuarioId: 1, tablaAfectada: 'socios', registroId: 5, accion: 'CREAR', valorAnterior: null, valorNuevo: '{}', ip: '127.0.0.1', createdAt: '2026-08-01T10:00:00Z' }]);
+    req.flush({ content: [{ id: 1, usuarioId: 1, tablaAfectada: 'socios', registroId: 5, accion: 'CREAR', valorAnterior: null, valorNuevo: '{}', ip: '127.0.0.1', createdAt: '2026-08-01T10:00:00Z' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 });

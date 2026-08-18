@@ -6,8 +6,11 @@ import com.alantek.caja.modulo.seguridad.entity.Rol;
 import com.alantek.caja.modulo.seguridad.entity.Usuario;
 import com.alantek.caja.modulo.seguridad.repository.RolRepository;
 import com.alantek.caja.modulo.seguridad.repository.UsuarioRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,10 +39,9 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public List<UsuarioResponse> listar() {
-        return usuarioRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<UsuarioResponse> listar(Pageable pageable) {
+        Page<Usuario> page = usuarioRepository.findAll(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)

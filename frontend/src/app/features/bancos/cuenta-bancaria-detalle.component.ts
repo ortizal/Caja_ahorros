@@ -14,10 +14,13 @@ import {
 } from '../../core/models/banco.model';
 import { BancoService } from '../../core/services/banco.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SortState } from '../../core/models/paginado.model';
+import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
+import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
 
 @Component({
   selector: 'app-cuenta-bancaria-detalle',
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './cuenta-bancaria-detalle.html',
   styleUrl: './cuenta-bancaria-detalle.css'
 })
@@ -36,6 +39,12 @@ export class CuentaBancariaDetalleComponent implements OnInit {
   protected readonly guardando = signal(false);
   protected readonly tipos = TIPOS_MOVIMIENTO_BANCO;
   protected readonly puedeCrear = computed(() => this.auth.hasPermiso('BANCOS:CREAR'));
+
+  protected readonly page = signal(0);
+  protected readonly size = signal(10);
+  protected readonly sort = signal<SortState | null>(null);
+  protected readonly totalElements = signal(0);
+  protected readonly totalPages = signal(0);
 
   protected readonly movimientoForm = this.fb.nonNullable.group({
     tipo: ['DEPOSITO', [Validators.required]],
@@ -66,9 +75,9 @@ export class CuentaBancariaDetalleComponent implements OnInit {
   cargarTodo(): void {
     this.cargando.set(true);
     this.error.set('');
-    this.bancoService.cuentas().subscribe({
-      next: (cuentas) => {
-        const cuenta = cuentas.find((c) => c.id === this.cuentaId) ?? null;
+    this.bancoService.cuentas({ page: 0, size: 1000 }).subscribe({
+      next: (paginated) => {
+        const cuenta = paginated.content.find((c) => c.id === this.cuentaId) ?? null;
         this.cuenta.set(cuenta);
         if (cuenta) {
           this.cargarMovimientos();
@@ -85,10 +94,35 @@ export class CuentaBancariaDetalleComponent implements OnInit {
   }
 
   cargarMovimientos(): void {
-    this.bancoService.movimientos(this.cuentaId).subscribe({
-      next: (m) => this.movimientos.set(m),
+    this.bancoService.movimientos(this.cuentaId, {
+      page: this.page(),
+      size: this.size(),
+      sort: this.sort() ? `${this.sort()!.key},${this.sort()!.dir}` : undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.movimientos.set(paginated.content);
+        this.totalElements.set(paginated.totalElements);
+        this.totalPages.set(paginated.totalPages);
+      },
       error: () => this.movimientos.set([])
     });
+  }
+
+  cambiarPagina(p: number): void {
+    this.page.set(p);
+    this.cargarMovimientos();
+  }
+
+  cambiarTamano(t: number): void {
+    this.size.set(t);
+    this.page.set(0);
+    this.cargarMovimientos();
+  }
+
+  ordenar(s: SortState): void {
+    this.sort.set(s);
+    this.page.set(0);
+    this.cargarMovimientos();
   }
 
   registrarMovimiento(): void {

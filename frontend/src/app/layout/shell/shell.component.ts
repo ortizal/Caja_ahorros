@@ -48,10 +48,10 @@ export class ShellComponent implements OnInit {
   }
 
   cargar(): void {
-    this.notificacionService.listar().subscribe({
-      next: (lista) => {
-        this.lista.set(lista);
-        this.noLeidas.set(lista.filter((n) => !n.leida).length);
+    this.notificacionService.listar({ size: 50 }).subscribe({
+      next: (paginated) => {
+        this.lista.set(paginated.content);
+        this.noLeidas.set(paginated.content.filter((n) => !n.leida).length);
       },
       error: () => undefined
     });

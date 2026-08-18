@@ -1,6 +1,8 @@
 package com.alantek.caja.modulo.socios.repository;
 
 import com.alantek.caja.modulo.socios.entity.Socio;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -13,12 +15,14 @@ public interface SocioRepository extends JpaRepository<Socio, Long> {
 
     Optional<Socio> findByIdentificacion(String identificacion);
 
+    List<Socio> findByEstado(String estado);
+
+    Page<Socio> findByEstado(String estado, Pageable pageable);
+
     List<Socio> findByUsuarioId(Long usuarioId);
 
     @Query("SELECT COALESCE(MAX(s.id), 0) FROM Socio s")
     Long maxId();
 
     long countByEstado(String estado);
-
-    java.util.List<Socio> findByEstado(String estado);
 }

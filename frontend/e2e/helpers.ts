@@ -8,6 +8,18 @@ export async function loginAs(page: Page, username: string, password: string) {
   await page.waitForURL(/\/dashboard/);
 }
 
+export async function interceptLargePage(page: Page, urlGlob: string): Promise<void> {
+  await page.route(urlGlob, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    const url = new URL(route.request().url());
+    url.searchParams.set('size', '100');
+    await route.continue({ url: url.toString() });
+  });
+}
+
 export async function asegurarCajaAbierta(
   page: Page,
   username = 'admin',
@@ -19,7 +31,7 @@ export async function asegurarCajaAbierta(
   const { token } = (await login.json()) as { token: string };
   const headers = { Authorization: `Bearer ${token}` };
   const res = await page.request.get('http://localhost:8080/api/v1/caja/mias', { headers });
-  const cajas = (await res.json()) as { id: number; estado: string; fecha: string }[];
+  const { content: cajas } = (await res.json()) as { content: { id: number; estado: string; fecha: string }[] };
   const hoy = new Date();
   const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
   for (const c of cajas) {

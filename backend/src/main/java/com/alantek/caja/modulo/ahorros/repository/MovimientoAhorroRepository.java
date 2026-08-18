@@ -1,6 +1,8 @@
 package com.alantek.caja.modulo.ahorros.repository;
 
 import com.alantek.caja.modulo.ahorros.entity.MovimientoAhorro;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -8,6 +10,8 @@ import java.util.List;
 public interface MovimientoAhorroRepository extends JpaRepository<MovimientoAhorro, Long> {
 
     List<MovimientoAhorro> findByCuentaIdOrderByCreatedAtAsc(Long cuentaId);
+
+    Page<MovimientoAhorro> findByCuentaIdOrderByCreatedAtAsc(Long cuentaId, Pageable pageable);
 
     List<MovimientoAhorro> findByTipoAndEstado(String tipo, String estado);
 

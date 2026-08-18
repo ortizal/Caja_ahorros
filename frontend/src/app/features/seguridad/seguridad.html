@@ -37,11 +37,11 @@
       <table class="table" data-testid="usuarios-table">
         <thead>
           <tr>
-            <th>Usuario</th>
-            <th>Nombre Completo</th>
-            <th>Email</th>
+            <th appSortable sortKey="username" [sort]="sortUsuarios()" (sortChange)="ordenarUsuarios($event)">Usuario</th>
+            <th appSortable sortKey="nombreCompleto" [sort]="sortUsuarios()" (sortChange)="ordenarUsuarios($event)">Nombre Completo</th>
+            <th appSortable sortKey="email" [sort]="sortUsuarios()" (sortChange)="ordenarUsuarios($event)">Email</th>
             <th>Roles</th>
-            <th>Estado</th>
+            <th appSortable sortKey="estado" [sort]="sortUsuarios()" (sortChange)="ordenarUsuarios($event)">Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -90,6 +90,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="pageUsuarios()" [size]="sizeUsuarios()" [totalElements]="totalElementsUsuarios()" [totalPages]="totalPagesUsuarios()"
+                   (pageChange)="cambiarPaginaUsuarios($event)" (sizeChange)="cambiarTamanoUsuarios($event)" />
   </div>
 }
 
@@ -102,8 +104,8 @@
       <table class="table" data-testid="roles-table">
         <thead>
           <tr>
-            <th>Rol</th>
-            <th>Descripción</th>
+            <th appSortable sortKey="nombre" [sort]="sortRoles()" (sortChange)="ordenarRoles($event)">Rol</th>
+            <th appSortable sortKey="descripcion" [sort]="sortRoles()" (sortChange)="ordenarRoles($event)">Descripción</th>
             <th>Total Permisos</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
@@ -128,6 +130,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="pageRoles()" [size]="sizeRoles()" [totalElements]="totalElementsRoles()" [totalPages]="totalPagesRoles()"
+                   (pageChange)="cambiarPaginaRoles($event)" (sizeChange)="cambiarTamanoRoles($event)" />
 
     @if (rolPermisosAbierto() && rolEditando(); as rol) {
       <app-modal [abierto]="rolPermisosAbierto()" [titulo]="'Permisos del rol ' + rol.nombre" (cerrar)="cerrarPermisos()">
@@ -201,11 +205,11 @@
       <table class="table" data-testid="auditoria-table">
         <thead>
           <tr>
-            <th>Fecha y Hora</th>
-            <th>ID Usuario</th>
-            <th>Tabla Afectada</th>
-            <th>ID Registro</th>
-            <th>Acción</th>
+            <th appSortable sortKey="createdAt" [sort]="sortAuditoria()" (sortChange)="ordenarAuditoria($event)">Fecha y Hora</th>
+            <th appSortable sortKey="usuarioId" [sort]="sortAuditoria()" (sortChange)="ordenarAuditoria($event)">ID Usuario</th>
+            <th appSortable sortKey="tablaAfectada" [sort]="sortAuditoria()" (sortChange)="ordenarAuditoria($event)">Tabla Afectada</th>
+            <th appSortable sortKey="registroId" [sort]="sortAuditoria()" (sortChange)="ordenarAuditoria($event)">ID Registro</th>
+            <th appSortable sortKey="accion" [sort]="sortAuditoria()" (sortChange)="ordenarAuditoria($event)">Acción</th>
             <th>Dirección IP</th>
           </tr>
         </thead>
@@ -230,6 +234,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="pageAuditoria()" [size]="sizeAuditoria()" [totalElements]="totalElementsAuditoria()" [totalPages]="totalPagesAuditoria()"
+                   (pageChange)="cambiarPaginaAuditoria($event)" (sizeChange)="cambiarTamanoAuditoria($event)" />
     @if (auditoria().length === 0 && !cargando()) {
       <div class="empty-state" style="padding: 20px;" data-testid="auditoria-vacio">
         <div class="empty-state-text">Sin registros de auditoría para los filtros aplicados.</div>

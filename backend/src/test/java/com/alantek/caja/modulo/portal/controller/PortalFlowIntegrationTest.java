@@ -58,8 +58,8 @@ class PortalFlowIntegrationTest {
         mvc.perform(get("/api/v1/portal/ahorro")
                         .header("Authorization", "Bearer " + socio))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].cuenta.socioId").value(socioId))
-                .andExpect(jsonPath("$[0].movimientos").isArray());
+                .andExpect(jsonPath("$.content[0].cuenta.socioId").value(socioId))
+                .andExpect(jsonPath("$.content[0].movimientos").isArray());
 
         mvc.perform(post("/api/v1/aportaciones/generar?periodo=" + periodoActual())
                         .header("Authorization", "Bearer " + admin))
@@ -68,7 +68,7 @@ class PortalFlowIntegrationTest {
         mvc.perform(get("/api/v1/portal/aportaciones")
                         .header("Authorization", "Bearer " + socio))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.aportacion.periodo == '" + periodoActual() + "')]").isNotEmpty());
+                .andExpect(jsonPath("$.content[?(@.aportacion.periodo == '" + periodoActual() + "')]").isNotEmpty());
 
         long socioDemoId = idDeCodigo(admin, "SOC-DEMO-01");
         long productoCreditoId = primerProductoId(admin, "/api/v1/productos-credito/activos");
@@ -101,10 +101,10 @@ class PortalFlowIntegrationTest {
         mvc.perform(get("/api/v1/portal/creditos")
                         .header("Authorization", "Bearer " + socio))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].credito.estado").value("VIGENTE"))
-                .andExpect(jsonPath("$[0].credito.saldoCapital").value(1200.0))
-                .andExpect(jsonPath("$[0].cuotas.length()").value(12))
-                .andExpect(jsonPath("$[0].pagos").isArray());
+                .andExpect(jsonPath("$.content[0].credito.estado").value("VIGENTE"))
+                .andExpect(jsonPath("$.content[0].credito.saldoCapital").value(1200.0))
+                .andExpect(jsonPath("$.content[0].cuotas.length()").value(12))
+                .andExpect(jsonPath("$.content[0].pagos").isArray());
 
         MvcResult resumenFinal = mvc.perform(get("/api/v1/portal/resumen")
                         .header("Authorization", "Bearer " + socio))
@@ -140,12 +140,14 @@ class PortalFlowIntegrationTest {
     }
 
     private long idDeCodigo(String token, String codigo) throws Exception {
-        MvcResult result = mvc.perform(get("/api/v1/socios")
-                        .header("Authorization", "Bearer " + token))
+        MvcResult result =         mvc.perform(get("/api/v1/socios")
+                        .header("Authorization", "Bearer " + token)
+                        .param("size", "500")
+                        .param("sort", "codigo,asc"))
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode lista = objectMapper.readTree(result.getResponse().getContentAsString());
-        for (JsonNode item : lista) {
+        for (JsonNode item : lista.get("content")) {
             if (codigo.equals(item.get("codigo").asText())) {
                 return item.get("id").asLong();
             }
@@ -155,20 +157,22 @@ class PortalFlowIntegrationTest {
 
     private long primerProductoId(String token, String ruta) throws Exception {
         MvcResult result = mvc.perform(get(ruta)
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("size", "1"))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode lista = objectMapper.readTree(result.getResponse().getContentAsString());
-        return lista.get(0).get("id").asLong();
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        return json.get("content").get(0).get("id").asLong();
     }
 
     private long creditoIdDeSolicitud(String token, long solicitudId) throws Exception {
         MvcResult result = mvc.perform(get("/api/v1/creditos")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("size", "500"))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode lista = objectMapper.readTree(result.getResponse().getContentAsString());
-        for (JsonNode credito : lista) {
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        for (JsonNode credito : json.get("content")) {
             if (credito.get("solicitudId").asLong() == solicitudId) {
                 return credito.get("id").asLong();
             }

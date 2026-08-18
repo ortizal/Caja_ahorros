@@ -6,8 +6,11 @@ import com.alantek.caja.modulo.socios.dto.SocioResponse;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.entity.SocioBeneficiario;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +29,11 @@ public class SocioService {
     }
 
     @Transactional(readOnly = true)
-    public List<SocioResponse> listar(String estado) {
-        List<Socio> socios = estado == null || estado.isBlank()
-                ? socioRepository.findAll()
-                : socioRepository.findAll().stream().filter(s -> estado.equalsIgnoreCase(s.getEstado())).toList();
-        return socios.stream().map(this::toResponse).toList();
+    public PageResponse<SocioResponse> listar(String estado, Pageable pageable) {
+        Page<Socio> page = (estado == null || estado.isBlank())
+                ? socioRepository.findAll(pageable)
+                : socioRepository.findByEstado(estado, pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)

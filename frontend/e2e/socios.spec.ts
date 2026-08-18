@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { loginAs } from './helpers';
+import { interceptLargePage, loginAs } from './helpers';
 
 const CEDULA = `17${Date.now().toString().slice(-10)}`;
 
@@ -7,6 +7,7 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Módulo de socios', () => {
   test('crear, ver y editar un socio', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/socios*');
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/socios');
 
@@ -42,6 +43,7 @@ test.describe('Módulo de socios', () => {
   });
 
   test('cambiar estado a SUSPENDIDO', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/socios*');
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/socios');
 
@@ -54,6 +56,7 @@ test.describe('Módulo de socios', () => {
   });
 
   test('auditor no puede editar ni cambiar estado', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/socios*');
     await loginAs(page, 'auditor', 'auditor123');
     await page.goto('/socios');
 

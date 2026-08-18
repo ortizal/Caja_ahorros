@@ -33,12 +33,12 @@ describe('CajaService', () => {
 
   it('misCajas hace GET a /caja/mias', () => {
     service.misCajas().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/caja/mias`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, cajeroId: 1, fecha: '2026-08-11', saldoInicial: 500, estado: 'ABIERTA' }]);
+    req.flush({ content: [{ id: 1, cajeroId: 1, fecha: '2026-08-11', saldoInicial: 500, estado: 'ABIERTA' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('registrarMovimiento hace POST al id correcto', () => {

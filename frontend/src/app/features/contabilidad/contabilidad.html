@@ -36,8 +36,8 @@
       <table class="table" data-testid="periodos-table">
         <thead>
           <tr>
-            <th>Periodo</th>
-            <th>Estado</th>
+            <th appSortable sortKey="anio" [sort]="periodoSort()" (sortChange)="ordenarPeriodo($event)">Periodo</th>
+            <th appSortable sortKey="estado" [sort]="periodoSort()" (sortChange)="ordenarPeriodo($event)">Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -69,6 +69,7 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="periodoPage()" [size]="periodoSize()" [totalElements]="periodoTotalElements()" [totalPages]="periodoTotalPages()" (pageChange)="cambiarPaginaPeriodo($event)" (sizeChange)="cambiarTamanoPeriodo($event)" />
   </div>
 }
 
@@ -85,10 +86,10 @@
       <table class="table" data-testid="plan-table">
         <thead>
           <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Tipo</th>
-            <th>Nivel</th>
+            <th appSortable sortKey="codigo" [sort]="planSort()" (sortChange)="ordenarPlan($event)">Código</th>
+            <th appSortable sortKey="nombre" [sort]="planSort()" (sortChange)="ordenarPlan($event)">Nombre</th>
+            <th appSortable sortKey="tipo" [sort]="planSort()" (sortChange)="ordenarPlan($event)">Tipo</th>
+            <th appSortable sortKey="nivel" [sort]="planSort()" (sortChange)="ordenarPlan($event)">Nivel</th>
             <th>Acepta Movimiento</th>
           </tr>
         </thead>
@@ -109,6 +110,7 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="planPage()" [size]="planSize()" [totalElements]="planTotalElements()" [totalPages]="planTotalPages()" (pageChange)="cambiarPaginaPlan($event)" (sizeChange)="cambiarTamanoPlan($event)" />
   </div>
 }
 
@@ -166,6 +168,7 @@
         </div>
       }
     </div>
+    <app-paginador [page]="diarioPage()" [size]="diarioSize()" [totalElements]="diarioTotalElements()" [totalPages]="diarioTotalPages()" (pageChange)="cambiarPaginaDiario($event)" (sizeChange)="cambiarTamanoDiario($event)" />
   </div>
 }
 
@@ -199,12 +202,12 @@
       <table class="table" data-testid="mayor-table">
         <thead>
           <tr>
-            <th>Fecha</th>
-            <th>Asiento</th>
-            <th>Descripción</th>
-            <th>Debe</th>
-            <th>Haber</th>
-            <th>Saldo acumulado</th>
+            <th appSortable sortKey="fecha" [sort]="mayorSort()" (sortChange)="ordenarMayor($event)">Fecha</th>
+            <th appSortable sortKey="asientoId" [sort]="mayorSort()" (sortChange)="ordenarMayor($event)">Asiento</th>
+            <th appSortable sortKey="descripcion" [sort]="mayorSort()" (sortChange)="ordenarMayor($event)">Descripción</th>
+            <th appSortable sortKey="debe" [sort]="mayorSort()" (sortChange)="ordenarMayor($event)">Debe</th>
+            <th appSortable sortKey="haber" [sort]="mayorSort()" (sortChange)="ordenarMayor($event)">Haber</th>
+            <th appSortable sortKey="saldo" [sort]="mayorSort()" (sortChange)="ordenarMayor($event)">Saldo acumulado</th>
           </tr>
         </thead>
         <tbody>
@@ -221,6 +224,7 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="mayorPage()" [size]="mayorSize()" [totalElements]="mayorTotalElements()" [totalPages]="mayorTotalPages()" (pageChange)="cambiarPaginaMayor($event)" (sizeChange)="cambiarTamanoMayor($event)" />
     @if (mayor().length === 0 && !cargando()) {
       <div class="empty-state" style="padding: 20px;" data-testid="mayor-vacio">
         <div class="empty-state-text">Sin movimientos para la cuenta seleccionada.</div>
@@ -250,9 +254,9 @@
       <table class="table" data-testid="balance-table">
         <thead>
           <tr>
-            <th>Cuenta Contable</th>
-            <th>Debe ($)</th>
-            <th>Haber ($)</th>
+            <th appSortable sortKey="cuentaCodigo" [sort]="balanceSort()" (sortChange)="ordenarBalance($event)">Cuenta Contable</th>
+            <th appSortable sortKey="debe" [sort]="balanceSort()" (sortChange)="ordenarBalance($event)">Debe ($)</th>
+            <th appSortable sortKey="haber" [sort]="balanceSort()" (sortChange)="ordenarBalance($event)">Haber ($)</th>
           </tr>
         </thead>
         <tbody>
@@ -275,6 +279,7 @@
         }
       </table>
     </div>
+    <app-paginador [page]="balancePage()" [size]="balanceSize()" [totalElements]="balanceTotalElements()" [totalPages]="balanceTotalPages()" (pageChange)="cambiarPaginaBalance($event)" (sizeChange)="cambiarTamanoBalance($event)" />
     @if (balance().length === 0 && !cargando()) {
       <div class="empty-state" style="padding: 20px;" data-testid="balance-vacio">
         <div class="empty-state-text">Sin movimientos en el periodo seleccionado.</div>
@@ -293,4 +298,3 @@
     </div>
   </div>
 }
-

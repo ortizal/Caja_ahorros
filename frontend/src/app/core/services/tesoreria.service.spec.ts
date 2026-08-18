@@ -22,12 +22,12 @@ describe('TesoreriaService', () => {
 
   it('gastos hace GET a /gastos', () => {
     service.gastos().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/gastos`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, concepto: 'Papelería', monto: 100 }]);
+    req.flush({ content: [{ id: 1, concepto: 'Papelería', monto: 100 }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('gastos con estado filtra por query param', () => {
@@ -36,7 +36,7 @@ describe('TesoreriaService', () => {
     const req = httpMock.expectOne(
       (r) => r.method === 'GET' && r.url === `${environment.apiUrl}/gastos` && r.params.get('estado') === 'PENDIENTE'
     );
-    req.flush([]);
+    req.flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
   });
 
   it('crearGasto hace POST con el cuerpo', () => {
@@ -85,12 +85,12 @@ describe('TesoreriaService', () => {
 
   it('cuentasPorPagar hace GET a /cuentas-por-pagar', () => {
     service.cuentasPorPagar().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/cuentas-por-pagar`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, proveedor: 'Proveedor S.A.', monto: 200, estado: 'PENDIENTE' }]);
+    req.flush({ content: [{ id: 1, proveedor: 'Proveedor S.A.', monto: 200, estado: 'PENDIENTE' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('crearCuentaPorPagar hace POST con el cuerpo', () => {
@@ -118,12 +118,12 @@ describe('TesoreriaService', () => {
 
   it('cuentasPorCobrar hace GET a /cuentas-por-cobrar', () => {
     service.cuentasPorCobrar().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/cuentas-por-cobrar`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, deudor: 'Juan', monto: 300, estado: 'PENDIENTE' }]);
+    req.flush({ content: [{ id: 1, deudor: 'Juan', monto: 300, estado: 'PENDIENTE' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('crearCuentaPorCobrar hace POST con el cuerpo', () => {

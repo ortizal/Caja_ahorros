@@ -14,7 +14,10 @@ import com.alantek.caja.modulo.creditos.dto.SimulacionCreditoResponse;
 import com.alantek.caja.modulo.creditos.dto.SolicitudCreditoRequest;
 import com.alantek.caja.modulo.creditos.dto.SolicitudCreditoResponse;
 import com.alantek.caja.modulo.creditos.service.CreditoService;
+import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,8 +29,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -41,14 +42,14 @@ public class CreditoController {
 
     @GetMapping("/productos-credito")
     @PreAuthorize("hasAuthority('CREDITOS:VER')")
-    public List<ProductoCreditoResponse> listarProductos() {
-        return creditoService.listarProductos();
+    public PageResponse<ProductoCreditoResponse> listarProductos(@PageableDefault(size = 10) Pageable pageable) {
+        return creditoService.listarProductos(pageable);
     }
 
     @GetMapping("/productos-credito/activos")
     @PreAuthorize("hasAuthority('CREDITOS:VER')")
-    public List<ProductoCreditoResponse> listarProductosActivos() {
-        return creditoService.listarProductosActivos();
+    public PageResponse<ProductoCreditoResponse> listarProductosActivos(@PageableDefault(size = 10) Pageable pageable) {
+        return creditoService.listarProductosActivos(pageable);
     }
 
     @PostMapping("/productos-credito")
@@ -60,8 +61,9 @@ public class CreditoController {
 
     @GetMapping("/solicitudes-credito")
     @PreAuthorize("hasAuthority('CREDITOS:VER')")
-    public List<SolicitudCreditoResponse> listarSolicitudes(@RequestParam(required = false) String estado) {
-        return creditoService.listarSolicitudes(estado);
+    public PageResponse<SolicitudCreditoResponse> listarSolicitudes(@RequestParam(required = false) String estado,
+                                                                    @PageableDefault(size = 10) Pageable pageable) {
+        return creditoService.listarSolicitudes(estado, pageable);
     }
 
     @PostMapping("/solicitudes-credito")
@@ -86,8 +88,9 @@ public class CreditoController {
 
     @GetMapping("/creditos")
     @PreAuthorize("hasAuthority('CREDITOS:VER')")
-    public List<CreditoResponse> listarCreditos(@RequestParam(required = false) Long socioId) {
-        return creditoService.listarCreditos(socioId);
+    public PageResponse<CreditoResponse> listarCreditos(@RequestParam(required = false) Long socioId,
+                                                        @PageableDefault(size = 10) Pageable pageable) {
+        return creditoService.listarCreditos(socioId, pageable);
     }
 
     @GetMapping("/creditos/{id}")
@@ -104,14 +107,16 @@ public class CreditoController {
 
     @GetMapping("/creditos/{id}/amortizacion")
     @PreAuthorize("hasAuthority('CREDITOS:VER')")
-    public List<CuotaCreditoResponse> listarCuotas(@PathVariable Long id) {
-        return creditoService.listarCuotas(id);
+    public PageResponse<CuotaCreditoResponse> listarCuotas(@PathVariable Long id,
+                                                           @PageableDefault(size = 10, sort = "numeroCuota") Pageable pageable) {
+        return creditoService.listarCuotas(id, pageable);
     }
 
     @GetMapping("/creditos/{id}/pagos")
     @PreAuthorize("hasAuthority('CREDITOS:VER')")
-    public List<PagoCuotaResponse> listarPagos(@PathVariable Long id) {
-        return creditoService.listarPagos(id);
+    public PageResponse<PagoCuotaResponse> listarPagos(@PathVariable Long id,
+                                                       @PageableDefault(size = 10, sort = "pagadoAt") Pageable pageable) {
+        return creditoService.listarPagos(id, pageable);
     }
 
     @PostMapping("/creditos/{id}/pagos")

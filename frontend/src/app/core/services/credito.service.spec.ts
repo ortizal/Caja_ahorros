@@ -27,7 +27,7 @@ describe('CreditoService', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/productos-credito`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, nombre: 'CREDITO PERSONAL', tasaInteres: 18, tasaMora: 1, sistemaAmortizacion: 'FRANCES', plazoMaxMeses: 36, requiereGarante: false, vigenteDesde: '2026-01-01', activo: true }]);
+    req.flush({ content: [{ id: 1, nombre: 'CREDITO PERSONAL', tasaInteres: 18, tasaMora: 1, sistemaAmortizacion: 'FRANCES', plazoMaxMeses: 36, requiereGarante: false, vigenteDesde: '2026-01-01', activo: true }], page: 0, size: 100, totalElements: 1, totalPages: 1 });
   });
 
   it('crearProducto hace POST con cuerpo', () => {
@@ -54,12 +54,12 @@ describe('CreditoService', () => {
 
   it('solicitudes hace GET a /solicitudes-credito', () => {
     service.solicitudes().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/solicitudes-credito`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, socioId: 2, productoId: 1, montoSolicitado: 500, plazoMeses: 12, estado: 'PENDIENTE', createdAt: '2026-08-12T00:00:00Z' }]);
+    req.flush({ content: [{ id: 1, socioId: 2, productoId: 1, montoSolicitado: 500, plazoMeses: 12, estado: 'PENDIENTE', createdAt: '2026-08-12T00:00:00Z' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('crearSolicitud hace POST con cuerpo', () => {
@@ -96,12 +96,12 @@ describe('CreditoService', () => {
 
   it('creditos hace GET a /creditos', () => {
     service.creditos().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/creditos`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, socioId: 2, productoId: 1, montoDesembolsado: 500, tasaInteres: 18, plazoMeses: 12, saldoCapital: 500, estado: 'VIGENTE', cuotasPendientes: 12, createdAt: '2026-08-12T00:00:00Z' }]);
+    req.flush({ content: [{ id: 1, socioId: 2, productoId: 1, montoDesembolsado: 500, tasaInteres: 18, plazoMeses: 12, saldoCapital: 500, estado: 'VIGENTE', cuotasPendientes: 12, createdAt: '2026-08-12T00:00:00Z' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('obtenerCredito hace GET a /creditos/{id}', () => {
@@ -126,22 +126,22 @@ describe('CreditoService', () => {
 
   it('cuotas hace GET a /amortizacion', () => {
     service.cuotas(1).subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/creditos/1/amortizacion`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, creditoId: 1, numeroCuota: 1, fechaVencimiento: '2026-09-12', capital: 41.67, interes: 7.5, cuotaTotal: 49.17, saldoCapital: 458.33, mora: 0, estado: 'PENDIENTE' }]);
+    req.flush({ content: [{ id: 1, creditoId: 1, numeroCuota: 1, fechaVencimiento: '2026-09-12', capital: 41.67, interes: 7.5, cuotaTotal: 49.17, saldoCapital: 458.33, mora: 0, estado: 'PENDIENTE' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('pagos hace GET a /creditos/{id}/pagos', () => {
     service.pagos(1).subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/creditos/1/pagos`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, cuotaId: 1, creditoId: 1, montoCapital: 41.67, montoInteres: 7.5, montoMora: 0, pagadoAt: '2026-08-12T00:00:00Z' }]);
+    req.flush({ content: [{ id: 1, cuotaId: 1, creditoId: 1, montoCapital: 41.67, montoInteres: 7.5, montoMora: 0, pagadoAt: '2026-08-12T00:00:00Z' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('pagarCuota hace POST con cuerpo', () => {

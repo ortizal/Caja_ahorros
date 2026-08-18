@@ -4,6 +4,9 @@ import com.alantek.caja.modulo.seguridad.dto.AuditoriaResponse;
 import com.alantek.caja.modulo.seguridad.dto.PermisoResponse;
 import com.alantek.caja.modulo.seguridad.dto.RolResponse;
 import com.alantek.caja.modulo.seguridad.service.RolService;
+import com.alantek.caja.shared.PageResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -30,14 +32,14 @@ public class RolController {
 
     @GetMapping("/roles")
     @PreAuthorize("hasAuthority('SEGURIDAD:VER')")
-    public List<RolResponse> listarRoles() {
-        return rolService.listar();
+    public PageResponse<RolResponse> listarRoles(@PageableDefault(size = 10) Pageable pageable) {
+        return rolService.listar(pageable);
     }
 
     @GetMapping("/permisos")
     @PreAuthorize("hasAuthority('SEGURIDAD:VER')")
-    public List<PermisoResponse> listarPermisos() {
-        return rolService.listarPermisos();
+    public PageResponse<PermisoResponse> listarPermisos(@PageableDefault(size = 10) Pageable pageable) {
+        return rolService.listarPermisos(pageable);
     }
 
     @PostMapping("/roles/{id}/permisos")
@@ -48,10 +50,11 @@ public class RolController {
 
     @GetMapping("/auditoria")
     @PreAuthorize("hasAuthority('SEGURIDAD:VER')")
-    public List<AuditoriaResponse> listarAuditoria(
+    public PageResponse<AuditoriaResponse> listarAuditoria(
             @RequestParam(required = false) String tabla,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant desde,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta) {
-        return rolService.listarAuditoria(tabla, desde, hasta);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return rolService.listarAuditoria(tabla, desde, hasta, pageable);
     }
 }

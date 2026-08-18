@@ -9,6 +9,7 @@ import {
   CajaMovimientoRequest,
   SaldoCaja
 } from '../models/caja.model';
+import { Paginated, Paginacion, paginar } from '../models/paginado.model';
 
 @Injectable({ providedIn: 'root' })
 export class CajaService {
@@ -23,16 +24,16 @@ export class CajaService {
     });
   }
 
-  misCajas(): Observable<CajaApertura[]> {
-    return this.http.get<CajaApertura[]>(`${this.base}/mias`);
+  misCajas(paginacion?: Paginacion): Observable<Paginated<CajaApertura>> {
+    return this.http.get<Paginated<CajaApertura>>(`${this.base}/mias`, { params: paginar(paginacion) });
   }
 
   cerrar(id: number): Observable<CajaApertura> {
     return this.http.post<CajaApertura>(`${this.base}/${id}/cierre`, null);
   }
 
-  movimientos(id: number): Observable<CajaMovimiento[]> {
-    return this.http.get<CajaMovimiento[]>(`${this.base}/${id}/movimientos`);
+  movimientos(id: number, paginacion?: Paginacion): Observable<Paginated<CajaMovimiento>> {
+    return this.http.get<Paginated<CajaMovimiento>>(`${this.base}/${id}/movimientos`, { params: paginar(paginacion) });
   }
 
   saldo(id: number): Observable<SaldoCaja> {

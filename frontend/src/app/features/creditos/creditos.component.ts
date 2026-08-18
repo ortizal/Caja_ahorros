@@ -21,11 +21,14 @@ import { CreditoService } from '../../core/services/credito.service';
 import { ReporteService } from '../../core/services/reporte.service';
 import { SocioService } from '../../core/services/socio.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SortState } from '../../core/models/paginado.model';
 import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
+import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
+import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
 
 @Component({
   selector: 'app-creditos',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './creditos.html',
   styleUrl: './creditos.css'
 })
@@ -55,6 +58,15 @@ export class CreditosComponent implements OnInit {
   protected readonly rechazoId = signal<number | null>(null);
   protected readonly error = signal('');
   protected readonly guardando = signal(false);
+
+  protected readonly productosPag = signal({ page: 0, size: 10, totalElements: 0, totalPages: 0 });
+  protected readonly productosSort = signal<SortState | null>(null);
+  protected readonly solicitudesPag = signal({ page: 0, size: 10, totalElements: 0, totalPages: 0 });
+  protected readonly solicitudesSort = signal<SortState | null>(null);
+  protected readonly creditosPag = signal({ page: 0, size: 10, totalElements: 0, totalPages: 0 });
+  protected readonly creditosSort = signal<SortState | null>(null);
+  protected readonly cuotasPag = signal({ page: 0, size: 10, totalElements: 0, totalPages: 0 });
+  protected readonly pagosPag = signal({ page: 0, size: 10, totalElements: 0, totalPages: 0 });
 
   protected readonly puedeCrear = computedPermiso(this.auth, 'CREDITOS:CREAR');
   protected readonly puedeEditar = computedPermiso(this.auth, 'CREDITOS:EDITAR');
@@ -86,29 +98,50 @@ export class CreditosComponent implements OnInit {
   }
 
   cargarProductos(): void {
-    this.creditoService.productos().subscribe({
-      next: (p) => this.productos.set(p),
+    this.creditoService.productosPag({
+      page: this.productosPag().page,
+      size: this.productosPag().size,
+      sort: this.productosSort() ? `${this.productosSort()!.key},${this.productosSort()!.dir}` : undefined
+    }).subscribe({
+      next: (p) => {
+        this.productos.set(p.content);
+        this.productosPag.set({ page: p.page, size: p.size, totalElements: p.totalElements, totalPages: p.totalPages });
+      },
       error: () => this.productos.set([])
     });
   }
 
   cargarSocios(): void {
-    this.socioService.listar('ACTIVO').subscribe({
-      next: (s) => this.socios.set(s),
+    this.socioService.listar({ estado: 'ACTIVO' }).subscribe({
+      next: (s) => this.socios.set(s.content),
       error: () => this.socios.set([])
     });
   }
 
   cargarSolicitudes(): void {
-    this.creditoService.solicitudes().subscribe({
-      next: (s) => this.solicitudes.set(s),
+    this.creditoService.solicitudes(undefined, {
+      page: this.solicitudesPag().page,
+      size: this.solicitudesPag().size,
+      sort: this.solicitudesSort() ? `${this.solicitudesSort()!.key},${this.solicitudesSort()!.dir}` : undefined
+    }).subscribe({
+      next: (s) => {
+        this.solicitudes.set(s.content);
+        this.solicitudesPag.set({ page: s.page, size: s.size, totalElements: s.totalElements, totalPages: s.totalPages });
+      },
       error: () => this.solicitudes.set([])
     });
   }
 
   cargarCreditos(): void {
-    this.creditoService.creditos().subscribe({
-      next: (c) => this.creditos.set(c),
+    this.creditoService.creditos(undefined, {
+      page: this.creditosPag().page,
+      size: this.creditosPag().size,
+      sort: this.creditosSort() ? `${this.creditosSort()!.key},${this.creditosSort()!.dir}` : undefined
+    }).subscribe({
+      next: (c) => {
+        this.creditos.set(c.content);
+        this.creditosPag.set({ page: c.page, size: c.size, totalElements: c.totalElements, totalPages: c.totalPages });
+      },
       error: () => this.creditos.set([])
     });
   }
@@ -199,15 +232,27 @@ export class CreditosComponent implements OnInit {
   }
 
   cargarCuotas(creditoId: number): void {
-    this.creditoService.cuotas(creditoId).subscribe({
-      next: (c) => this.cuotas.set(c),
+    this.creditoService.cuotas(creditoId, {
+      page: this.cuotasPag().page,
+      size: this.cuotasPag().size
+    }).subscribe({
+      next: (c) => {
+        this.cuotas.set(c.content);
+        this.cuotasPag.set({ page: c.page, size: c.size, totalElements: c.totalElements, totalPages: c.totalPages });
+      },
       error: () => this.cuotas.set([])
     });
   }
 
   cargarPagos(creditoId: number): void {
-    this.creditoService.pagos(creditoId).subscribe({
-      next: (p) => this.pagos.set(p),
+    this.creditoService.pagos(creditoId, {
+      page: this.pagosPag().page,
+      size: this.pagosPag().size
+    }).subscribe({
+      next: (p) => {
+        this.pagos.set(p.content);
+        this.pagosPag.set({ page: p.page, size: p.size, totalElements: p.totalElements, totalPages: p.totalPages });
+      },
       error: () => this.pagos.set([])
     });
   }
@@ -351,6 +396,86 @@ export class CreditosComponent implements OnInit {
 
   exportarCarteraPdf(): void {
     this.descargarReporte(this.reporteService.exportarCarteraPdf(), 'cartera.pdf');
+  }
+
+  cambiarPaginaProductos(p: number): void {
+    this.productosPag.update(s => ({ ...s, page: p }));
+    this.cargarProductos();
+  }
+
+  cambiarTamanoProductos(t: number): void {
+    this.productosPag.update(s => ({ ...s, size: t, page: 0 }));
+    this.cargarProductos();
+  }
+
+  ordenarProductos(s: SortState): void {
+    this.productosSort.set(s);
+    this.productosPag.update(p => ({ ...p, page: 0 }));
+    this.cargarProductos();
+  }
+
+  cambiarPaginaSolicitudes(p: number): void {
+    this.solicitudesPag.update(s => ({ ...s, page: p }));
+    this.cargarSolicitudes();
+  }
+
+  cambiarTamanoSolicitudes(t: number): void {
+    this.solicitudesPag.update(s => ({ ...s, size: t, page: 0 }));
+    this.cargarSolicitudes();
+  }
+
+  ordenarSolicitudes(s: SortState): void {
+    this.solicitudesSort.set(s);
+    this.solicitudesPag.update(p => ({ ...p, page: 0 }));
+    this.cargarSolicitudes();
+  }
+
+  cambiarPaginaCreditos(p: number): void {
+    this.creditosPag.update(s => ({ ...s, page: p }));
+    this.cargarCreditos();
+  }
+
+  cambiarTamanoCreditos(t: number): void {
+    this.creditosPag.update(s => ({ ...s, size: t, page: 0 }));
+    this.cargarCreditos();
+  }
+
+  ordenarCreditos(s: SortState): void {
+    this.creditosSort.set(s);
+    this.creditosPag.update(p => ({ ...p, page: 0 }));
+    this.cargarCreditos();
+  }
+
+  cambiarPaginaCuotas(p: number): void {
+    this.cuotasPag.update(s => ({ ...s, page: p }));
+    const credito = this.creditoSeleccionado();
+    if (credito) {
+      this.cargarCuotas(credito.id);
+    }
+  }
+
+  cambiarTamanoCuotas(t: number): void {
+    this.cuotasPag.update(s => ({ ...s, size: t, page: 0 }));
+    const credito = this.creditoSeleccionado();
+    if (credito) {
+      this.cargarCuotas(credito.id);
+    }
+  }
+
+  cambiarPaginaPagos(p: number): void {
+    this.pagosPag.update(s => ({ ...s, page: p }));
+    const credito = this.creditoSeleccionado();
+    if (credito) {
+      this.cargarPagos(credito.id);
+    }
+  }
+
+  cambiarTamanoPagos(t: number): void {
+    this.pagosPag.update(s => ({ ...s, size: t, page: 0 }));
+    const credito = this.creditoSeleccionado();
+    if (credito) {
+      this.cargarPagos(credito.id);
+    }
   }
 
   private descargarReporte(obs: Observable<Blob>, nombre: string): void {

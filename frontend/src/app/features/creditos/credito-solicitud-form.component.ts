@@ -36,8 +36,8 @@ export class CreditoSolicitudFormComponent implements OnInit {
   protected readonly error = signal('');
 
   ngOnInit(): void {
-    this.socioService.listar('ACTIVO').subscribe({
-      next: (s) => this.socios.set(s),
+    this.socioService.listar({ estado: 'ACTIVO' }).subscribe({
+      next: (s) => this.socios.set(s.content),
       error: () => this.socios.set([])
     });
     this.creditoService.productos().subscribe({

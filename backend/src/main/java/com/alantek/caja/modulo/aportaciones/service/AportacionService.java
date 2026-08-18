@@ -17,8 +17,11 @@ import com.alantek.caja.modulo.caja.dto.CajaMovimientoResponse;
 import com.alantek.caja.modulo.caja.service.CajaService;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,8 +75,9 @@ public class AportacionService {
         return toResponse(saved);
     }
 
-    public List<AportacionConfigResponse> listarConfigs() {
-        return configRepository.findAllByOrderByIdDesc().stream().map(this::toResponse).toList();
+    public PageResponse<AportacionConfigResponse> listarConfigs(Pageable pageable) {
+        Page<AportacionConfig> page = configRepository.findAll(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional
@@ -109,22 +113,23 @@ public class AportacionService {
         return new GenerarAportacionesResponse(generadas, periodo);
     }
 
-    public List<AportacionResponse> listarAportaciones(String periodo, Long socioId) {
-        List<Aportacion> aportaciones;
-        if (socioId != null) {
-            aportaciones = aportacionRepository.findBySocioIdOrderByPeriodoDesc(socioId);
+    public PageResponse<AportacionResponse> listarAportaciones(String periodo, Long socioId, Pageable pageable) {
+        Page<Aportacion> page;
+        if (socioId != null && periodo != null && !periodo.isBlank()) {
+            page = aportacionRepository.findByPeriodoAndSocioId(periodo, socioId, pageable);
+        } else if (socioId != null) {
+            page = aportacionRepository.findBySocioId(socioId, pageable);
         } else if (periodo != null && !periodo.isBlank()) {
-            aportaciones = aportacionRepository.findByPeriodoOrderBySocioId(periodo);
+            page = aportacionRepository.findByPeriodo(periodo, pageable);
         } else {
-            aportaciones = aportacionRepository.findAllByOrderByPeriodoDesc();
+            page = aportacionRepository.findAll(pageable);
         }
-        return aportaciones.stream().map(this::toResponse).toList();
+        return PageResponse.of(page, this::toResponse);
     }
 
-    public List<AportacionPagoResponse> listarPagos(Long aportacionId) {
-        return pagoRepository.findByAportacionIdOrderByPagadoAtAsc(aportacionId).stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<AportacionPagoResponse> listarPagos(Long aportacionId, Pageable pageable) {
+        Page<AportacionPago> page = pagoRepository.findByAportacionId(aportacionId, pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional

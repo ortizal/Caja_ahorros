@@ -116,10 +116,11 @@ class CreditosFlowIntegrationTest {
                 .andExpect(jsonPath("$.saldoCapital").value(1200.0));
 
         MvcResult cuotas = mvc.perform(get("/api/v1/creditos/" + creditoId + "/amortizacion")
-                        .header("Authorization", "Bearer " + admin))
+                        .header("Authorization", "Bearer " + admin)
+                        .param("size", "100"))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode tabla = objectMapper.readTree(cuotas.getResponse().getContentAsString());
+        JsonNode tabla = objectMapper.readTree(cuotas.getResponse().getContentAsString()).get("content");
         assertThat(tabla).hasSize(12);
         assertThat(tabla.get(0).get("estado").asText()).isEqualTo("PENDIENTE");
         assertThat(tabla.get(0).get("cuotaTotal").decimalValue()).isGreaterThan(BigDecimal.ZERO);
@@ -144,14 +145,16 @@ class CreditosFlowIntegrationTest {
         assertThat(creditoJson.get("cuotasPendientes").asInt()).isEqualTo(11);
 
         mvc.perform(get("/api/v1/creditos/" + creditoId + "/amortizacion")
-                        .header("Authorization", "Bearer " + admin))
+                        .header("Authorization", "Bearer " + admin)
+                        .param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].estado").value("PAGADA"));
+                .andExpect(jsonPath("$.content[0].estado").value("PAGADA"));
 
         mvc.perform(get("/api/v1/creditos/" + creditoId + "/pagos")
                         .header("Authorization", "Bearer " + admin))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1));
     }
 
     @Test
@@ -258,9 +261,10 @@ class CreditosFlowIntegrationTest {
                 .andExpect(jsonPath("$.plazoMeses").value(24));
 
         mvc.perform(get("/api/v1/creditos/" + creditoId + "/amortizacion")
-                        .header("Authorization", "Bearer " + admin))
+                        .header("Authorization", "Bearer " + admin)
+                        .param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(24));
+                .andExpect(jsonPath("$.content.length()").value(24));
     }
 
     @Test
@@ -376,10 +380,11 @@ class CreditosFlowIntegrationTest {
                 .andExpect(jsonPath("$.tasaInteres").value(18.0));
 
         MvcResult cuotasAntes = mvc.perform(get("/api/v1/creditos/" + creditoId + "/amortizacion")
-                        .header("Authorization", "Bearer " + admin))
+                        .header("Authorization", "Bearer " + admin)
+                        .param("size", "100"))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode tablaAntes = objectMapper.readTree(cuotasAntes.getResponse().getContentAsString());
+        JsonNode tablaAntes = objectMapper.readTree(cuotasAntes.getResponse().getContentAsString()).get("content");
         BigDecimal capitalAntes = tablaAntes.get(0).get("capital").decimalValue();
         BigDecimal interesAntes = tablaAntes.get(0).get("interes").decimalValue();
         BigDecimal cuotaAntes = tablaAntes.get(0).get("cuotaTotal").decimalValue();
@@ -394,10 +399,11 @@ class CreditosFlowIntegrationTest {
                 .andExpect(jsonPath("$.tasaInteres").value(18.0));
 
         MvcResult cuotasDespues = mvc.perform(get("/api/v1/creditos/" + creditoId + "/amortizacion")
-                        .header("Authorization", "Bearer " + admin))
+                        .header("Authorization", "Bearer " + admin)
+                        .param("size", "100"))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode tablaDespues = objectMapper.readTree(cuotasDespues.getResponse().getContentAsString());
+        JsonNode tablaDespues = objectMapper.readTree(cuotasDespues.getResponse().getContentAsString()).get("content");
         assertThat(tablaDespues).hasSize(12);
         assertThat(tablaDespues.get(0).get("capital").decimalValue()).isEqualByComparingTo(capitalAntes);
         assertThat(tablaDespues.get(0).get("interes").decimalValue()).isEqualByComparingTo(interesAntes);
@@ -464,7 +470,7 @@ class CreditosFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        for (JsonNode credito : body) {
+        for (JsonNode credito : body.get("content")) {
             if (credito.get("solicitudId").asLong() == solicitudId) {
                 return credito.get("id").asLong();
             }
@@ -478,7 +484,7 @@ class CreditosFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        return body.get(0).get("id").asLong();
+        return body.get("content").get(0).get("id").asLong();
     }
 
     private Long primerSocioId(String token) throws Exception {
@@ -487,7 +493,7 @@ class CreditosFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        for (JsonNode socio : body) {
+        for (JsonNode socio : body.get("content")) {
             long socioId = socio.get("id").asLong();
             if (!"ACTIVO".equals(socio.get("estado").asText())) {
                 continue;

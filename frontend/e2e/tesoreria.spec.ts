@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asegurarCajaAbierta, loginAs, operarConCaja } from './helpers';
+import { asegurarCajaAbierta, interceptLargePage, loginAs, operarConCaja } from './helpers';
 
 const TS = Date.now().toString().slice(-8);
 const GASTO_FLUJO = `Gasto flujo ${TS}`;
@@ -14,6 +14,9 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Módulo de tesorería', () => {
   test('flujo completo: gasto con aprobación y pago, CxP, CxC y presupuesto', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/gastos*');
+    await interceptLargePage(page, '**/api/v1/cuentas-por-pagar*');
+    await interceptLargePage(page, '**/api/v1/cuentas-por-cobrar*');
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/tesoreria');
 
@@ -106,6 +109,7 @@ test.describe('Módulo de tesorería', () => {
   });
 
   test('gerente aprueba gastos pero no crea ni paga', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/gastos*');
     await loginAs(page, 'gerente', 'gerente123');
     await page.goto('/tesoreria');
 
@@ -122,6 +126,7 @@ test.describe('Módulo de tesorería', () => {
   });
 
   test('cajero paga gastos aprobados pero no aprueba', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/gastos*');
     await loginAs(page, 'cajero', 'cajero123');
     await page.goto('/tesoreria');
 

@@ -32,14 +32,14 @@
       <table class="table" data-testid="productos-table">
         <thead>
           <tr>
-            <th>Nombre</th>
-            <th>Tasa</th>
-            <th>Mora</th>
-            <th>Sistema</th>
-            <th>Plazo Máx.</th>
+            <th appSortable sortKey="nombre" [sort]="productosSort()" (sortChange)="ordenarProductos($event)">Nombre</th>
+            <th appSortable sortKey="tasaInteres" [sort]="productosSort()" (sortChange)="ordenarProductos($event)">Tasa</th>
+            <th appSortable sortKey="tasaMora" [sort]="productosSort()" (sortChange)="ordenarProductos($event)">Mora</th>
+            <th appSortable sortKey="sistemaAmortizacion" [sort]="productosSort()" (sortChange)="ordenarProductos($event)">Sistema</th>
+            <th appSortable sortKey="plazoMaxMeses" [sort]="productosSort()" (sortChange)="ordenarProductos($event)">Plazo Máx.</th>
             <th>Rango Montos</th>
             <th>Garante</th>
-            <th>Estado</th>
+            <th appSortable sortKey="activo" [sort]="productosSort()" (sortChange)="ordenarProductos($event)">Estado</th>
           </tr>
         </thead>
         <tbody>
@@ -62,6 +62,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="productosPag().page" [size]="productosPag().size" [totalElements]="productosPag().totalElements" [totalPages]="productosPag().totalPages"
+                   (pageChange)="cambiarPaginaProductos($event)" (sizeChange)="cambiarTamanoProductos($event)" />
   </div>
 }
 
@@ -78,13 +80,13 @@
       <table class="table" data-testid="solicitudes-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th appSortable sortKey="id" [sort]="solicitudesSort()" (sortChange)="ordenarSolicitudes($event)">#</th>
             <th>Socio</th>
             <th>Producto</th>
-            <th>Monto</th>
-            <th>Plazo</th>
+            <th appSortable sortKey="montoSolicitado" [sort]="solicitudesSort()" (sortChange)="ordenarSolicitudes($event)">Monto</th>
+            <th appSortable sortKey="plazoMeses" [sort]="solicitudesSort()" (sortChange)="ordenarSolicitudes($event)">Plazo</th>
             <th>Destino</th>
-            <th>Estado</th>
+            <th appSortable sortKey="estado" [sort]="solicitudesSort()" (sortChange)="ordenarSolicitudes($event)">Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -145,6 +147,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="solicitudesPag().page" [size]="solicitudesPag().size" [totalElements]="solicitudesPag().totalElements" [totalPages]="solicitudesPag().totalPages"
+                   (pageChange)="cambiarPaginaSolicitudes($event)" (sizeChange)="cambiarTamanoSolicitudes($event)" />
   </div>
 }
 
@@ -169,15 +173,15 @@
       <table class="table" data-testid="creditos-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th appSortable sortKey="id" [sort]="creditosSort()" (sortChange)="ordenarCreditos($event)">#</th>
             <th>Socio</th>
             <th>Producto</th>
-            <th>Monto</th>
-            <th>Tasa</th>
-            <th>Plazo</th>
-            <th>Saldo Capital</th>
+            <th appSortable sortKey="montoDesembolsado" [sort]="creditosSort()" (sortChange)="ordenarCreditos($event)">Monto</th>
+            <th appSortable sortKey="tasaInteres" [sort]="creditosSort()" (sortChange)="ordenarCreditos($event)">Tasa</th>
+            <th appSortable sortKey="plazoMeses" [sort]="creditosSort()" (sortChange)="ordenarCreditos($event)">Plazo</th>
+            <th appSortable sortKey="saldoCapital" [sort]="creditosSort()" (sortChange)="ordenarCreditos($event)">Saldo Capital</th>
             <th>Pend.</th>
-            <th>Estado</th>
+            <th appSortable sortKey="estado" [sort]="creditosSort()" (sortChange)="ordenarCreditos($event)">Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -214,6 +218,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="creditosPag().page" [size]="creditosPag().size" [totalElements]="creditosPag().totalElements" [totalPages]="creditosPag().totalPages"
+                   (pageChange)="cambiarPaginaCreditos($event)" (sizeChange)="cambiarTamanoCreditos($event)" />
   </div>
 
   @if (creditoSeleccionado()) {
@@ -268,6 +274,8 @@
           </tbody>
         </table>
       </div>
+      <app-paginador [page]="cuotasPag().page" [size]="cuotasPag().size" [totalElements]="cuotasPag().totalElements" [totalPages]="cuotasPag().totalPages"
+                     (pageChange)="cambiarPaginaCuotas($event)" (sizeChange)="cambiarTamanoCuotas($event)" />
 
       @if (puedeAprobar()) {
         <div class="card" style="margin-bottom: 20px; background: #f8fafc;">
@@ -315,6 +323,8 @@
           </tbody>
         </table>
       </div>
+      <app-paginador [page]="pagosPag().page" [size]="pagosPag().size" [totalElements]="pagosPag().totalElements" [totalPages]="pagosPag().totalPages"
+                     (pageChange)="cambiarPaginaPagos($event)" (sizeChange)="cambiarTamanoPagos($event)" />
     </div>
   }
 }

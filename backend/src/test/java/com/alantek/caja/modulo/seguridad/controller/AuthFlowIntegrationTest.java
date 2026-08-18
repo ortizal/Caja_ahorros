@@ -84,8 +84,8 @@ class AuthFlowIntegrationTest {
         mvc.perform(get("/api/v1/permisos")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").isNumber())
-                .andExpect(jsonPath("$[0].modulo").isNotEmpty());
+                .andExpect(jsonPath("$.content.length()").isNumber())
+                .andExpect(jsonPath("$.content[0].modulo").isNotEmpty());
     }
 
     @Test

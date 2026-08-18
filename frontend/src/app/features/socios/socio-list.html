@@ -37,43 +37,47 @@
     <div class="empty-state-text">No hay socios registrados.</div>
   </div>
 } @else {
-  <div class="table-responsive">
-    <table class="table" data-testid="socios-table">
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Identificación</th>
-          <th>Nombres</th>
-          <th>Apellidos</th>
-          <th>Estado</th>
-          <th style="text-align: right;">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (socio of socios(); track socio.id) {
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table" data-testid="socios-table">
+        <thead>
           <tr>
-            <td><strong>{{ socio.codigo }}</strong></td>
-            <td>{{ socio.identificacion }}</td>
-            <td>{{ socio.nombres }}</td>
-            <td>{{ socio.apellidos }}</td>
-            <td>
-              <span
-                class="badge"
-                [class.badge-success]="socio.estado === 'ACTIVO'"
-                [class.badge-secondary]="socio.estado !== 'ACTIVO'"
-              >{{ socio.estado }}</span>
-            </td>
-            <td style="text-align: right;">
-              <app-acciones-menu>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-ver-socio" (click)="ver(socio)">
-                  👁 Ver
-                </button>
-              </app-acciones-menu>
-            </td>
+            <th appSortable sortKey="codigo" [sort]="sort()" (sortChange)="ordenar($event)">Código</th>
+            <th appSortable sortKey="identificacion" [sort]="sort()" (sortChange)="ordenar($event)">Identificación</th>
+            <th appSortable sortKey="nombres" [sort]="sort()" (sortChange)="ordenar($event)">Nombres</th>
+            <th appSortable sortKey="apellidos" [sort]="sort()" (sortChange)="ordenar($event)">Apellidos</th>
+            <th appSortable sortKey="estado" [sort]="sort()" (sortChange)="ordenar($event)">Estado</th>
+            <th style="text-align: right;">Acciones</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (socio of socios(); track socio.id) {
+            <tr>
+              <td><strong>{{ socio.codigo }}</strong></td>
+              <td>{{ socio.identificacion }}</td>
+              <td>{{ socio.nombres }}</td>
+              <td>{{ socio.apellidos }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-success]="socio.estado === 'ACTIVO'"
+                  [class.badge-secondary]="socio.estado !== 'ACTIVO'"
+                >{{ socio.estado }}</span>
+              </td>
+              <td style="text-align: right;">
+                <app-acciones-menu>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-ver-socio" (click)="ver(socio)">
+                    👁 Ver
+                  </button>
+                </app-acciones-menu>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-paginador [page]="page()" [size]="size()" [totalElements]="totalElements()" [totalPages]="totalPages()"
+                   (pageChange)="cambiarPagina($event)" (sizeChange)="cambiarTamano($event)" />
   </div>
 }
 

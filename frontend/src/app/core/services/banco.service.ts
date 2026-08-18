@@ -9,6 +9,7 @@ import {
   CuentaBancaria,
   CuentaBancariaRequest
 } from '../models/banco.model';
+import { Paginated, Paginacion, paginar } from '../models/paginado.model';
 
 @Injectable({ providedIn: 'root' })
 export class BancoService {
@@ -16,16 +17,16 @@ export class BancoService {
 
   constructor(private readonly http: HttpClient) {}
 
-  cuentas(): Observable<CuentaBancaria[]> {
-    return this.http.get<CuentaBancaria[]>(this.base);
+  cuentas(paginacion?: Paginacion): Observable<Paginated<CuentaBancaria>> {
+    return this.http.get<Paginated<CuentaBancaria>>(this.base, { params: paginar(paginacion) });
   }
 
   crearCuenta(request: CuentaBancariaRequest): Observable<CuentaBancaria> {
     return this.http.post<CuentaBancaria>(this.base, request);
   }
 
-  movimientos(id: number): Observable<BancoMovimiento[]> {
-    return this.http.get<BancoMovimiento[]>(`${this.base}/${id}/movimientos`);
+  movimientos(id: number, paginacion?: Paginacion): Observable<Paginated<BancoMovimiento>> {
+    return this.http.get<Paginated<BancoMovimiento>>(`${this.base}/${id}/movimientos`, { params: paginar(paginacion) });
   }
 
   registrarMovimiento(id: number, request: BancoMovimientoRequest): Observable<BancoMovimiento> {

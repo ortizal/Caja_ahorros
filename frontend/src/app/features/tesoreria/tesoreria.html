@@ -50,12 +50,12 @@
       <table class="table" data-testid="gastos-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Concepto</th>
-            <th>Monto</th>
+            <th appSortable sortKey="id" [sort]="sortGastos()" (sortChange)="ordenarGastos($event)">#</th>
+            <th appSortable sortKey="concepto" [sort]="sortGastos()" (sortChange)="ordenarGastos($event)">Concepto</th>
+            <th appSortable sortKey="monto" [sort]="sortGastos()" (sortChange)="ordenarGastos($event)">Monto</th>
             <th>Cuenta Contable</th>
-            <th>Fecha Solicitud</th>
-            <th>Estado</th>
+            <th appSortable sortKey="fechaSolicitud" [sort]="sortGastos()" (sortChange)="ordenarGastos($event)">Fecha Solicitud</th>
+            <th appSortable sortKey="estado" [sort]="sortGastos()" (sortChange)="ordenarGastos($event)">Estado</th>
             <th>Motivo Rechazo</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
@@ -104,6 +104,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="pageGastos()" [size]="sizeGastos()" [totalElements]="totalElementsGastos()" [totalPages]="totalPagesGastos()"
+                   (pageChange)="cambiarPaginaGastos($event)" (sizeChange)="cambiarTamanoGastos($event)" />
     @if (gastos().length === 0 && !cargando()) {
       <div class="empty-state" style="padding: 20px;" data-testid="gastos-vacio">
         <div class="empty-state-text">Sin gastos registrados.</div>
@@ -125,13 +127,13 @@
       <table class="table" data-testid="cuentas-pagar-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Proveedor</th>
-            <th>Concepto</th>
-            <th>Monto</th>
+            <th appSortable sortKey="id" [sort]="sortCxp()" (sortChange)="ordenarCxp($event)">#</th>
+            <th appSortable sortKey="proveedor" [sort]="sortCxp()" (sortChange)="ordenarCxp($event)">Proveedor</th>
+            <th appSortable sortKey="concepto" [sort]="sortCxp()" (sortChange)="ordenarCxp($event)">Concepto</th>
+            <th appSortable sortKey="monto" [sort]="sortCxp()" (sortChange)="ordenarCxp($event)">Monto</th>
             <th>Cuenta Contable</th>
-            <th>Vencimiento</th>
-            <th>Estado</th>
+            <th appSortable sortKey="fechaVencimiento" [sort]="sortCxp()" (sortChange)="ordenarCxp($event)">Vencimiento</th>
+            <th appSortable sortKey="estado" [sort]="sortCxp()" (sortChange)="ordenarCxp($event)">Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -163,6 +165,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="pageCxp()" [size]="sizeCxp()" [totalElements]="totalElementsCxp()" [totalPages]="totalPagesCxp()"
+                   (pageChange)="cambiarPaginaCxp($event)" (sizeChange)="cambiarTamanoCxp($event)" />
     @if (cuentasPagar().length === 0 && !cargando()) {
       <div class="empty-state" style="padding: 20px;" data-testid="cuentas-pagar-vacio">
         <div class="empty-state-text">Sin cuentas por pagar.</div>
@@ -184,13 +188,13 @@
       <table class="table" data-testid="cuentas-cobrar-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Deudor</th>
-            <th>Concepto</th>
-            <th>Monto</th>
+            <th appSortable sortKey="id" [sort]="sortCxc()" (sortChange)="ordenarCxc($event)">#</th>
+            <th appSortable sortKey="deudor" [sort]="sortCxc()" (sortChange)="ordenarCxc($event)">Deudor</th>
+            <th appSortable sortKey="concepto" [sort]="sortCxc()" (sortChange)="ordenarCxc($event)">Concepto</th>
+            <th appSortable sortKey="monto" [sort]="sortCxc()" (sortChange)="ordenarCxc($event)">Monto</th>
             <th>Cuenta Contable</th>
-            <th>Vencimiento</th>
-            <th>Estado</th>
+            <th appSortable sortKey="fechaVencimiento" [sort]="sortCxc()" (sortChange)="ordenarCxc($event)">Vencimiento</th>
+            <th appSortable sortKey="estado" [sort]="sortCxc()" (sortChange)="ordenarCxc($event)">Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -222,6 +226,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="pageCxc()" [size]="sizeCxc()" [totalElements]="totalElementsCxc()" [totalPages]="totalPagesCxc()"
+                   (pageChange)="cambiarPaginaCxc($event)" (sizeChange)="cambiarTamanoCxc($event)" />
     @if (cuentasCobrar().length === 0 && !cargando()) {
       <div class="empty-state" style="padding: 20px;" data-testid="cuentas-cobrar-vacio">
         <div class="empty-state-text">Sin cuentas por cobrar.</div>

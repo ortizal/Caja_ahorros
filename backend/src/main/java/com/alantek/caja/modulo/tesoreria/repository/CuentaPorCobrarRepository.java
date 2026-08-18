@@ -1,6 +1,8 @@
 package com.alantek.caja.modulo.tesoreria.repository;
 
 import com.alantek.caja.modulo.tesoreria.entity.CuentaPorCobrar;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -10,4 +12,6 @@ public interface CuentaPorCobrarRepository extends JpaRepository<CuentaPorCobrar
     List<CuentaPorCobrar> findAllByOrderByCreatedAtDesc();
 
     List<CuentaPorCobrar> findByEstadoOrderByCreatedAtDesc(String estado);
+
+    Page<CuentaPorCobrar> findByEstado(String estado, Pageable pageable);
 }

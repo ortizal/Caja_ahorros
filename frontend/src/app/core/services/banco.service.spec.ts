@@ -22,12 +22,13 @@ describe('BancoService', () => {
 
   it('cuentas hace GET a /cuentas-bancarias', () => {
     service.cuentas().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
+      expect(res.totalElements).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/cuentas-bancarias`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, banco: 'Banco Nacional', numeroCuenta: '001', tipo: 'CORRIENTE', saldoContable: 1000 }]);
+    req.flush({ content: [{ id: 1, banco: 'Banco Nacional', numeroCuenta: '001', tipo: 'CORRIENTE', saldoContable: 1000 }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('crearCuenta hace POST con el cuerpo', () => {
@@ -45,12 +46,13 @@ describe('BancoService', () => {
 
   it('movimientos hace GET a /cuentas-bancarias/:id/movimientos', () => {
     service.movimientos(1).subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
+      expect(res.totalElements).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/cuentas-bancarias/1/movimientos`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, cuentaBancariaId: 1, tipo: 'DEPOSITO', monto: 100, fecha: '2026-08-11', conciliado: false, saldoContable: 100 }]);
+    req.flush({ content: [{ id: 1, cuentaBancariaId: 1, tipo: 'DEPOSITO', monto: 100, fecha: '2026-08-11', conciliado: false, saldoContable: 100 }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('conciliar hace POST con params cuentaId', () => {

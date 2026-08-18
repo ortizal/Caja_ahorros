@@ -22,22 +22,22 @@ describe('ContabilidadService', () => {
 
   it('planCuentas hace GET a /plan-cuentas', () => {
     service.planCuentas().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/plan-cuentas`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, codigo: '1', nombre: 'Caja', tipo: 'ACTIVO', cuentaPadreId: null, nivel: 1, aceptaMovimiento: true }]);
+    req.flush({ content: [{ id: 1, codigo: '1', nombre: 'Caja', tipo: 'ACTIVO', cuentaPadreId: null, nivel: 1, aceptaMovimiento: true }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('periodos hace GET a /periodos-contables', () => {
     service.periodos().subscribe((res) => {
-      expect(res[0].estado).toBe('ABIERTO');
+      expect(res.content[0].estado).toBe('ABIERTO');
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/periodos-contables`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, anio: 2026, mes: 8, estado: 'ABIERTO', cerradoPor: null, cerradoAt: null }]);
+    req.flush({ content: [{ id: 1, anio: 2026, mes: 8, estado: 'ABIERTO', cerradoPor: null, cerradoAt: null }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('cerrarPeriodo hace POST con params', () => {
@@ -57,7 +57,7 @@ describe('ContabilidadService', () => {
 
   it('libroDiario hace GET con desde y hasta', () => {
     service.libroDiario('2026-08-01', '2026-08-31').subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(
@@ -67,7 +67,7 @@ describe('ContabilidadService', () => {
         r.params.get('desde') === '2026-08-01' &&
         r.params.get('hasta') === '2026-08-31'
     );
-    req.flush([{ id: 1, periodoId: 1, comprobanteId: null, fecha: '2026-08-01', descripcion: 'X', origen: 'MANUAL', estado: 'EJECUTADO', createdAt: '2026-08-01T00:00:00Z', createdBy: 1, detalles: [] }]);
+    req.flush({ content: [{ id: 1, periodoId: 1, comprobanteId: null, fecha: '2026-08-01', descripcion: 'X', origen: 'MANUAL', estado: 'EJECUTADO', createdAt: '2026-08-01T00:00:00Z', createdBy: 1, detalles: [] }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('registrarAsiento hace POST con cuerpo', () => {
@@ -89,7 +89,7 @@ describe('ContabilidadService', () => {
 
   it('balance hace GET con anio y mes', () => {
     service.balance(2026, 8).subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(
@@ -99,6 +99,6 @@ describe('ContabilidadService', () => {
         r.params.get('anio') === '2026' &&
         r.params.get('mes') === '8'
     );
-    req.flush([{ cuentaCodigo: '1', cuentaNombre: 'Caja', debe: 100, haber: 0 }]);
+    req.flush({ content: [{ cuentaCodigo: '1', cuentaNombre: 'Caja', debe: 100, haber: 0 }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 });

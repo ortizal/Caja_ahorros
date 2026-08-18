@@ -10,6 +10,7 @@ import {
   AportacionPagoRequest,
   GenerarAportacionesResponse
 } from '../models/aportacion.model';
+import { Paginated, Paginacion, paginar } from '../models/paginado.model';
 
 @Injectable({ providedIn: 'root' })
 export class AportacionService {
@@ -17,8 +18,8 @@ export class AportacionService {
 
   constructor(private readonly http: HttpClient) {}
 
-  configs(): Observable<AportacionConfig[]> {
-    return this.http.get<AportacionConfig[]>(`${this.base}/aportaciones/config`);
+  configs(paginacion?: Paginacion): Observable<Paginated<AportacionConfig>> {
+    return this.http.get<Paginated<AportacionConfig>>(`${this.base}/aportaciones/config`, { params: paginar(paginacion) });
   }
 
   crearConfig(request: AportacionConfigRequest): Observable<AportacionConfig> {
@@ -33,19 +34,12 @@ export class AportacionService {
     );
   }
 
-  aportaciones(periodo?: string, socioId?: number): Observable<Aportacion[]> {
-    const params: Record<string, string> = {};
-    if (periodo) {
-      params['periodo'] = periodo;
-    }
-    if (socioId) {
-      params['socioId'] = String(socioId);
-    }
-    return this.http.get<Aportacion[]>(`${this.base}/aportaciones`, { params });
+  aportaciones(paginacion?: Paginacion & { periodo?: string; socioId?: number }): Observable<Paginated<Aportacion>> {
+    return this.http.get<Paginated<Aportacion>>(`${this.base}/aportaciones`, { params: paginar(paginacion) });
   }
 
-  pagos(aportacionId: number): Observable<AportacionPago[]> {
-    return this.http.get<AportacionPago[]>(`${this.base}/aportaciones/${aportacionId}/pagos`);
+  pagos(aportacionId: number, paginacion?: Paginacion): Observable<Paginated<AportacionPago>> {
+    return this.http.get<Paginated<AportacionPago>>(`${this.base}/aportaciones/${aportacionId}/pagos`, { params: paginar(paginacion) });
   }
 
   pagar(aportacionId: number, monto: number): Observable<AportacionPago> {

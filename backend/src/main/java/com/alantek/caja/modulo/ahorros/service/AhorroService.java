@@ -21,8 +21,11 @@ import com.alantek.caja.modulo.caja.service.CajaService;
 import com.alantek.caja.modulo.contabilidad.service.AsientoAutomaticoService;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,20 +87,18 @@ public class AhorroService {
         return toResponse(saved);
     }
 
-    public List<ProductoAhorroResponse> listarProductos() {
-        return productoRepository.findAllByOrderByActivoDescIdDesc().stream()
-                .map(this::toResponse)
-                .toList();
+    @Transactional(readOnly = true)
+    public PageResponse<ProductoAhorroResponse> listarProductos(Pageable pageable) {
+        Page<ProductoAhorro> page = productoRepository.findAllByOrderByActivoDescIdDesc(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
-    public List<CuentaAhorroResponse> listarCuentas(Long socioId) {
-        List<CuentaAhorro> cuentas;
-        if (socioId != null) {
-            cuentas = cuentaRepository.findBySocioIdOrderByFechaAperturaDesc(socioId);
-        } else {
-            cuentas = cuentaRepository.findAllByOrderByFechaAperturaDesc();
-        }
-        return cuentas.stream().map(this::toResponse).toList();
+    @Transactional(readOnly = true)
+    public PageResponse<CuentaAhorroResponse> listarCuentas(Long socioId, Pageable pageable) {
+        Page<CuentaAhorro> page = (socioId != null)
+                ? cuentaRepository.findBySocioIdOrderByFechaAperturaDesc(socioId, pageable)
+                : cuentaRepository.findAllByOrderByFechaAperturaDesc(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional
@@ -175,10 +176,10 @@ public class AhorroService {
         return toResponse(movimiento);
     }
 
-    public List<MovimientoAhorroResponse> listarMovimientos(Long cuentaId) {
-        return movimientoRepository.findByCuentaIdOrderByCreatedAtAsc(cuentaId).stream()
-                .map(this::toResponse)
-                .toList();
+    @Transactional(readOnly = true)
+    public PageResponse<MovimientoAhorroResponse> listarMovimientos(Long cuentaId, Pageable pageable) {
+        Page<MovimientoAhorro> page = movimientoRepository.findByCuentaIdOrderByCreatedAtAsc(cuentaId, pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional

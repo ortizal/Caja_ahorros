@@ -16,9 +16,12 @@ import com.alantek.caja.modulo.caja.repository.CajaArqueoRepository;
 import com.alantek.caja.modulo.caja.repository.CajaMovimientoRepository;
 import com.alantek.caja.modulo.caja.repository.ComprobanteRepository;
 import com.alantek.caja.modulo.contabilidad.service.AsientoAutomaticoService;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -128,10 +131,20 @@ public class CajaService {
                 .toList();
     }
 
+    public PageResponse<CajaMovimientoResponse> listarMovimientos(Long cajaAperturaId, Pageable pageable) {
+        Page<CajaMovimiento> page = movimientoRepository.findByCajaAperturaId(cajaAperturaId, pageable);
+        return PageResponse.of(page, m -> toResponse(m, comprobanteRepository.findById(m.getComprobanteId()).orElse(null)));
+    }
+
     public List<CajaAperturaResponse> misCajas() {
         return aperturaRepository.findByCajeroIdOrderByOpenedAtDesc(currentUserService.requireUserId()).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public PageResponse<CajaAperturaResponse> misCajas(Pageable pageable) {
+        Page<CajaApertura> page = aperturaRepository.findByCajeroIdOrderByOpenedAtDesc(currentUserService.requireUserId(), pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     public SaldoCajaResponse saldoCaja(Long cajaAperturaId) {        CajaApertura apertura = aperturaRepository.findById(cajaAperturaId)

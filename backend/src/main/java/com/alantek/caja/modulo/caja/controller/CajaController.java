@@ -8,7 +8,10 @@ import com.alantek.caja.modulo.caja.dto.CajaMovimientoRequest;
 import com.alantek.caja.modulo.caja.dto.CajaMovimientoResponse;
 import com.alantek.caja.modulo.caja.dto.SaldoCajaResponse;
 import com.alantek.caja.modulo.caja.service.CajaService;
+import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,8 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/caja")
@@ -52,14 +53,15 @@ public class CajaController {
 
     @GetMapping("/mias")
     @PreAuthorize("hasAuthority('CAJA:VER')")
-    public List<CajaAperturaResponse> misCajas() {
-        return cajaService.misCajas();
+    public PageResponse<CajaAperturaResponse> misCajas(@PageableDefault(size = 10) Pageable pageable) {
+        return cajaService.misCajas(pageable);
     }
 
     @GetMapping("/{id}/movimientos")
     @PreAuthorize("hasAuthority('CAJA:VER')")
-    public List<CajaMovimientoResponse> listarMovimientos(@PathVariable Long id) {
-        return cajaService.listarMovimientos(id);
+    public PageResponse<CajaMovimientoResponse> listarMovimientos(@PathVariable Long id,
+                                                                   @PageableDefault(size = 10) Pageable pageable) {
+        return cajaService.listarMovimientos(id, pageable);
     }
 
     @GetMapping("/{id}/saldo")

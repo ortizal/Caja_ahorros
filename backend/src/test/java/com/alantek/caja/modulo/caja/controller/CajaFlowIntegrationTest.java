@@ -52,7 +52,7 @@ class CajaFlowIntegrationTest {
         mvc.perform(get("/api/v1/caja/mias")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(cajaId));
+                .andExpect(jsonPath("$.content[0].id").value(cajaId));
 
         mvc.perform(post("/api/v1/caja/" + cajaId + "/movimientos")
                         .header("Authorization", "Bearer " + token)

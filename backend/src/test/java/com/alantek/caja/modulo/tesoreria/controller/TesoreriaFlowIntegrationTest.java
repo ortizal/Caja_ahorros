@@ -85,10 +85,10 @@ class TesoreriaFlowIntegrationTest {
                 .andReturn();
         long gastoId = objectMapper.readTree(creado.getResponse().getContentAsString()).get("id").asLong();
 
-        mvc.perform(get("/api/v1/gastos?estado=PENDIENTE")
+        mvc.perform(get("/api/v1/gastos?estado=PENDIENTE&sort=id,desc")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(gastoId));
+                .andExpect(jsonPath("$.content[0].id").value(gastoId));
 
         mvc.perform(post("/api/v1/gastos/" + gastoId + "/aprobar")
                         .header("Authorization", "Bearer " + token)
@@ -292,11 +292,12 @@ class TesoreriaFlowIntegrationTest {
     private long idPlanCuenta(String codigo) throws Exception {
         String token = loginToken("admin", "admin123");
         MvcResult result = mvc.perform(get("/api/v1/plan-cuentas")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("size", "500"))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode cuentas = objectMapper.readTree(result.getResponse().getContentAsString());
-        for (JsonNode cuenta : cuentas) {
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        for (JsonNode cuenta : body.get("content")) {
             if (codigo.equals(cuenta.get("codigo").asText())) {
                 return cuenta.get("id").asLong();
             }

@@ -9,13 +9,16 @@ import { ApiError } from '../../core/models/auth.model';
 import { Auditoria, Permiso, Rol, Usuario } from '../../core/models/seguridad.model';
 import { SeguridadService } from '../../core/services/seguridad.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SortState } from '../../core/models/paginado.model';
 import { ModalComponent, ModalFooterDirective } from '../../shared/components/modal/modal.component';
 import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
+import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
+import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
 import { UsuarioDetalleComponent } from './usuario-detalle.component';
 
 @Component({
   selector: 'app-seguridad',
-  imports: [ReactiveFormsModule, DatePipe, RouterLink, AccionesMenuComponent, ModalComponent, ModalFooterDirective, UsuarioDetalleComponent],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink, AccionesMenuComponent, ModalComponent, ModalFooterDirective, UsuarioDetalleComponent, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './seguridad.html',
   styleUrl: './seguridad.css'
 })
@@ -36,6 +39,24 @@ export class SeguridadComponent implements OnInit {
   protected readonly error = signal('');
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
+
+  protected readonly pageUsuarios = signal(0);
+  protected readonly sizeUsuarios = signal(10);
+  protected readonly sortUsuarios = signal<SortState | null>(null);
+  protected readonly totalElementsUsuarios = signal(0);
+  protected readonly totalPagesUsuarios = signal(0);
+
+  protected readonly pageRoles = signal(0);
+  protected readonly sizeRoles = signal(10);
+  protected readonly sortRoles = signal<SortState | null>(null);
+  protected readonly totalElementsRoles = signal(0);
+  protected readonly totalPagesRoles = signal(0);
+
+  protected readonly pageAuditoria = signal(0);
+  protected readonly sizeAuditoria = signal(10);
+  protected readonly sortAuditoria = signal<SortState | null>(null);
+  protected readonly totalElementsAuditoria = signal(0);
+  protected readonly totalPagesAuditoria = signal(0);
 
   protected readonly detalle = signal<Usuario | null>(null);
   protected readonly infoAbierto = signal(false);
@@ -58,27 +79,46 @@ export class SeguridadComponent implements OnInit {
   }
 
   cargarUsuarios(): void {
-    this.seguridadService.usuarios().subscribe({
-      next: (u) => this.usuarios.set(u),
+    this.cargando.set(true);
+    this.seguridadService.usuarios({
+      page: this.pageUsuarios(),
+      size: this.sizeUsuarios(),
+      sort: this.sortUsuarios() ? `${this.sortUsuarios()!.key},${this.sortUsuarios()!.dir}` : undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.usuarios.set(paginated.content);
+        this.totalElementsUsuarios.set(paginated.totalElements);
+        this.totalPagesUsuarios.set(paginated.totalPages);
+        this.cargando.set(false);
+      },
       error: () => {
         this.usuarios.set([]);
         this.error.set('No se pudieron cargar los usuarios.');
+        this.cargando.set(false);
       }
     });
   }
 
   cargarRoles(): void {
-    this.seguridadService.roles().subscribe({
-      next: (r) => this.roles.set(r),
+    this.seguridadService.roles({
+      page: this.pageRoles(),
+      size: this.sizeRoles(),
+      sort: this.sortRoles() ? `${this.sortRoles()!.key},${this.sortRoles()!.dir}` : undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.roles.set(paginated.content);
+        this.totalElementsRoles.set(paginated.totalElements);
+        this.totalPagesRoles.set(paginated.totalPages);
+      },
       error: () => this.roles.set([])
     });
   }
 
   cargarPermisos(): void {
-    this.seguridadService.permisos().subscribe({
-      next: (p) => {
-        this.permisos.set(p);
-        this.modulos.set([...new Set(p.map((x) => x.modulo))].sort());
+    this.seguridadService.permisos({ size: 100 }).subscribe({
+      next: (paginated) => {
+        this.permisos.set(paginated.content);
+        this.modulos.set([...new Set(paginated.content.map((x) => x.modulo))].sort());
       },
       error: () => this.permisos.set([])
     });
@@ -158,15 +198,79 @@ export class SeguridadComponent implements OnInit {
     this.cargando.set(true);
     this.error.set('');
     this.seguridadService
-      .auditoria(raw.tabla || undefined, raw.desde ? `${raw.desde}T00:00:00Z` : undefined, raw.hasta ? `${raw.hasta}T23:59:59Z` : undefined)
+      .auditoria(
+        raw.tabla || undefined,
+        raw.desde ? `${raw.desde}T00:00:00Z` : undefined,
+        raw.hasta ? `${raw.hasta}T23:59:59Z` : undefined,
+        {
+          page: this.pageAuditoria(),
+          size: this.sizeAuditoria(),
+          sort: this.sortAuditoria() ? `${this.sortAuditoria()!.key},${this.sortAuditoria()!.dir}` : undefined
+        }
+      )
       .pipe(finalize(() => this.cargando.set(false)))
       .subscribe({
-        next: (a) => this.auditoria.set(a),
+        next: (paginated) => {
+          this.auditoria.set(paginated.content);
+          this.totalElementsAuditoria.set(paginated.totalElements);
+          this.totalPagesAuditoria.set(paginated.totalPages);
+        },
         error: (err: HttpErrorResponse) => {
           const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo consultar la auditoría.';
           this.error.set(msg);
           this.toast.error(msg);
         }
       });
+  }
+
+  cambiarPaginaUsuarios(p: number): void {
+    this.pageUsuarios.set(p);
+    this.cargarUsuarios();
+  }
+
+  cambiarTamanoUsuarios(t: number): void {
+    this.sizeUsuarios.set(t);
+    this.pageUsuarios.set(0);
+    this.cargarUsuarios();
+  }
+
+  ordenarUsuarios(s: SortState): void {
+    this.sortUsuarios.set(s);
+    this.pageUsuarios.set(0);
+    this.cargarUsuarios();
+  }
+
+  cambiarPaginaRoles(p: number): void {
+    this.pageRoles.set(p);
+    this.cargarRoles();
+  }
+
+  cambiarTamanoRoles(t: number): void {
+    this.sizeRoles.set(t);
+    this.pageRoles.set(0);
+    this.cargarRoles();
+  }
+
+  ordenarRoles(s: SortState): void {
+    this.sortRoles.set(s);
+    this.pageRoles.set(0);
+    this.cargarRoles();
+  }
+
+  cambiarPaginaAuditoria(p: number): void {
+    this.pageAuditoria.set(p);
+    this.consultarAuditoria();
+  }
+
+  cambiarTamanoAuditoria(t: number): void {
+    this.sizeAuditoria.set(t);
+    this.pageAuditoria.set(0);
+    this.consultarAuditoria();
+  }
+
+  ordenarAuditoria(s: SortState): void {
+    this.sortAuditoria.set(s);
+    this.pageAuditoria.set(0);
+    this.consultarAuditoria();
   }
 }

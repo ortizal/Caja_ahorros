@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { loginAs } from './helpers';
+import { interceptLargePage, loginAs } from './helpers';
 
 const USERNAME = `e2e${Date.now().toString().slice(-6)}`;
 
@@ -7,6 +7,7 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Módulo de seguridad', () => {
   test('crear usuario, asignar permisos a un rol y consultar auditoría', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/usuarios*');
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/seguridad');
 

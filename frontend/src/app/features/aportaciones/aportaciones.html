@@ -58,6 +58,10 @@
         </tbody>
       </table>
     </div>
+    @if (totalElementsConfigs() > 0) {
+      <app-paginador [page]="pageConfigs()" [size]="sizeConfigs()" [totalElements]="totalElementsConfigs()" [totalPages]="totalPagesConfigs()"
+                     (pageChange)="cambiarPaginaConfigs($event)" (sizeChange)="cambiarTamanoConfigs($event)" />
+    }
   </div>
 }
 
@@ -90,12 +94,12 @@
       <table class="table" data-testid="aportaciones-table">
         <thead>
           <tr>
-            <th>Socio</th>
-            <th>Periodo</th>
-            <th>Esperado</th>
-            <th>Pagado</th>
-            <th>Mora</th>
-            <th>Estado</th>
+            <th appSortable sortKey="socioId" [sort]="sort()" (sortChange)="ordenar($event)">Socio</th>
+            <th appSortable sortKey="periodo" [sort]="sort()" (sortChange)="ordenar($event)">Periodo</th>
+            <th appSortable sortKey="montoEsperado" [sort]="sort()" (sortChange)="ordenar($event)">Esperado</th>
+            <th appSortable sortKey="montoPagado" [sort]="sort()" (sortChange)="ordenar($event)">Pagado</th>
+            <th appSortable sortKey="mora" [sort]="sort()" (sortChange)="ordenar($event)">Mora</th>
+            <th appSortable sortKey="estado" [sort]="sort()" (sortChange)="ordenar($event)">Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -126,6 +130,10 @@
         </tbody>
       </table>
     </div>
+    @if (totalElements() > 0) {
+      <app-paginador [page]="page()" [size]="size()" [totalElements]="totalElements()" [totalPages]="totalPages()"
+                     (pageChange)="cambiarPagina($event)" (sizeChange)="cambiarTamano($event)" />
+    }
   </div>
 }
 
@@ -167,6 +175,10 @@
           </tbody>
         </table>
       </div>
+      @if (totalElementsPagos() > 0) {
+        <app-paginador [page]="pagePagos()" [size]="sizePagos()" [totalElements]="totalElementsPagos()" [totalPages]="totalPagesPagos()"
+                       (pageChange)="cambiarPaginaPagos($event)" (sizeChange)="cambiarTamanoPagos($event)" />
+      }
     }
   </div>
 }

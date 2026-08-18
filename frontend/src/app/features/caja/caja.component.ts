@@ -17,10 +17,13 @@ import { CajaService } from '../../core/services/caja.service';
 import { ReporteService } from '../../core/services/reporte.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
+import { SortState } from '../../core/models/paginado.model';
+import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
+import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
 
 @Component({
   selector: 'app-caja',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './caja.html',
   styleUrl: './caja.css'
 })
@@ -41,6 +44,18 @@ export class CajaComponent implements OnInit {
   protected readonly guardando = signal(false);
   protected readonly exportando = signal(false);
   protected readonly tipos = TIPOS_MOVIMIENTO_CAJA;
+
+  protected readonly page = signal(0);
+  protected readonly size = signal(10);
+  protected readonly sort = signal<SortState | null>(null);
+  protected readonly totalElements = signal(0);
+  protected readonly totalPages = signal(0);
+
+  protected readonly movPage = signal(0);
+  protected readonly movSize = signal(10);
+  protected readonly movSort = signal<SortState | null>(null);
+  protected readonly movTotalElements = signal(0);
+  protected readonly movTotalPages = signal(0);
 
   protected readonly movimientoForm = this.fb.nonNullable.group({
     tipo: ['APORTACION', [Validators.required]],
@@ -73,10 +88,16 @@ export class CajaComponent implements OnInit {
   cargarCajas(): void {
     this.cargando.set(true);
     this.error.set('');
-    this.cajaService.misCajas().subscribe({
-      next: (cajas) => {
-        this.cajas.set(cajas);
-        const abierta = cajas.find((c) => c.estado === 'ABIERTA');
+    this.cajaService.misCajas({
+      page: this.page(),
+      size: this.size(),
+      sort: this.sort() ? `${this.sort()!.key},${this.sort()!.dir}` : undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.cajas.set(paginated.content);
+        this.totalElements.set(paginated.totalElements);
+        this.totalPages.set(paginated.totalPages);
+        const abierta = paginated.content.find((c) => c.estado === 'ABIERTA');
         if (abierta) {
           this.seleccionar(abierta);
         }
@@ -104,10 +125,61 @@ export class CajaComponent implements OnInit {
   }
 
   cargarMovimientos(id: number): void {
-    this.cajaService.movimientos(id).subscribe({
-      next: (m) => this.movimientos.set(m),
+    this.cajaService.movimientos(id, {
+      page: this.movPage(),
+      size: this.movSize(),
+      sort: this.movSort() ? `${this.movSort()!.key},${this.movSort()!.dir}` : undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.movimientos.set(paginated.content);
+        this.movTotalElements.set(paginated.totalElements);
+        this.movTotalPages.set(paginated.totalPages);
+      },
       error: () => this.movimientos.set([])
     });
+  }
+
+  cambiarPagina(p: number): void {
+    this.page.set(p);
+    this.cargarCajas();
+  }
+
+  cambiarTamano(t: number): void {
+    this.size.set(t);
+    this.page.set(0);
+    this.cargarCajas();
+  }
+
+  ordenar(s: SortState): void {
+    this.sort.set(s);
+    this.page.set(0);
+    this.cargarCajas();
+  }
+
+  cambiarMovPagina(p: number): void {
+    this.movPage.set(p);
+    const caja = this.seleccionada();
+    if (caja) {
+      this.cargarMovimientos(caja.id);
+    }
+  }
+
+  cambiarMovTamano(t: number): void {
+    this.movSize.set(t);
+    this.movPage.set(0);
+    const caja = this.seleccionada();
+    if (caja) {
+      this.cargarMovimientos(caja.id);
+    }
+  }
+
+  ordenarMovimientos(s: SortState): void {
+    this.movSort.set(s);
+    this.movPage.set(0);
+    const caja = this.seleccionada();
+    if (caja) {
+      this.cargarMovimientos(caja.id);
+    }
   }
 
   registrarMovimiento(): void {

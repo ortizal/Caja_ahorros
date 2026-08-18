@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   application:
     name: caja-ahorros-backend
   datasource:
@@ -16,13 +18,13 @@ spring:
           time_zone: UTC
   sql:
     init:
-      mode: always
+      mode: never
       schema-locations: classpath:db/schema.sql
   data:
     web:
       pageable:
         default-page-size: 10
-        max-page-size: 50
+        max-page-size: 1000
         page-parameter: page
         size-parameter: size
         sort-parameter: sort
@@ -32,7 +34,7 @@ server:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:caja-ahorros-alantek-secreto-jwt-2026-debe-tener-32-bytes-minimo}
+    secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 cors:

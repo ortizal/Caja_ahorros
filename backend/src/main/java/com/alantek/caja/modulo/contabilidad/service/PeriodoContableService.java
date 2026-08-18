@@ -2,14 +2,15 @@ package com.alantek.caja.modulo.contabilidad.service;
 
 import com.alantek.caja.modulo.contabilidad.entity.PeriodoContable;
 import com.alantek.caja.modulo.contabilidad.repository.PeriodoContableRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 
 @Service
 public class PeriodoContableService {
@@ -26,11 +27,9 @@ public class PeriodoContableService {
         this.auditService = auditService;
     }
 
-    public List<PeriodoContable> listar() {
-        return periodoRepository.findAll().stream()
-                .sorted(java.util.Comparator.comparing(PeriodoContable::getAnio).reversed()
-                        .thenComparing(PeriodoContable::getMes).reversed())
-                .toList();
+    @Transactional(readOnly = true)
+    public PageResponse<PeriodoContable> listar(Pageable pageable) {
+        return PageResponse.of(periodoRepository.findAll(pageable));
     }
 
     @Transactional

@@ -3,7 +3,10 @@ package com.alantek.caja.modulo.seguridad.controller;
 import com.alantek.caja.modulo.seguridad.dto.UsuarioRequest;
 import com.alantek.caja.modulo.seguridad.dto.UsuarioResponse;
 import com.alantek.caja.modulo.seguridad.service.UsuarioService;
+import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/usuarios")
@@ -30,8 +31,8 @@ public class UsuarioController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('SEGURIDAD:VER')")
-    public List<UsuarioResponse> listar() {
-        return usuarioService.listar();
+    public PageResponse<UsuarioResponse> listar(@PageableDefault(size = 10) Pageable pageable) {
+        return usuarioService.listar(pageable);
     }
 
     @GetMapping("/{id}")

@@ -30,8 +30,8 @@ export class AsientoFormComponent implements OnInit {
   protected readonly error = signal('');
 
   ngOnInit(): void {
-    this.contabilidadService.planCuentas().subscribe({
-      next: (p) => this.planCuentas.set(p),
+    this.contabilidadService.planCuentas({ size: 500 }).subscribe({
+      next: (p) => this.planCuentas.set(p.content),
       error: (err: HttpErrorResponse) => {
         const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo cargar el plan de cuentas.';
         this.error.set(msg);

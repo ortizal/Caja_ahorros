@@ -13,8 +13,11 @@ import com.alantek.caja.modulo.notificaciones.entity.Notificacion;
 import com.alantek.caja.modulo.notificaciones.repository.NotificacionRepository;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,12 +53,11 @@ public class NotificacionService {
         this.currentUserService = currentUserService;
     }
 
-    public List<NotificacionResponse> listarMias() {
+    @Transactional(readOnly = true)
+    public PageResponse<NotificacionResponse> listarMias(Pageable pageable) {
         Long usuarioId = currentUserService.requireUserId();
-        return notificacionRepository.findByUsuarioIdOrderByCreatedAtDesc(usuarioId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        Page<Notificacion> page = notificacionRepository.findByUsuarioIdOrderByCreatedAtDesc(usuarioId, pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     public long contarNoLeidas() {

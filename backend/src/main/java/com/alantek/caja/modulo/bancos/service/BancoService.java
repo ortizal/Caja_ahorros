@@ -12,9 +12,12 @@ import com.alantek.caja.modulo.bancos.entity.CuentaBancaria;
 import com.alantek.caja.modulo.bancos.repository.BancoMovimientoRepository;
 import com.alantek.caja.modulo.bancos.repository.ConciliacionBancariaRepository;
 import com.alantek.caja.modulo.bancos.repository.CuentaBancariaRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,8 +49,9 @@ public class BancoService {
         this.auditService = auditService;
     }
 
-    public List<CuentaBancariaResponse> listarCuentas() {
-        return cuentaRepository.findAll().stream().map(this::toResponse).toList();
+    public PageResponse<CuentaBancariaResponse> listarCuentas(Pageable pageable) {
+        Page<CuentaBancaria> page = cuentaRepository.findAll(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional
@@ -91,10 +95,10 @@ public class BancoService {
         return toResponse(saved, cuenta);
     }
 
-    public List<BancoMovimientoResponse> listarMovimientos(Long cuentaId) {
-        return movimientoRepository.findByCuentaBancariaIdOrderByFechaAsc(cuentaId).stream()
-                .map(m -> toResponse(m, cuentaRepository.findById(cuentaId).orElse(null)))
-                .toList();
+    public PageResponse<BancoMovimientoResponse> listarMovimientos(Long cuentaId, Pageable pageable) {
+        CuentaBancaria cuenta = cuentaRepository.findById(cuentaId).orElse(null);
+        Page<BancoMovimiento> page = movimientoRepository.findByCuentaBancariaId(cuentaId, pageable);
+        return PageResponse.of(page, m -> toResponse(m, cuenta));
     }
 
     @Transactional

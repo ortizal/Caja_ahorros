@@ -32,9 +32,12 @@ import com.alantek.caja.modulo.creditos.repository.ProductoCreditoRepository;
 import com.alantek.caja.modulo.creditos.repository.SolicitudCreditoRepository;
 import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
 import com.alantek.caja.shared.security.CurrentUserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,16 +126,14 @@ public class CreditoService {
         return toResponse(saved);
     }
 
-    public List<ProductoCreditoResponse> listarProductos() {
-        return productoRepository.findAllByOrderByActivoDescIdDesc().stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<ProductoCreditoResponse> listarProductos(Pageable pageable) {
+        Page<ProductoCredito> page = productoRepository.findAllByOrderByActivoDescIdDesc(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
-    public List<ProductoCreditoResponse> listarProductosActivos() {
-        return productoRepository.findByActivoTrueOrderByIdDesc().stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<ProductoCreditoResponse> listarProductosActivos(Pageable pageable) {
+        Page<ProductoCredito> page = productoRepository.findByActivoTrueOrderByIdDesc(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     // ---------------- Solicitudes ----------------
@@ -180,11 +181,11 @@ public class CreditoService {
         return toResponse(saved);
     }
 
-    public List<SolicitudCreditoResponse> listarSolicitudes(String estado) {
-        List<SolicitudCredito> solicitudes = estado == null || estado.isBlank()
-                ? solicitudRepository.findAllByOrderByCreatedAtDesc()
-                : solicitudRepository.findByEstadoOrderByCreatedAtDesc(estado.toUpperCase());
-        return solicitudes.stream().map(this::toResponse).toList();
+    public PageResponse<SolicitudCreditoResponse> listarSolicitudes(String estado, Pageable pageable) {
+        Page<SolicitudCredito> page = (estado == null || estado.isBlank())
+                ? solicitudRepository.findAllByOrderByCreatedAtDesc(pageable)
+                : solicitudRepository.findByEstado(estado.toUpperCase(), pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional
@@ -256,11 +257,11 @@ public class CreditoService {
 
     // ---------------- Creditos ----------------
 
-    public List<CreditoResponse> listarCreditos(Long socioId) {
-        List<Credito> creditos = socioId != null
-                ? creditoRepository.findBySocioIdOrderByCreatedAtDesc(socioId)
-                : creditoRepository.findAllByOrderByCreatedAtDesc();
-        return creditos.stream().map(this::toResponse).toList();
+    public PageResponse<CreditoResponse> listarCreditos(Long socioId, Pageable pageable) {
+        Page<Credito> page = socioId != null
+                ? creditoRepository.findBySocioId(socioId, pageable)
+                : creditoRepository.findAllByOrderByCreatedAtDesc(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     public CreditoResponse obtenerCredito(Long id) {
@@ -312,17 +313,14 @@ public class CreditoService {
         return toResponse(credito);
     }
 
-    public List<CuotaCreditoResponse> listarCuotas(Long creditoId) {
-        return cuotaRepository.findByCreditoIdOrderByNumeroCuotaAsc(creditoId).stream()
-                .filter(cuota -> !"REFINANCIADA".equals(cuota.getEstado()))
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<CuotaCreditoResponse> listarCuotas(Long creditoId, Pageable pageable) {
+        Page<CuotaCredito> page = cuotaRepository.findByCreditoIdAndEstadoNot(creditoId, "REFINANCIADA", pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
-    public List<PagoCuotaResponse> listarPagos(Long creditoId) {
-        return pagoRepository.findByCreditoIdOrderByPagadoAtAsc(creditoId).stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<PagoCuotaResponse> listarPagos(Long creditoId, Pageable pageable) {
+        Page<PagoCuota> page = pagoRepository.findByCreditoId(creditoId, pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional

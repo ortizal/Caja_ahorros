@@ -39,7 +39,7 @@ class AhorrosFlowIntegrationTest {
         mvc.perform(get("/api/v1/productos-ahorro")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").isNumber());
+                .andExpect(jsonPath("$.content").isArray());
 
         MvcResult producto = mvc.perform(post("/api/v1/productos-ahorro")
                         .header("Authorization", "Bearer " + token)
@@ -82,7 +82,7 @@ class AhorrosFlowIntegrationTest {
         mvc.perform(get("/api/v1/cuentas-ahorro/" + cuentaId + "/movimientos")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.content.length()").value(2));
 
         MvcResult capitalizacion = mvc.perform(post("/api/v1/ahorros/capitalizar")
                         .header("Authorization", "Bearer " + token)
@@ -97,8 +97,8 @@ class AhorrosFlowIntegrationTest {
         mvc.perform(get("/api/v1/cuentas-ahorro/" + cuentaId + "/movimientos")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(3))
-                .andExpect(jsonPath("$[2].tipo").value("INTERES"));
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.content[2].tipo").value("INTERES"));
     }
 
     @Test
@@ -213,7 +213,7 @@ class AhorrosFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        for (JsonNode socio : body) {
+        for (JsonNode socio : body.get("content")) {
             if ("ACTIVO".equals(socio.get("estado").asText())) {
                 return socio.get("id").asLong();
             }

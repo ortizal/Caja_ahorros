@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Capitalizacion,
@@ -11,6 +11,7 @@ import {
   ProductoAhorro,
   ProductoAhorroRequest
 } from '../models/ahorro.model';
+import { Paginated, Paginacion, paginar } from '../models/paginado.model';
 
 @Injectable({ providedIn: 'root' })
 export class AhorroService {
@@ -19,27 +20,33 @@ export class AhorroService {
   constructor(private readonly http: HttpClient) {}
 
   productos(): Observable<ProductoAhorro[]> {
-    return this.http.get<ProductoAhorro[]>(`${this.base}/productos-ahorro`);
+    return this.http.get<Paginated<ProductoAhorro>>(`${this.base}/productos-ahorro`, { params: paginar({ size: 100 }) }).pipe(
+      map(p => p.content)
+    );
+  }
+
+  productosPag(pag?: Paginacion): Observable<Paginated<ProductoAhorro>> {
+    return this.http.get<Paginated<ProductoAhorro>>(`${this.base}/productos-ahorro`, { params: paginar(pag) });
   }
 
   crearProducto(request: ProductoAhorroRequest): Observable<ProductoAhorro> {
     return this.http.post<ProductoAhorro>(`${this.base}/productos-ahorro`, request);
   }
 
-  cuentas(socioId?: number): Observable<CuentaAhorro[]> {
-    const params: Record<string, string> = {};
+  cuentas(socioId?: number, pag?: Paginacion): Observable<Paginated<CuentaAhorro>> {
+    const params: Record<string, string | number> = paginar(pag);
     if (socioId) {
-      params['socioId'] = String(socioId);
+      params['socioId'] = socioId;
     }
-    return this.http.get<CuentaAhorro[]>(`${this.base}/cuentas-ahorro`, { params });
+    return this.http.get<Paginated<CuentaAhorro>>(`${this.base}/cuentas-ahorro`, { params });
   }
 
   aperturar(request: CuentaAhorroRequest): Observable<CuentaAhorro> {
     return this.http.post<CuentaAhorro>(`${this.base}/cuentas-ahorro`, request);
   }
 
-  movimientos(cuentaId: number): Observable<MovimientoAhorro[]> {
-    return this.http.get<MovimientoAhorro[]>(`${this.base}/cuentas-ahorro/${cuentaId}/movimientos`);
+  movimientos(cuentaId: number, pag?: Paginacion): Observable<Paginated<MovimientoAhorro>> {
+    return this.http.get<Paginated<MovimientoAhorro>>(`${this.base}/cuentas-ahorro/${cuentaId}/movimientos`, { params: paginar(pag) });
   }
 
   depositar(cuentaId: number, monto: number): Observable<MovimientoAhorro> {

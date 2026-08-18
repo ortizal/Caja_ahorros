@@ -41,9 +41,9 @@ export class UsuarioFormComponent implements OnInit {
       this.esEdicion.set(true);
       this.usuarioId = Number(id);
     }
-    this.seguridadService.roles().subscribe({
+    this.seguridadService.roles({ size: 100 }).subscribe({
       next: (roles) => {
-        this.roles.set(roles);
+        this.roles.set(roles.content);
         if (this.esEdicion()) {
           this.cargarUsuario();
         }
@@ -60,9 +60,9 @@ export class UsuarioFormComponent implements OnInit {
       return;
     }
     this.loading.set(true);
-    this.seguridadService.usuarios().subscribe({
-      next: (lista) => {
-        const usuario = lista.find((u) => u.id === this.usuarioId);
+    this.seguridadService.usuarios({ size: 100 }).subscribe({
+      next: (paginated) => {
+        const usuario = paginated.content.find((u) => u.id === this.usuarioId);
         if (!usuario) {
           this.error.set('No se encontró el usuario.');
           this.loading.set(false);

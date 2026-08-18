@@ -8,7 +8,10 @@ import com.alantek.caja.modulo.ahorros.dto.MovimientoAhorroResponse;
 import com.alantek.caja.modulo.ahorros.dto.ProductoAhorroRequest;
 import com.alantek.caja.modulo.ahorros.dto.ProductoAhorroResponse;
 import com.alantek.caja.modulo.ahorros.service.AhorroService;
+import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -34,8 +35,8 @@ public class AhorroController {
 
     @GetMapping("/productos-ahorro")
     @PreAuthorize("hasAuthority('AHORROS:VER')")
-    public List<ProductoAhorroResponse> listarProductos() {
-        return ahorroService.listarProductos();
+    public PageResponse<ProductoAhorroResponse> listarProductos(@PageableDefault(size = 10) Pageable pageable) {
+        return ahorroService.listarProductos(pageable);
     }
 
     @PostMapping("/productos-ahorro")
@@ -47,8 +48,9 @@ public class AhorroController {
 
     @GetMapping("/cuentas-ahorro")
     @PreAuthorize("hasAuthority('AHORROS:VER')")
-    public List<CuentaAhorroResponse> listarCuentas(@RequestParam(required = false) Long socioId) {
-        return ahorroService.listarCuentas(socioId);
+    public PageResponse<CuentaAhorroResponse> listarCuentas(@RequestParam(required = false) Long socioId,
+                                                             @PageableDefault(size = 10) Pageable pageable) {
+        return ahorroService.listarCuentas(socioId, pageable);
     }
 
     @PostMapping("/cuentas-ahorro")
@@ -59,8 +61,9 @@ public class AhorroController {
 
     @GetMapping("/cuentas-ahorro/{id}/movimientos")
     @PreAuthorize("hasAuthority('AHORROS:VER')")
-    public List<MovimientoAhorroResponse> listarMovimientos(@PathVariable Long id) {
-        return ahorroService.listarMovimientos(id);
+    public PageResponse<MovimientoAhorroResponse> listarMovimientos(@PathVariable Long id,
+                                                                     @PageableDefault(size = 10) Pageable pageable) {
+        return ahorroService.listarMovimientos(id, pageable);
     }
 
     @PostMapping("/cuentas-ahorro/{id}/depositos")

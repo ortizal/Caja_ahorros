@@ -33,8 +33,8 @@ export class GastoFormComponent implements OnInit {
   protected readonly error = signal('');
 
   ngOnInit(): void {
-    this.contabilidadService.planCuentas().subscribe({
-      next: (p) => this.planCuentas.set(p),
+    this.contabilidadService.planCuentas({ size: 500 }).subscribe({
+      next: (p) => this.planCuentas.set(p.content),
       error: () => this.planCuentas.set([])
     });
   }

@@ -12,10 +12,13 @@ import { AportacionService } from '../../core/services/aportacion.service';
 import { SocioService } from '../../core/services/socio.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
+import { SortState } from '../../core/models/paginado.model';
+import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
+import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
 
 @Component({
   selector: 'app-aportaciones',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './aportaciones.html',
   styleUrl: './aportaciones.css'
 })
@@ -36,6 +39,22 @@ export class AportacionesComponent implements OnInit {
   protected readonly error = signal('');
   protected readonly cargando = signal(false);
   protected readonly guardando = signal(false);
+
+  protected readonly page = signal(0);
+  protected readonly size = signal(10);
+  protected readonly sort = signal<SortState | null>(null);
+  protected readonly totalElements = signal(0);
+  protected readonly totalPages = signal(0);
+
+  protected readonly pageConfigs = signal(0);
+  protected readonly sizeConfigs = signal(10);
+  protected readonly totalElementsConfigs = signal(0);
+  protected readonly totalPagesConfigs = signal(0);
+
+  protected readonly pagePagos = signal(0);
+  protected readonly sizePagos = signal(10);
+  protected readonly totalElementsPagos = signal(0);
+  protected readonly totalPagesPagos = signal(0);
 
   protected readonly puedeVer = computed(() => this.auth.hasPermiso('APORTACIONES:VER'));
   protected readonly puedeCrear = computed(() => this.auth.hasPermiso('APORTACIONES:CREAR'));
@@ -60,29 +79,96 @@ export class AportacionesComponent implements OnInit {
   }
 
   cargarConfigs(): void {
-    this.aportacionService.configs().subscribe({
-      next: (c) => this.configs.set(c),
+    this.aportacionService.configs({
+      page: this.pageConfigs(),
+      size: this.sizeConfigs()
+    }).subscribe({
+      next: (paginated) => {
+        this.configs.set(paginated.content);
+        this.totalElementsConfigs.set(paginated.totalElements);
+        this.totalPagesConfigs.set(paginated.totalPages);
+      },
       error: () => this.configs.set([])
     });
   }
 
   cargarSocios(): void {
-    this.socioService.listar('ACTIVO').subscribe({
-      next: (s) => this.socios.set(s),
+    this.socioService.listar({ estado: 'ACTIVO' }).subscribe({
+      next: (s) => this.socios.set(s.content),
       error: () => this.socios.set([])
     });
   }
 
   cargarAportaciones(): void {
-    this.aportacionService.aportaciones(this.filtroPeriodo() || undefined).subscribe({
-      next: (a) => this.aportaciones.set(a),
-      error: () => this.aportaciones.set([])
+    this.cargando.set(true);
+    this.aportacionService.aportaciones({
+      page: this.page(),
+      size: this.size(),
+      sort: this.sort() ? `${this.sort()!.key},${this.sort()!.dir}` : undefined,
+      periodo: this.filtroPeriodo() || undefined
+    }).subscribe({
+      next: (paginated) => {
+        this.aportaciones.set(paginated.content);
+        this.totalElements.set(paginated.totalElements);
+        this.totalPages.set(paginated.totalPages);
+        this.cargando.set(false);
+      },
+      error: () => {
+        this.aportaciones.set([]);
+        this.cargando.set(false);
+      }
     });
   }
 
   aplicarFiltro(event: Event): void {
     this.filtroPeriodo.set((event.target as HTMLInputElement).value);
+    this.page.set(0);
     this.cargarAportaciones();
+  }
+
+  cambiarPagina(p: number): void {
+    this.page.set(p);
+    this.cargarAportaciones();
+  }
+
+  cambiarTamano(t: number): void {
+    this.size.set(t);
+    this.page.set(0);
+    this.cargarAportaciones();
+  }
+
+  ordenar(s: SortState): void {
+    this.sort.set(s);
+    this.page.set(0);
+    this.cargarAportaciones();
+  }
+
+  cambiarPaginaConfigs(p: number): void {
+    this.pageConfigs.set(p);
+    this.cargarConfigs();
+  }
+
+  cambiarTamanoConfigs(t: number): void {
+    this.sizeConfigs.set(t);
+    this.pageConfigs.set(0);
+    this.cargarConfigs();
+  }
+
+  cambiarPaginaPagos(p: number): void {
+    this.pagePagos.set(p);
+    const target = this.pagoTarget();
+    if (target) {
+      this.cargarPagos(target.id);
+    }
+  }
+
+  cambiarTamanoPagos(t: number): void {
+    this.sizePagos.set(t);
+    this.pagePagos.set(0);
+    const target = this.pagoTarget();
+    if (target) {
+      this.cargarPagos(target.id);
+    }
   }
 
   generarPeriodo(): void {
@@ -111,12 +197,20 @@ export class AportacionesComponent implements OnInit {
   seleccionar(a: Aportacion): void {
     this.pagoTarget.set(a);
     this.pagoForm.patchValue({ monto: Number(a.montoEsperado) - Number(a.montoPagado) });
+    this.pagePagos.set(0);
     this.cargarPagos(a.id);
   }
 
   cargarPagos(aportacionId: number): void {
-    this.aportacionService.pagos(aportacionId).subscribe({
-      next: (p) => this.pagos.set(p),
+    this.aportacionService.pagos(aportacionId, {
+      page: this.pagePagos(),
+      size: this.sizePagos()
+    }).subscribe({
+      next: (paginated) => {
+        this.pagos.set(paginated.content);
+        this.totalElementsPagos.set(paginated.totalElements);
+        this.totalPagesPagos.set(paginated.totalPages);
+      },
       error: () => this.pagos.set([])
     });
   }

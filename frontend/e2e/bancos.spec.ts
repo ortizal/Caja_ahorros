@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { loginAs } from './helpers';
+import { interceptLargePage, loginAs } from './helpers';
 
 const NUMERO_CUENTA = `9${Date.now().toString().slice(-8)}`;
 
@@ -7,6 +7,7 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Módulo de bancos', () => {
   test('crear cuenta, registrar movimiento y conciliar', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/cuentas-bancarias*');
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/bancos');
 

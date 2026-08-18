@@ -4,7 +4,10 @@ import com.alantek.caja.modulo.socios.dto.EstadoCuentaResponse;
 import com.alantek.caja.modulo.socios.dto.SocioRequest;
 import com.alantek.caja.modulo.socios.dto.SocioResponse;
 import com.alantek.caja.modulo.socios.service.SocioService;
+import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,8 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/socios")
@@ -31,8 +32,8 @@ public class SocioController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('SOCIOS:VER')")
-    public List<SocioResponse> listar(@RequestParam(required = false) String estado) {
-        return socioService.listar(estado);
+    public PageResponse<SocioResponse> listar(@RequestParam(required = false) String estado, @PageableDefault(size = 10) Pageable pageable) {
+        return socioService.listar(estado, pageable);
     }
 
     @GetMapping("/{id}")

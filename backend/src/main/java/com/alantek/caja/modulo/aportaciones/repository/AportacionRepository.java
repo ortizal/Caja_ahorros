@@ -1,6 +1,8 @@
 package com.alantek.caja.modulo.aportaciones.repository;
 
 import com.alantek.caja.modulo.aportaciones.entity.Aportacion;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -17,4 +19,10 @@ public interface AportacionRepository extends JpaRepository<Aportacion, Long> {
     List<Aportacion> findBySocioIdOrderByPeriodoDesc(Long socioId);
 
     List<Aportacion> findAllByOrderByPeriodoDesc();
+
+    Page<Aportacion> findByPeriodo(String periodo, Pageable pageable);
+
+    Page<Aportacion> findBySocioId(Long socioId, Pageable pageable);
+
+    Page<Aportacion> findByPeriodoAndSocioId(String periodo, Long socioId, Pageable pageable);
 }

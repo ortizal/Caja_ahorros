@@ -22,12 +22,12 @@ describe('AportacionService', () => {
 
   it('configs hace GET a /aportaciones/config', () => {
     service.configs().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/aportaciones/config`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, tipo: 'OBLIGATORIA', modoCalculo: 'FIJO', valor: 25, periodicidad: 'MENSUAL', vigenteDesde: '2026-01-01' }]);
+    req.flush({ content: [{ id: 1, tipo: 'OBLIGATORIA', modoCalculo: 'FIJO', valor: 25, periodicidad: 'MENSUAL', vigenteDesde: '2026-01-01' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('crearConfig hace POST con cuerpo', () => {
@@ -64,8 +64,8 @@ describe('AportacionService', () => {
   });
 
   it('aportaciones hace GET con filtro de periodo', () => {
-    service.aportaciones('2026-09').subscribe((res) => {
-      expect(res.length).toBe(1);
+    service.aportaciones({ periodo: '2026-09' }).subscribe((res) => {
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(
@@ -74,7 +74,7 @@ describe('AportacionService', () => {
         r.url === `${environment.apiUrl}/aportaciones` &&
         r.params.get('periodo') === '2026-09'
     );
-    req.flush([{ id: 1, socioId: 2, configId: 1, periodo: '2026-09', montoEsperado: 25, montoPagado: 0, mora: 0, estado: 'PENDIENTE' }]);
+    req.flush({ content: [{ id: 1, socioId: 2, configId: 1, periodo: '2026-09', montoEsperado: 25, montoPagado: 0, mora: 0, estado: 'PENDIENTE' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('pagar hace POST al detalle de pagos', () => {

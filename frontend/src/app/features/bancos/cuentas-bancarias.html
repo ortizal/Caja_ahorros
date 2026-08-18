@@ -35,10 +35,10 @@
       <table class="table" data-testid="cuentas-table">
         <thead>
           <tr>
-            <th>Banco</th>
-            <th>Número de Cuenta</th>
-            <th>Tipo</th>
-            <th>Saldo Contable</th>
+            <th appSortable sortKey="banco" [sort]="sort()" (sortChange)="ordenar($event)">Banco</th>
+            <th appSortable sortKey="numeroCuenta" [sort]="sort()" (sortChange)="ordenar($event)">Número de Cuenta</th>
+            <th appSortable sortKey="tipo" [sort]="sort()" (sortChange)="ordenar($event)">Tipo</th>
+            <th appSortable sortKey="saldoContable" [sort]="sort()" (sortChange)="ordenar($event)">Saldo Contable</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
         </thead>
@@ -61,5 +61,7 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="page()" [size]="size()" [totalElements]="totalElements()" [totalPages]="totalPages()"
+                   (pageChange)="cambiarPagina($event)" (sizeChange)="cambiarTamano($event)" />
   }
 </div>

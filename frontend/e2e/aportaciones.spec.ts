@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { loginAs, operarConCaja } from './helpers';
+import { interceptLargePage, loginAs, operarConCaja } from './helpers';
 
 const futuro = new Date(Date.now() + 400 * 24 * 60 * 60 * 1000);
 const PERIODO = `${futuro.getUTCFullYear()}-${String(futuro.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -8,6 +8,8 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Modulo de aportaciones', () => {
   test('crear configuracion, generar periodo y pagar aportacion', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/aportaciones/config*');
+    await interceptLargePage(page, '**/api/v1/aportaciones*');
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/aportaciones');
 

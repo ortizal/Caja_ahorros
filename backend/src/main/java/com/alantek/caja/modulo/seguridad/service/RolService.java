@@ -9,8 +9,11 @@ import com.alantek.caja.modulo.seguridad.entity.Rol;
 import com.alantek.caja.modulo.seguridad.repository.AuditoriaRepository;
 import com.alantek.caja.modulo.seguridad.repository.PermisoRepository;
 import com.alantek.caja.modulo.seguridad.repository.RolRepository;
+import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,18 +42,15 @@ public class RolService {
     }
 
     @Transactional(readOnly = true)
-    public List<RolResponse> listar() {
-        return rolRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<RolResponse> listar(Pageable pageable) {
+        Page<Rol> page = rolRepository.findAll(pageable);
+        return PageResponse.of(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<PermisoResponse> listarPermisos() {
-        return permisoRepository.findAll().stream()
-                .sorted(Comparator.comparing(Permiso::getModulo).thenComparing(Permiso::getAccion))
-                .map(p -> new PermisoResponse(p.getId(), p.getModulo(), p.getAccion()))
-                .toList();
+    public PageResponse<PermisoResponse> listarPermisos(Pageable pageable) {
+        Page<Permiso> page = permisoRepository.findAll(pageable);
+        return PageResponse.of(page, p -> new PermisoResponse(p.getId(), p.getModulo(), p.getAccion()));
     }
 
     @Transactional
@@ -72,12 +72,11 @@ public class RolService {
         return toResponse(rol);
     }
 
-    public List<AuditoriaResponse> listarAuditoria(String tabla, Instant desde, Instant hasta) {
+    public PageResponse<AuditoriaResponse> listarAuditoria(String tabla, Instant desde, Instant hasta, Pageable pageable) {
         Instant desdeFinal = desde == null ? Instant.EPOCH : desde;
         Instant hastaFinal = hasta == null ? Instant.parse("2099-12-31T23:59:59Z") : hasta;
-        return auditoriaRepository.filtrar(tabla, desdeFinal, hastaFinal).stream()
-                .map(this::toAuditoriaResponse)
-                .toList();
+        Page<Auditoria> page = auditoriaRepository.filtrar(tabla, desdeFinal, hastaFinal, pageable);
+        return PageResponse.of(page, this::toAuditoriaResponse);
     }
 
     private AuditoriaResponse toAuditoriaResponse(Auditoria a) {

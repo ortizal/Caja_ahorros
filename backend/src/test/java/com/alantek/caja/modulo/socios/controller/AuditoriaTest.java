@@ -144,7 +144,7 @@ class AuditoriaTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        for (JsonNode socio : body) {
+        for (JsonNode socio : body.get("content")) {
             long socioId = socio.get("id").asLong();
             if (!"ACTIVO".equals(socio.get("estado").asText())) {
                 continue;
@@ -168,6 +168,6 @@ class AuditoriaTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        return body.get(0).get("id").asLong();
+        return body.get("content").get(0).get("id").asLong();
     }
 }

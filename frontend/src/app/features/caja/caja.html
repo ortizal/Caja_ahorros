@@ -34,10 +34,10 @@
       <table class="table" data-testid="cajas-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Fecha</th>
-            <th>Saldo Inicial</th>
-            <th>Estado</th>
+            <th appSortable sortKey="id" [sort]="sort()" (sortChange)="ordenar($event)">#</th>
+            <th appSortable sortKey="fecha" [sort]="sort()" (sortChange)="ordenar($event)">Fecha</th>
+            <th appSortable sortKey="saldoInicial" [sort]="sort()" (sortChange)="ordenar($event)">Saldo Inicial</th>
+            <th appSortable sortKey="estado" [sort]="sort()" (sortChange)="ordenar($event)">Estado</th>
             <th style="text-align: right;">Acción</th>
           </tr>
         </thead>
@@ -64,6 +64,8 @@
         </tbody>
       </table>
     </div>
+    <app-paginador [page]="page()" [size]="size()" [totalElements]="totalElements()" [totalPages]="totalPages()"
+                   (pageChange)="cambiarPagina($event)" (sizeChange)="cambiarTamano($event)" />
   }
 </div>
 
@@ -212,11 +214,11 @@
         <table class="table" data-testid="movimientos-table">
           <thead>
             <tr>
-              <th>Comprobante</th>
-              <th>Tipo</th>
-              <th>Monto</th>
-              <th>Referencia</th>
-              <th>Fecha</th>
+              <th appSortable sortKey="comprobanteNumero" [sort]="movSort()" (sortChange)="ordenarMovimientos($event)">Comprobante</th>
+              <th appSortable sortKey="tipo" [sort]="movSort()" (sortChange)="ordenarMovimientos($event)">Tipo</th>
+              <th appSortable sortKey="monto" [sort]="movSort()" (sortChange)="ordenarMovimientos($event)">Monto</th>
+              <th appSortable sortKey="referenciaTabla" [sort]="movSort()" (sortChange)="ordenarMovimientos($event)">Referencia</th>
+              <th appSortable sortKey="createdAt" [sort]="movSort()" (sortChange)="ordenarMovimientos($event)">Fecha</th>
             </tr>
           </thead>
           <tbody>
@@ -232,6 +234,8 @@
           </tbody>
         </table>
       </div>
+      <app-paginador [page]="movPage()" [size]="movSize()" [totalElements]="movTotalElements()" [totalPages]="movTotalPages()"
+                     (pageChange)="cambiarMovPagina($event)" (sizeChange)="cambiarMovTamano($event)" />
     }
   </div>
 }

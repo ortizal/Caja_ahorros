@@ -25,9 +25,9 @@ describe('AhorroService', () => {
       expect(res.length).toBe(1);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/productos-ahorro`);
+    const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${environment.apiUrl}/productos-ahorro`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, nombre: 'A LA VISTA', tasaInteres: 2.5, periodicidadCapitalizacion: 'MENSUAL', saldoMinimo: 0, vigenteDesde: '2026-01-01', activo: true }]);
+    req.flush({ content: [{ id: 1, nombre: 'A LA VISTA', tasaInteres: 2.5, periodicidadCapitalizacion: 'MENSUAL', saldoMinimo: 0, vigenteDesde: '2026-01-01', activo: true }], page: 0, size: 100, totalElements: 1, totalPages: 1 });
   });
 
   it('crearProducto hace POST con cuerpo', () => {
@@ -51,12 +51,12 @@ describe('AhorroService', () => {
 
   it('cuentas hace GET a /cuentas-ahorro', () => {
     service.cuentas().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/cuentas-ahorro`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, socioId: 2, productoId: 1, numeroCuenta: 'AH-0000001', saldo: 0, estado: 'ACTIVA', fechaApertura: '2026-08-12' }]);
+    req.flush({ content: [{ id: 1, socioId: 2, productoId: 1, numeroCuenta: 'AH-0000001', saldo: 0, estado: 'ACTIVA', fechaApertura: '2026-08-12' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('aperturar hace POST con socio y producto', () => {

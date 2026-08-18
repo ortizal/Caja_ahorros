@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { loginAs } from './helpers';
+import { interceptLargePage, loginAs } from './helpers';
 
 const CODIGO = `E2E${Date.now().toString().slice(-5)}`;
 
@@ -8,10 +8,10 @@ async function cuentaAceptaMovimiento(page: Page): Promise<{ codigo: string; nom
     data: { username: 'admin', password: 'admin123' }
   });
   const { token } = (await login.json()) as { token: string };
-  const res = await page.request.get('http://localhost:8080/api/v1/plan-cuentas', {
+  const res = await page.request.get('http://localhost:8080/api/v1/plan-cuentas?size=100', {
     headers: { Authorization: `Bearer ${token}` }
   });
-  const cuentas = (await res.json()) as { codigo: string; nombre: string; aceptaMovimiento: boolean }[];
+  const { content: cuentas } = (await res.json()) as { content: { codigo: string; nombre: string; aceptaMovimiento: boolean }[] };
   const cuenta = cuentas.find((c) => c.aceptaMovimiento)!;
   return { codigo: cuenta.codigo, nombre: cuenta.nombre };
 }
@@ -20,6 +20,9 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Módulo de contabilidad', () => {
   test('crear cuenta, registrar asiento manual y consultar balance', async ({ page }) => {
+    await interceptLargePage(page, '**/api/v1/plan-cuentas*');
+    await interceptLargePage(page, '**/api/v1/libro-diario*');
+    await interceptLargePage(page, '**/api/v1/balance-comprobacion*');
     await loginAs(page, 'admin', 'admin123');
     await page.goto('/contabilidad');
 

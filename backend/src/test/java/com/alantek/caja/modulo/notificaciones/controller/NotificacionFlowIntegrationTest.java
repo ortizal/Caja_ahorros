@@ -240,9 +240,10 @@ class NotificacionFlowIntegrationTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode lista = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode content = root.get("content");
         Set<String> tipos = new HashSet<>();
-        for (JsonNode item : lista) {
+        for (JsonNode item : content) {
             tipos.add(item.get("tipo").asText());
         }
         return tipos;

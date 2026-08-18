@@ -22,12 +22,12 @@ describe('NotificacionService', () => {
 
   it('listar hace GET a /notificaciones', () => {
     service.listar().subscribe((res) => {
-      expect(res.length).toBe(1);
+      expect(res.content.length).toBe(1);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/notificaciones`);
     expect(req.request.method).toBe('GET');
-    req.flush([{ id: 1, tipo: 'MORA', mensaje: 'Cuota vencida', leida: false }]);
+    req.flush({ content: [{ id: 1, tipo: 'MORA', mensaje: 'Cuota vencida', leida: false }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   });
 
   it('contarNoLeidas hace GET a /notificaciones/no-leidas', () => {

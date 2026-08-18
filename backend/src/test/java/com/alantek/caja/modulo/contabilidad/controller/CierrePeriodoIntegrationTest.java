@@ -83,10 +83,10 @@ class CierrePeriodoIntegrationTest {
                 .andExpect(jsonPath("$.message").value(
                         org.hamcrest.Matchers.containsString("CERRADO")));
 
-        mvc.perform(get("/api/v1/gastos")
+        mvc.perform(get("/api/v1/gastos?estado=APROBADO&sort=id,desc")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].estado").value("APROBADO"));
+                .andExpect(jsonPath("$.content[?(@.id == " + gastoId + ")].estado").value("APROBADO"));
 
         mvc.perform(post("/api/v1/periodos-contables/reabrir?anio=" + anio + "&mes=" + mes)
                         .header("Authorization", "Bearer " + token))
@@ -151,11 +151,12 @@ class CierrePeriodoIntegrationTest {
     private long idPlanCuenta(String codigo) throws Exception {
         String token = loginToken("admin", "admin123");
         MvcResult result = mvc.perform(get("/api/v1/plan-cuentas")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("size", "500"))
                 .andExpect(status().isOk())
                 .andReturn();
-        JsonNode cuentas = objectMapper.readTree(result.getResponse().getContentAsString());
-        for (JsonNode cuenta : cuentas) {
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        for (JsonNode cuenta : body.get("content")) {
             if (codigo.equals(cuenta.get("codigo").asText())) {
                 return cuenta.get("id").asLong();
             }

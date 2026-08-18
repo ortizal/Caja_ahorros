@@ -125,6 +125,10 @@
       }
     </div>
   }
+  @if (ahorroTotalPages() > 1) {
+    <app-paginador [page]="ahorroPage()" [size]="ahorroSize()" [totalElements]="ahorroTotalElements()" [totalPages]="ahorroTotalPages()"
+                   (pageChange)="cambiarPaginaAhorro($event)" (sizeChange)="cambiarTamanoAhorro($event)" />
+  }
 </div>
 
 <div class="card" aria-label="Aportaciones" data-testid="seccion-aportaciones">
@@ -165,6 +169,10 @@
         </tbody>
       </table>
     </div>
+  }
+  @if (aportacionesTotalPages() > 1) {
+    <app-paginador [page]="aportacionesPage()" [size]="aportacionesSize()" [totalElements]="aportacionesTotalElements()" [totalPages]="aportacionesTotalPages()"
+                   (pageChange)="cambiarPaginaAportaciones($event)" (sizeChange)="cambiarTamanoAportaciones($event)" />
   }
 </div>
 
@@ -222,6 +230,10 @@
       }
     </div>
   }
+  @if (creditosTotalPages() > 1) {
+    <app-paginador [page]="creditosPage()" [size]="creditosSize()" [totalElements]="creditosTotalElements()" [totalPages]="creditosTotalPages()"
+                   (pageChange)="cambiarPaginaCreditos($event)" (sizeChange)="cambiarTamanoCreditos($event)" />
+  }
 </div>
 
 <div class="card" aria-label="Notificaciones" data-testid="seccion-notificaciones">
@@ -245,6 +257,7 @@
         </div>
       }
     </div>
+    <app-paginador [page]="notifPage()" [size]="notifSize()" [totalElements]="notifTotalElements()" [totalPages]="notifTotalPages()"
+                   (pageChange)="cambiarPaginaNotif($event)" (sizeChange)="cambiarTamanoNotif($event)" />
   }
 </div>
-

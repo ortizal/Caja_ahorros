@@ -31,8 +31,8 @@ CONTAINER_PORT=8080
 # Entorno de la base de datos (PostgreSQL en el servidor 192.168.1.43).
 DB_URL="${DB_URL:-jdbc:postgresql://host.docker.internal:5432/caja_ahorros}"
 DB_USER="${DB_USER:-caja_app}"
-DB_PASSWORD="${DB_PASSWORD:-caja_dev_2026}"
-JWT_SECRET="${JWT_SECRET:-caja-ahorros-alantek-secreto-jwt-2026-debe-tener-32-bytes-minimo}"
+DB_PASSWORD="${DB_PASSWORD:?Error: DB_PASSWORD must be set}"
+JWT_SECRET="${JWT_SECRET:?Error: JWT_SECRET must be set}"
 CORS_ORIGINS="${CORS_ORIGINS:-http://192.168.1.43}"
 
 SUDO=""
