@@ -33,7 +33,7 @@ DB_URL="${DB_URL:-jdbc:postgresql://host.docker.internal:5432/caja_ahorros}"
 DB_USER="${DB_USER:-postgres}"
 DB_PASSWORD="${DB_PASSWORD:-086411421}"
 JWT_SECRET="${JWT_SECRET:-caja-ahorros-alantek-secreto-jwt-2026-debe-tener-32-bytes-minimo}"
-CORS_ORIGINS="${CORS_ORIGINS:-http://192.168.1.43}"
+CORS_ORIGINS="${CORS_ORIGINS:-https://alan-tek.com,http://192.168.1.43}"
 
 SUDO=""
 if [ "$(id -u)" -ne 0 ]; then SUDO="sudo"; fi
