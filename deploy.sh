@@ -47,9 +47,11 @@ deploy_frontend() {
   npx ng build --base-href="$BASE_HREF"
 
   step "Frontend: copiando $FRONTEND_DIST a $WEB_ROOT"
+  DIST_DIR="$FRONTEND_DIR/$FRONTEND_DIST"
+  if [ -d "$DIST_DIR/browser" ]; then DIST_DIR="$DIST_DIR/browser"; fi
   $SUDO mkdir -p "$WEB_ROOT"
   $SUDO rm -rf "$WEB_ROOT"/*
-  $SUDO cp -r "$FRONTEND_DIR/$FRONTEND_DIST/"* "$WEB_ROOT/"
+  $SUDO cp -r "$DIST_DIR/"* "$WEB_ROOT/"
   $SUDO chown -R www-data:www-data "$WEB_ROOT"
   $SUDO chmod -R 755 "$WEB_ROOT"
   echo "Frontend desplegado en $WEB_ROOT (raiz http://192.168.1.43/caja-ahorros/)"
