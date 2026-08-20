@@ -553,3 +553,22 @@ CREATE TABLE IF NOT EXISTS notificaciones (
 );
 
 CREATE INDEX IF NOT EXISTS idx_notificacion_usuario ON notificaciones(usuario_id, leida);
+
+-- ----------------------------------------------------------------------------
+-- Reportes (plantillas JasperReports)
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS reportes (
+  id BIGSERIAL PRIMARY KEY,
+  nombre VARCHAR(100) UNIQUE NOT NULL,
+  descripcion VARCHAR(255),
+  titulo VARCHAR(200) NOT NULL,
+  entidad VARCHAR(50) NOT NULL,
+  formato_default VARCHAR(10) NOT NULL DEFAULT 'pdf',
+  orientacion VARCHAR(10) NOT NULL DEFAULT 'portrait',
+  parametros JSONB,
+  jrxml TEXT NOT NULL,
+  activo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ
+);

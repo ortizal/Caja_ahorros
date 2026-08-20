@@ -17,7 +17,8 @@ const MENU: MenuItem[] = [
   { ruta: '/ahorros', etiqueta: 'Ahorros', permiso: 'AHORROS:VER' },
   { ruta: '/creditos', etiqueta: 'Creditos', permiso: 'CREDITOS:VER' },
   { ruta: '/tesoreria', etiqueta: 'Tesorería', permiso: 'TESORERIA:VER' },
-  { ruta: '/seguridad', etiqueta: 'Seguridad', permiso: 'SEGURIDAD:VER' }
+  { ruta: '/seguridad', etiqueta: 'Seguridad', permiso: 'SEGURIDAD:VER' },
+  { ruta: '/reportes', etiqueta: 'Reportes', permiso: 'SEGURIDAD:VER' }
 ];
 
 @Component({

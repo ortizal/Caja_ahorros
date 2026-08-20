@@ -1,0 +1,98 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="form-title">{{ esEdicion() ? 'Editar Reporte' : 'Nuevo Reporte' }}</h1>
+    <p class="page-subtitle">Crear o modificar plantillas JasperReports</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="form-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+@if (loading()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando reporte…</div>
+  </div>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" data-testid="reporte-form">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Información General</h3>
+      </div>
+      <div class="form-grid">
+        <label class="field">
+          <span>Nombre (identificador) *</span>
+          <input class="form-control form-control-sm" formControlName="nombre"
+                 placeholder="ej. socios, caja, cartera" data-testid="input-nombre" />
+          <span class="field-hint">Sin espacios. Solo minusculas, numeros, guiones</span>
+        </label>
+        <label class="field">
+          <span>Título del reporte *</span>
+          <input class="form-control form-control-sm" formControlName="titulo"
+                 placeholder="ej. Reporte de Socios" data-testid="input-titulo" />
+        </label>
+        <label class="field">
+          <span>Entidad *</span>
+          <select class="form-control form-control-sm" formControlName="entidad" data-testid="select-entidad">
+            @for (e of entidades; track e.value) {
+              <option [value]="e.value">{{ e.label }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Formato por defecto</span>
+          <select class="form-control form-control-sm" formControlName="formatoDefault">
+            <option value="pdf">PDF</option>
+            <option value="xlsx">Excel (XLSX)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Orientación</span>
+          <select class="form-control form-control-sm" formControlName="orientacion">
+            <option value="portrait">Vertical (Portrait)</option>
+            <option value="landscape">Horizontal (Landscape)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Descripción</span>
+          <input class="form-control form-control-sm" formControlName="descripcion"
+                 placeholder="Descripcion breve del reporte" data-testid="input-descripcion" />
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Plantilla JRXML</h3>
+        <div class="header-actions">
+          <label class="btn btn-xs btn-outline-secondary upload-btn" data-testid="btn-upload">
+            📂 Subir archivo .jrxml
+            <input type="file" accept=".jrxml,.xml" hidden (change)="onFileSelected($event)" />
+          </label>
+          @if (fileName()) {
+            <span class="file-name">{{ fileName() }}</span>
+          }
+        </div>
+      </div>
+      <label class="field field-jrxml">
+        <textarea class="form-control textarea-jrxml" formControlName="jrxml"
+                  placeholder="Pegue aqui el contenido XML del template JasperReports..."
+                  data-testid="textarea-jrxml" spellcheck="false"></textarea>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+      <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-guardar-reporte"
+              [disabled]="form.invalid || guardando()">
+        {{ guardando() ? 'Guardando…' : (esEdicion() ? 'Actualizar Reporte' : 'Crear Reporte') }}
+      </button>
+    </div>
+  </form>
+}

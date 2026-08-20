@@ -65,6 +65,11 @@ export const routes: Routes = [
         path: 'seguridad',
         canActivate: [permisoGuard('SEGURIDAD:VER')],
         loadChildren: () => import('./features/seguridad/seguridad.routes').then((m) => m.seguridadRoutes)
+      },
+      {
+        path: 'reportes',
+        canActivate: [permisoGuard('SEGURIDAD:VER')],
+        loadChildren: () => import('./features/reportes/reportes.routes').then((m) => m.reportesRoutes)
       }
     ]
   },

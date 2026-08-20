@@ -258,6 +258,7 @@ export class AppSidebarComponent {
     if (ruta.includes('creditos')) return '💳';
     if (ruta.includes('tesoreria')) return '⚖️';
     if (ruta.includes('seguridad')) return '🔒';
+    if (ruta.includes('reportes')) return '📋';
     return '📌';
   }
 }

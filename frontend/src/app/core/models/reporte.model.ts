@@ -57,3 +57,35 @@ export interface DashboardGraficos {
   flujoCajaPorMes: FlujoMensual[];
   carteraPorEstado: CarteraPorEstado[];
 }
+
+export interface Reporte {
+  id?: number;
+  nombre: string;
+  descripcion?: string;
+  titulo: string;
+  entidad: string;
+  formatoDefault: string;
+  orientacion: string;
+  parametros?: Record<string, unknown>;
+  jrxml: string;
+  activo: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const ENTIDADES = [
+  { value: 'SOCIO', label: 'Socios' },
+  { value: 'CAJA', label: 'Caja' },
+  { value: 'BANCO', label: 'Bancos' },
+  { value: 'AHORRO', label: 'Ahorros' },
+  { value: 'APORTACION', label: 'Aportaciones' },
+  { value: 'CREDITO', label: 'Creditos' },
+  { value: 'CONTABILIDAD', label: 'Contabilidad' },
+  { value: 'TESORERIA', label: 'Tesoreria' },
+  { value: 'USUARIO', label: 'Usuarios' },
+  { value: 'GENERAL', label: 'General' }
+];
+
+export const ENTIDADES_MAP: Record<string, string> = Object.fromEntries(
+  ENTIDADES.map(e => [e.value, e.label])
+);

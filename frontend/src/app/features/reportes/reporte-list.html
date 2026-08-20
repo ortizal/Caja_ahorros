@@ -1,0 +1,96 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Administración de Reportes</h1>
+    <p class="page-subtitle">Gestión de plantillas JasperReports del sistema</p>
+  </div>
+  @if (puedeCrear()) {
+    <a class="btn btn-sm btn-primary" routerLink="/reportes/nuevo" data-testid="btn-nuevo-reporte">➕ Nuevo Reporte</a>
+  }
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="reportes-error">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Plantillas</h3>
+    <div class="header-actions">
+      <input
+        type="text"
+        class="form-control form-control-sm"
+        placeholder="Buscar reporte..."
+        [value]="buscar()"
+        (input)="onBuscar($event)"
+        data-testid="input-buscar"
+      />
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="empty-state">
+      <div class="empty-state-icon">⌛</div>
+      <div class="empty-state-text">Cargando reportes…</div>
+    </div>
+  } @else if (reportes().length === 0) {
+    <div class="empty-state">
+      <div class="empty-state-icon">📄</div>
+      <div class="empty-state-text">No se encontraron reportes</div>
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table" data-testid="reportes-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Título</th>
+            <th>Entidad</th>
+            <th>Formato</th>
+            <th>Orientación</th>
+            <th>Estado</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of reportes(); track r.id) {
+            <tr [class.row-inactivo]="!r.activo" data-testid="reporte-row">
+              <td class="td-mono">{{ r.nombre }}</td>
+              <td>{{ r.titulo }}</td>
+              <td><span class="badge badge-outline">{{ entidadLabel(r.entidad) }}</span></td>
+              <td><span class="badge badge-info">{{ r.formatoDefault | uppercase }}</span></td>
+              <td>{{ r.orientacion === 'landscape' ? 'Horizontal' : 'Vertical' }}</td>
+              <td>
+                @if (r.activo) {
+                  <span class="badge badge-success">Activo</span>
+                } @else {
+                  <span class="badge badge-muted">Inactivo</span>
+                }
+              </td>
+              <td class="td-actions">
+                @if (puedeEditar()) {
+                  <a class="btn btn-xs btn-outline-primary" [routerLink]="['/reportes', r.id, 'editar']"
+                     data-testid="btn-editar" title="Editar">✏️</a>
+                  <button type="button" class="btn btn-xs btn-outline-warning" data-testid="btn-toggle"
+                          [title]="r.activo ? 'Desactivar' : 'Activar'" (click)="toggleActivo(r)">
+                    {{ r.activo ? '⏸️' : '▶️' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginador
+      [page]="page()"
+      [size]="size()"
+      [totalElements]="totalElements()"
+      [totalPages]="totalPages()"
+      (pageChange)="onPageChange($event)"
+      (sizeChange)="onSizeChange($event)"
+    />
+  }
+</div>
