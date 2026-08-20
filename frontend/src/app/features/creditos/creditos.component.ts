@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DecimalPipe, DatePipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { finalize, Observable } from 'rxjs';
@@ -8,10 +8,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
 import {
   Credito,
-  CreditoDetalle,
-  CuotaCredito,
   MoraProcesada,
-  PagoCuota,
   ProductoCredito,
   SimulacionCredito,
   SolicitudCredito
@@ -29,7 +26,7 @@ import { SortableHeaderDirective } from '../../shared/components/sortable-header
 
 @Component({
   selector: 'app-creditos',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
+  imports: [ReactiveFormsModule, DecimalPipe, RouterLink, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './creditos.html',
   styleUrl: './creditos.css'
 })
@@ -46,11 +43,6 @@ export class CreditosComponent implements OnInit {
   protected readonly socios = signal<Socio[]>([]);
   protected readonly solicitudes = signal<SolicitudCredito[]>([]);
   protected readonly creditos = signal<Credito[]>([]);
-  protected readonly creditoSeleccionado = signal<Credito | null>(null);
-  protected readonly creditoDetalle = signal<CreditoDetalle | null>(null);
-  protected readonly detalleTab = signal<'resumen' | 'amortizacion' | 'pagos' | 'historial'>('resumen');
-  protected readonly cuotas = signal<CuotaCredito[]>([]);
-  protected readonly pagos = signal<PagoCuota[]>([]);
   protected readonly simulacion = signal<SimulacionCredito | null>(null);
   protected readonly simPag = signal({ page: 0, size: 10 });
 
@@ -84,8 +76,6 @@ export class CreditosComponent implements OnInit {
   protected readonly solicitudesSort = signal<SortState | null>(null);
   protected readonly creditosPag = signal({ page: 0, size: 10, totalElements: 0, totalPages: 0 });
   protected readonly creditosSort = signal<SortState | null>(null);
-  protected readonly cuotasPag = signal({ page: 0, size: 10, totalElements: 0, totalPages: 0 });
-  protected readonly pagosPag = signal({ page: 0, size: 10, totalElements: 0, totalPages: 0 });
 
   protected readonly puedeCrear = computedPermiso(this.auth, 'CREDITOS:CREAR');
   protected readonly puedeEditar = computedPermiso(this.auth, 'CREDITOS:EDITAR');
@@ -93,11 +83,6 @@ export class CreditosComponent implements OnInit {
 
   protected readonly rechazoForm = this.fb.nonNullable.group({
     motivoRechazo: ['', [Validators.required]]
-  });
-
-  protected readonly refinanciarForm = this.fb.nonNullable.group({
-    plazoMeses: [24, [Validators.required, Validators.min(1)]],
-    tasaInteres: [18, [Validators.required, Validators.min(0)]]
   });
 
   protected readonly simuladorForm = this.fb.nonNullable.group({
@@ -166,9 +151,7 @@ export class CreditosComponent implements OnInit {
   }
 
   evaluar(id: number): void {
-    if (this.guardando()) {
-      return;
-    }
+    if (this.guardando()) return;
     this.guardando.set(true);
     this.error.set('');
     this.creditoService
@@ -188,9 +171,7 @@ export class CreditosComponent implements OnInit {
   }
 
   aprobar(id: number): void {
-    if (this.guardando()) {
-      return;
-    }
+    if (this.guardando()) return;
     this.guardando.set(true);
     this.error.set('');
     this.creditoService
@@ -220,9 +201,7 @@ export class CreditosComponent implements OnInit {
   }
 
   rechazar(id: number): void {
-    if (this.rechazoForm.invalid || this.guardando()) {
-      return;
-    }
+    if (this.rechazoForm.invalid || this.guardando()) return;
     const raw = this.rechazoForm.getRawValue();
     this.guardando.set(true);
     this.error.set('');
@@ -243,81 +222,17 @@ export class CreditosComponent implements OnInit {
       });
   }
 
-  seleccionarCredito(credito: Credito): void {
-    this.creditoSeleccionado.set(credito);
-    this.detalleTab.set('resumen');
-    this.refinanciarForm.patchValue({ plazoMeses: credito.plazoMeses, tasaInteres: Number(credito.tasaInteres) });
-    this.cargarDetalle(credito.id);
-    this.cargarCuotas(credito.id);
-    this.cargarPagos(credito.id);
-  }
-
-  cargarDetalle(creditoId: number): void {
-    this.creditoService.detalleCredito(creditoId).subscribe({
-      next: (d) => this.creditoDetalle.set(d),
-      error: () => this.creditoDetalle.set(null)
-    });
-  }
-
-  cambiarDetalleTab(tab: 'resumen' | 'amortizacion' | 'pagos' | 'historial'): void {
-    this.detalleTab.set(tab);
-  }
-
-  descargarContratoPdf(): void {
-    const credito = this.creditoSeleccionado();
-    if (!credito) return;
-    this.descargarReporte(this.creditoService.contratoCredito(credito.id, 'pdf'), `contrato-credito-${credito.id}.pdf`);
-  }
-
-  descargarContratoExcel(): void {
-    const credito = this.creditoSeleccionado();
-    if (!credito) return;
-    this.descargarReporte(this.creditoService.contratoCredito(credito.id, 'xlsx'), `contrato-credito-${credito.id}.xlsx`);
-  }
-
-  cargarCuotas(creditoId: number): void {
-    this.creditoService.cuotas(creditoId, {
-      page: this.cuotasPag().page,
-      size: this.cuotasPag().size
-    }).subscribe({
-      next: (c) => {
-        this.cuotas.set(c.content);
-        this.cuotasPag.set({ page: c.page, size: c.size, totalElements: c.totalElements, totalPages: c.totalPages });
-      },
-      error: () => this.cuotas.set([])
-    });
-  }
-
-  cargarPagos(creditoId: number): void {
-    this.creditoService.pagos(creditoId, {
-      page: this.pagosPag().page,
-      size: this.pagosPag().size
-    }).subscribe({
-      next: (p) => {
-        this.pagos.set(p.content);
-        this.pagosPag.set({ page: p.page, size: p.size, totalElements: p.totalElements, totalPages: p.totalPages });
-      },
-      error: () => this.pagos.set([])
-    });
-  }
-
   desembolsar(id: number): void {
-    if (this.guardando()) {
-      return;
-    }
+    if (this.guardando()) return;
     this.guardando.set(true);
     this.error.set('');
     this.creditoService
       .desembolsar(id)
       .pipe(finalize(() => this.guardando.set(false)))
       .subscribe({
-        next: (res) => {
+        next: () => {
           this.toast.success(`Credito ${id} desembolsado.`);
           this.cargarCreditos();
-          if (this.creditoSeleccionado()?.id === id) {
-            this.creditoSeleccionado.set(res);
-            this.cargarCuotas(id);
-          }
         },
         error: (err: HttpErrorResponse) => {
           const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo desembolsar el credito.';
@@ -327,65 +242,8 @@ export class CreditosComponent implements OnInit {
       });
   }
 
-  pagarCuota(credito: Credito, cuota: CuotaCredito): void {
-    if (this.guardando()) {
-      return;
-    }
-    this.guardando.set(true);
-    this.error.set('');
-    this.creditoService
-      .pagarCuota(credito.id, { cuotaId: cuota.id })
-      .pipe(finalize(() => this.guardando.set(false)))
-      .subscribe({
-        next: () => {
-          this.toast.success(`Cuota ${cuota.numeroCuota} pagada.`);
-          this.cargarCreditos();
-          this.cargarCuotas(credito.id);
-          this.cargarPagos(credito.id);
-          if (this.creditoSeleccionado()?.id === credito.id) {
-            this.creditoService.obtenerCredito(credito.id).subscribe({
-              next: (c) => this.creditoSeleccionado.set(c)
-            });
-          }
-        },
-        error: (err: HttpErrorResponse) => {
-          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el pago.';
-          this.error.set(msg);
-          this.toast.error(msg);
-        }
-      });
-  }
-
-  refinanciar(): void {
-    const credito = this.creditoSeleccionado();
-    if (!credito || this.refinanciarForm.invalid || this.guardando()) {
-      return;
-    }
-    const raw = this.refinanciarForm.getRawValue();
-    this.guardando.set(true);
-    this.error.set('');
-    this.creditoService
-      .refinanciar(credito.id, { plazoMeses: Number(raw.plazoMeses), tasaInteres: Number(raw.tasaInteres) })
-      .pipe(finalize(() => this.guardando.set(false)))
-      .subscribe({
-        next: (res) => {
-          this.toast.success(`Credito ${credito.id} refinanciado.`);
-          this.creditoSeleccionado.set(res);
-          this.cargarCreditos();
-          this.cargarCuotas(credito.id);
-        },
-        error: (err: HttpErrorResponse) => {
-          const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo refinanciar el credito.';
-          this.error.set(msg);
-          this.toast.error(msg);
-        }
-      });
-  }
-
   procesarVencidas(): void {
-    if (this.guardando()) {
-      return;
-    }
+    if (this.guardando()) return;
     this.guardando.set(true);
     this.error.set('');
     this.moraResultado.set(null);
@@ -397,10 +255,6 @@ export class CreditosComponent implements OnInit {
           this.moraResultado.set(res);
           this.toast.success(`Mora procesada: ${res.cuotasMarcadas} cuotas, ${res.creditosEnMora} creditos.`);
           this.cargarCreditos();
-          const credito = this.creditoSeleccionado();
-          if (credito) {
-            this.cargarCuotas(credito.id);
-          }
         },
         error: (err: HttpErrorResponse) => {
           const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo procesar la mora.';
@@ -490,42 +344,8 @@ export class CreditosComponent implements OnInit {
     this.cargarCreditos();
   }
 
-  cambiarPaginaCuotas(p: number): void {
-    this.cuotasPag.update(s => ({ ...s, page: p }));
-    const credito = this.creditoSeleccionado();
-    if (credito) {
-      this.cargarCuotas(credito.id);
-    }
-  }
-
-  cambiarTamanoCuotas(t: number): void {
-    this.cuotasPag.update(s => ({ ...s, size: t, page: 0 }));
-    const credito = this.creditoSeleccionado();
-    if (credito) {
-      this.cargarCuotas(credito.id);
-    }
-  }
-
-  cambiarPaginaPagos(p: number): void {
-    this.pagosPag.update(s => ({ ...s, page: p }));
-    const credito = this.creditoSeleccionado();
-    if (credito) {
-      this.cargarPagos(credito.id);
-    }
-  }
-
-  cambiarTamanoPagos(t: number): void {
-    this.pagosPag.update(s => ({ ...s, size: t, page: 0 }));
-    const credito = this.creditoSeleccionado();
-    if (credito) {
-      this.cargarPagos(credito.id);
-    }
-  }
-
   private descargarReporte(obs: Observable<Blob>, nombre: string): void {
-    if (this.exportando()) {
-      return;
-    }
+    if (this.exportando()) return;
     this.exportando.set(true);
     this.error.set('');
     obs.subscribe({
@@ -561,12 +381,12 @@ export class CreditosComponent implements OnInit {
     const rows = s.cuotas.map(c =>
       `<tr><td>#${c.numero}</td><td>${c.fechaVencimiento}</td><td>$${c.capital.toFixed(2)}</td><td>$${c.interes.toFixed(2)}</td><td><strong>$${c.cuota.toFixed(2)}</strong></td><td>$${c.saldo.toFixed(2)}</td></tr>`
     ).join('');
-    const html = `<!DOCTYPE html><html><head><title>Simulación de Crédito</title>
+    const html = `<!DOCTYPE html><html><head><title>Simulacion de Credito</title>
 <style>body{font-family:Arial,sans-serif;padding:20px}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #ddd;padding:6px 8px;text-align:right;font-size:12px}th{background:#1e293b;color:#fff;text-align:center}td:first-child,td:nth-child(2){text-align:center}.summary{background:#f0f9ff;padding:12px;border-radius:6px;margin-bottom:16px;font-size:14px}.summary strong{color:#1d4ed8}@media print{th{background:#1e293b!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>
-<h2>Simulación de Crédito — ${s.sistemaAmortizacion}</h2>
-<div class="summary">Monto: <strong>$${form.monto}</strong> · Plazo: <strong>${form.plazoMeses} meses</strong> · Tasa: <strong>${form.tasaInteres}%</strong><br>
-Cuota mensual: <strong>$${s.cuotaMensual.toFixed(2)}</strong> · Interés total: <strong>$${s.totalInteres.toFixed(2)}</strong> · Total a pagar: <strong>$${s.totalPagar.toFixed(2)}</strong></div>
-<table><thead><tr><th>Cuota</th><th>Vencimiento</th><th>Capital</th><th>Interés</th><th>Cuota Total</th><th>Saldo Capital</th></tr></thead><tbody>${rows}</tbody></table>
+<h2>Simulacion de Credito — ${s.sistemaAmortizacion}</h2>
+<div class="summary">Monto: <strong>$${form.monto}</strong> - Plazo: <strong>${form.plazoMeses} meses</strong> - Tasa: <strong>${form.tasaInteres}%</strong><br>
+Cuota mensual: <strong>$${s.cuotaMensual.toFixed(2)}</strong> - Interes total: <strong>$${s.totalInteres.toFixed(2)}</strong> - Total a pagar: <strong>$${s.totalPagar.toFixed(2)}</strong></div>
+<table><thead><tr><th>Cuota</th><th>Vencimiento</th><th>Capital</th><th>Interes</th><th>Cuota Total</th><th>Saldo Capital</th></tr></thead><tbody>${rows}</tbody></table>
 </body></html>`;
     const w = window.open('', '_blank');
     if (w) { w.document.write(html); w.document.close(); w.print(); }
@@ -589,9 +409,7 @@ Cuota mensual: <strong>$${s.cuotaMensual.toFixed(2)}</strong> · Interés total:
   }
 
   simular(): void {
-    if (this.simuladorForm.invalid || this.guardando()) {
-      return;
-    }
+    if (this.simuladorForm.invalid || this.guardando()) return;
     const raw = this.simuladorForm.getRawValue();
     this.guardando.set(true);
     this.error.set('');

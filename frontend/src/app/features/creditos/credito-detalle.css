@@ -1,0 +1,87 @@
+.detail-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0;
+  margin-bottom: 16px;
+}
+
+.detail-tabs .tab-btn {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 8px 16px;
+  cursor: pointer;
+  color: var(--color-muted);
+  font-size: 13px;
+  margin-bottom: -1px;
+}
+
+.detail-tabs .tab-btn.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.detail-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.resumen-section h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 6px;
+}
+
+.resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 16px;
+}
+
+.resumen-field {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.resumen-field .label {
+  font-weight: 600;
+  color: var(--color-muted);
+  margin-right: 4px;
+}
+
+.empty-text {
+  color: var(--color-muted);
+  font-style: italic;
+  font-size: 13px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-muted);
+}
+
+.form-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+}

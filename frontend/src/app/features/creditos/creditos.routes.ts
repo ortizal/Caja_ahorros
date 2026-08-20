@@ -10,6 +10,11 @@ export const creditosRoutes: Routes = [
           import('./creditos.component').then((m) => m.CreditosComponent)
       },
       {
+        path: ':id/detalle',
+        loadComponent: () =>
+          import('./credito-detalle.component').then((m) => m.CreditoDetalleComponent)
+      },
+      {
         path: 'productos/nuevo',
         loadComponent: () =>
           import('./credito-producto-form.component').then((m) => m.CreditoProductoFormComponent)

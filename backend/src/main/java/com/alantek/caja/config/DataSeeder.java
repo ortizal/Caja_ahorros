@@ -10,6 +10,8 @@ import com.alantek.caja.modulo.contabilidad.entity.PlanCuenta;
 import com.alantek.caja.modulo.contabilidad.entity.ReglaContable;
 import com.alantek.caja.modulo.contabilidad.repository.PlanCuentaRepository;
 import com.alantek.caja.modulo.contabilidad.repository.ReglaContableRepository;
+import com.alantek.caja.modulo.reportes.entity.Reporte;
+import com.alantek.caja.modulo.reportes.repository.ReporteRepository;
 import com.alantek.caja.modulo.seguridad.entity.Permiso;
 import com.alantek.caja.modulo.seguridad.entity.Rol;
 import com.alantek.caja.modulo.seguridad.entity.Usuario;
@@ -20,10 +22,14 @@ import com.alantek.caja.modulo.socios.entity.Socio;
 import com.alantek.caja.modulo.socios.repository.SocioRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -47,6 +53,7 @@ public class DataSeeder implements ApplicationRunner {
     private final ProductoAhorroRepository productoAhorroRepository;
     private final ProductoCreditoRepository productoCreditoRepository;
     private final SocioRepository socioRepository;
+    private final ReporteRepository reporteRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(RolRepository rolRepository,
@@ -58,6 +65,7 @@ public class DataSeeder implements ApplicationRunner {
                       ProductoAhorroRepository productoAhorroRepository,
                       ProductoCreditoRepository productoCreditoRepository,
                       SocioRepository socioRepository,
+                      ReporteRepository reporteRepository,
                       PasswordEncoder passwordEncoder) {
         this.rolRepository = rolRepository;
         this.permisoRepository = permisoRepository;
@@ -68,6 +76,7 @@ public class DataSeeder implements ApplicationRunner {
         this.productoAhorroRepository = productoAhorroRepository;
         this.productoCreditoRepository = productoCreditoRepository;
         this.socioRepository = socioRepository;
+        this.reporteRepository = reporteRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -82,6 +91,7 @@ public class DataSeeder implements ApplicationRunner {
         sembrarReglasContables();
         sembrarAportacionesYahorros();
         sembrarCreditos();
+        sembrarReportes();
     }
 
     private void sembrarPermisos() {
@@ -345,4 +355,55 @@ public class DataSeeder implements ApplicationRunner {
             productoCreditoRepository.save(producto);
         }
     }
+
+    private void sembrarReportes() {
+        List<ReportePlantilla> plantillas = List.of(
+                plantilla("socios", "Listado de Socios", "SOCIO", "portrait",
+                        "Reporte del registro completo de socios activos e inactivos"),
+                plantilla("caja", "Arqueo de Caja", "CAJA", "portrait",
+                        "Reporte diario de arqueo de caja con saldos y movimientos"),
+                plantilla("cartera", "Cartera de Creditos", "CREDITO", "landscape",
+                        "Estado de cartera de creditos con cuotas vencidas"),
+                plantilla("ahorros", "Ahorros de Socios", "AHORRO", "portrait",
+                        "Reporte de cuentas de ahorro de socios"),
+                plantilla("aportaciones", "Aportaciones de Socios", "APORTACION", "portrait",
+                        "Reporte de aportaciones obligatorias y voluntarias"),
+                plantilla("creditos", "Creditos Desembolsados", "CREDITO", "landscape",
+                        "Reporte general de creditos desembolsados"),
+                plantilla("usuarios", "Usuarios del Sistema", "USUARIO", "portrait",
+                        "Reporte de usuarios registrados en el sistema"),
+                plantilla("contrato-credito", "Contrato de Credito", "CREDITO", "portrait",
+                        "Plantilla de contrato para creditos desembolsados")
+        );
+
+        for (ReportePlantilla p : plantillas) {
+            if (reporteRepository.existsByNombre(p.nombre())) {
+                continue;
+            }
+            try {
+                ClassPathResource resource = new ClassPathResource("reports/" + p.nombre() + ".jrxml");
+                String jrxml = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+                Reporte reporte = new Reporte();
+                reporte.setNombre(p.nombre());
+                reporte.setTitulo(p.titulo());
+                reporte.setEntidad(p.entidad());
+                reporte.setOrientacion(p.orientacion());
+                reporte.setFormatoDefault("pdf");
+                reporte.setDescripcion(p.descripcion());
+                reporte.setJrxml(jrxml);
+                reporte.setActivo(true);
+                reporte.setCreatedAt(Instant.now());
+                reporteRepository.save(reporte);
+            } catch (IOException e) {
+                System.err.println("No se pudo cargar plantilla de reporte '" + p.nombre() + "': " + e.getMessage());
+            }
+        }
+    }
+
+    private ReportePlantilla plantilla(String nombre, String titulo, String entidad, String orientacion, String descripcion) {
+        return new ReportePlantilla(nombre, titulo, entidad, orientacion, descripcion);
+    }
+
+    private record ReportePlantilla(String nombre, String titulo, String entidad, String orientacion, String descripcion) {}
 }
