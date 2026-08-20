@@ -69,14 +69,23 @@
                 }
               </td>
               <td class="td-actions">
-                @if (puedeEditar()) {
-                  <a class="btn btn-xs btn-outline-primary" [routerLink]="['/reportes', r.id, 'editar']"
-                     data-testid="btn-editar" title="Editar">✏️</a>
-                  <button type="button" class="btn btn-xs btn-outline-warning" data-testid="btn-toggle"
-                          [title]="r.activo ? 'Desactivar' : 'Activar'" (click)="toggleActivo(r)">
-                    {{ r.activo ? '⏸️' : '▶️' }}
+                <app-acciones-menu>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-vista-previa" (click)="vistaPrevia(r)">
+                    👁 Vista Previa
                   </button>
-                }
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-descargar-ejemplo" (click)="descargarEjemplo(r)">
+                    ⬇ Descargar Ejemplo
+                  </button>
+                  @if (puedeEditar()) {
+                    <a class="btn btn-sm btn-outline-primary" [routerLink]="['/reportes', r.id, 'editar']" data-testid="btn-editar">
+                      ✏️ Editar
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-warning" data-testid="btn-toggle"
+                            (click)="toggleActivo(r)">
+                      {{ r.activo ? '⏸ Desactivar' : '▶ Activar' }}
+                    </button>
+                  }
+                </app-acciones-menu>
               </td>
             </tr>
           }
@@ -94,3 +103,13 @@
     />
   }
 </div>
+
+<app-modal [abierto]="previewAbierto()" [titulo]="'Vista Previa — ' + previewNombre()" (cerrar)="cerrarPreview()">
+  @if (previewCargando()) {
+    <div class="preview-loading">Generando vista previa...</div>
+  } @else if (previewUrl()) {
+    <iframe class="preview-iframe" [src]="previewUrl()" data-testid="preview-iframe"></iframe>
+  } @else {
+    <div class="preview-loading">No se pudo cargar la vista previa.</div>
+  }
+</app-modal>

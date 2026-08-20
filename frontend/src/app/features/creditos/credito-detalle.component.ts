@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize, Observable } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -13,7 +13,7 @@ import { PaginadorComponent } from '../../shared/components/paginador/paginador.
 
 @Component({
   selector: 'app-credito-detalle',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, PaginadorComponent],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, PaginadorComponent],
   templateUrl: './credito-detalle.html',
   styleUrl: './credito-detalle.css'
 })
