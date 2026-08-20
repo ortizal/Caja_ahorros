@@ -451,7 +451,13 @@
         <span>Cuota mensual: <strong>\${{ simulacion()!.cuotaMensual | number: '1.2-2' }}</strong> · Interes total: <strong>\${{ simulacion()!.totalInteres | number: '1.2-2' }}</strong> · Total a pagar: <strong>\${{ simulacion()!.totalPagar | number: '1.2-2' }}</strong></span>
       </div>
 
-      <div class="table-responsive">
+      <div class="sim-actions">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="imprimirSimulacion()" data-testid="btn-imprimir-sim">🖨️ Imprimir</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="exportarSimulacionPdf()" [disabled]="exportando()" data-testid="btn-sim-pdf">PDF</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="exportarSimulacionExcel()" [disabled]="exportando()" data-testid="btn-sim-xlsx">Excel</button>
+      </div>
+
+      <div class="table-responsive" style="margin-top: 12px;">
         <table class="table" data-testid="simulacion-table">
           <thead>
             <tr>
@@ -464,7 +470,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (q of simulacion()!.cuotas; track q.numero) {
+            @for (q of simCuotasPag(); track q.numero) {
               <tr>
                 <td><strong>#{{ q.numero }}</strong></td>
                 <td>{{ q.fechaVencimiento }}</td>
@@ -477,6 +483,25 @@
           </tbody>
         </table>
       </div>
+
+      @if (simTotalPages() > 1) {
+        <div class="sim-paginator">
+          <span class="sim-pag-info">Página {{ simPag().page + 1 }} de {{ simTotalPages() }} ({{ simulacion()!.cuotas.length }} cuotas)</span>
+          <div class="sim-pag-btns">
+            <button type="button" class="btn btn-xs btn-outline-secondary" [disabled]="simPag().page === 0" (click)="simularPagina(0)">«</button>
+            <button type="button" class="btn btn-xs btn-outline-secondary" [disabled]="simPag().page === 0" (click)="simularPagina(simPag().page - 1)">‹</button>
+            <button type="button" class="btn btn-xs btn-outline-secondary" [disabled]="simPag().page >= simTotalPages() - 1" (click)="simularPagina(simPag().page + 1)">›</button>
+            <button type="button" class="btn btn-xs btn-outline-secondary" [disabled]="simPag().page >= simTotalPages() - 1" (click)="simularPagina(simTotalPages() - 1)">»</button>
+            <select class="form-control form-control-sm" [value]="simPag().size" (change)="simularTamano($any($event.target).value)" style="width:auto;margin-left:8px;">
+              <option [value]="5">5</option>
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
+          </div>
+        </div>
+      }
     }
   </div>
 }

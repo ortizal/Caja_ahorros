@@ -9,11 +9,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,6 +79,21 @@ public class ReporteController {
     @PreAuthorize("hasAuthority('CAJA:VER')")
     public ResponseEntity<byte[]> cajaPdf() throws DocumentException {
         return pdf(reporteService.caja(), "caja.pdf");
+    }
+
+    @PostMapping(value = "/simulacion/{formato}", produces = "application/pdf")
+    @PreAuthorize("hasAuthority('CREDITOS:VER')")
+    public ResponseEntity<byte[]> simulacionReporte(
+            @PathVariable String formato,
+            @RequestParam BigDecimal monto,
+            @RequestParam BigDecimal tasaInteres,
+            @RequestParam int plazoMeses,
+            @RequestParam(defaultValue = "FRANCES") String sistema) throws DocumentException, IOException {
+        TablaReporte tabla = reporteService.simulacion(monto, tasaInteres, plazoMeses, sistema);
+        if ("xlsx".equalsIgnoreCase(formato)) {
+            return xlsx(tabla, "simulacion.xlsx");
+        }
+        return pdf(tabla, "simulacion.pdf");
     }
 
     @GetMapping("/{nombre}/{formato}")

@@ -20,7 +20,7 @@ export class ReporteFormComponent implements OnInit {
   private readonly toast = inject(ToastService);
 
   protected readonly form = this.fb.nonNullable.group({
-    nombre: ['', [Validators.required, Validators.pattern(/^[a-z0-9_-]+$/)]],
+    nombre: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9 _-]+$/), Validators.maxLength(100)]],
     descripcion: [''],
     titulo: ['', [Validators.required]],
     entidad: ['GENERAL', [Validators.required]],

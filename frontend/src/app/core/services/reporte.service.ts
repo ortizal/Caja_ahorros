@@ -59,6 +59,18 @@ export class ReporteService {
     });
   }
 
+  simulacionReporte(monto: number, tasaInteres: number, plazoMeses: number,
+                    sistema: string, formato: 'pdf' | 'xlsx'): Observable<Blob> {
+    let params = new HttpParams()
+      .set('monto', String(monto))
+      .set('tasaInteres', String(tasaInteres))
+      .set('plazoMeses', String(plazoMeses))
+      .set('sistema', sistema);
+    return this.http.post(`${this.base}/reportes/simulacion/${formato}`, null, {
+      params, responseType: 'blob'
+    });
+  }
+
   private exportar(tipo: 'socios' | 'cartera' | 'caja', formato: 'csv' | 'xlsx' | 'pdf'): Observable<Blob> {
     return this.http.get(`${this.base}/reportes/${tipo}.${formato}`, { responseType: 'blob' });
   }

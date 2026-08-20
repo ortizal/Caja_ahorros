@@ -12,10 +12,12 @@ import com.alantek.caja.modulo.caja.repository.CajaAperturaRepository;
 import com.alantek.caja.modulo.caja.repository.CajaMovimientoRepository;
 import com.alantek.caja.modulo.caja.service.TipoMovimiento;
 import com.alantek.caja.modulo.cartera.service.CarteraService;
+import com.alantek.caja.modulo.creditos.dto.SimulacionCreditoResponse;
 import com.alantek.caja.modulo.creditos.entity.Credito;
 import com.alantek.caja.modulo.creditos.entity.ProductoCredito;
 import com.alantek.caja.modulo.creditos.repository.CreditoRepository;
 import com.alantek.caja.modulo.creditos.repository.ProductoCreditoRepository;
+import com.alantek.caja.modulo.creditos.service.AmortizacionService;
 import com.alantek.caja.modulo.seguridad.entity.Rol;
 import com.alantek.caja.modulo.seguridad.entity.Usuario;
 import com.alantek.caja.modulo.seguridad.repository.UsuarioRepository;
@@ -67,6 +69,7 @@ public class ReporteService {
     private final AportacionRepository aportacionRepository;
     private final CreditoRepository creditoRepository;
     private final ProductoCreditoRepository productoCreditoRepository;
+    private final AmortizacionService amortizacionService;
 
     public ReporteService(SocioRepository socioRepository,
                           CarteraService carteraService,
@@ -78,7 +81,8 @@ public class ReporteService {
                           ProductoAhorroRepository productoAhorroRepository,
                           AportacionRepository aportacionRepository,
                           CreditoRepository creditoRepository,
-                          ProductoCreditoRepository productoCreditoRepository) {
+                          ProductoCreditoRepository productoCreditoRepository,
+                          AmortizacionService amortizacionService) {
         this.socioRepository = socioRepository;
         this.carteraService = carteraService;
         this.cajaAperturaRepository = cajaAperturaRepository;
@@ -90,6 +94,7 @@ public class ReporteService {
         this.aportacionRepository = aportacionRepository;
         this.creditoRepository = creditoRepository;
         this.productoCreditoRepository = productoCreditoRepository;
+        this.amortizacionService = amortizacionService;
     }
 
     public TablaReporte socios() {
@@ -403,5 +408,22 @@ public class ReporteService {
 
     private String nvl(String valor) {
         return valor == null ? "" : valor;
+    }
+
+    public TablaReporte simulacion(BigDecimal monto, BigDecimal tasaInteres, int plazoMeses, String sistema) {
+        SimulacionCreditoResponse res = amortizacionService.simular(monto, tasaInteres, plazoMeses, sistema);
+        List<String> encabezados = List.of("Cuota", "Vencimiento", "Capital", "Interes", "Cuota Total", "Saldo Capital");
+        List<List<String>> filas = res.cuotas().stream()
+                .map(c -> List.of(
+                        String.valueOf(c.numero()),
+                        c.fechaVencimiento().toString(),
+                        c.capital().toPlainString(),
+                        c.interes().toPlainString(),
+                        c.cuota().toPlainString(),
+                        c.saldo().toPlainString()))
+                .toList();
+        String titulo = "Simulacion " + sistema + " | Monto: $" + monto.toPlainString()
+                + " | Plazo: " + plazoMeses + " meses | Tasa: " + tasaInteres + "%";
+        return new TablaReporte(titulo, encabezados, filas);
     }
 }

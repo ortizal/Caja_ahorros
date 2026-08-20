@@ -14,7 +14,7 @@ public record SimulacionCreditoRequest(
         @DecimalMin(value = "0.01", message = "El monto debe ser mayor a cero") BigDecimal monto,
         @NotNull(message = "El plazo es obligatorio")
         @Min(value = 1, message = "El plazo debe ser al menos 1 mes")
-        @Max(value = 120, message = "El plazo no puede superar 120 meses") Integer plazoMeses,
+        @Max(value = 360, message = "El plazo no puede superar 360 meses") Integer plazoMeses,
         @NotNull(message = "La tasa de interes es obligatoria")
         @DecimalMin(value = "0.0", message = "La tasa no puede ser negativa") BigDecimal tasaInteres,
         @NotBlank(message = "El sistema de amortizacion es obligatorio")

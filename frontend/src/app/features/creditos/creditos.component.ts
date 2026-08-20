@@ -49,6 +49,22 @@ export class CreditosComponent implements OnInit {
   protected readonly cuotas = signal<CuotaCredito[]>([]);
   protected readonly pagos = signal<PagoCuota[]>([]);
   protected readonly simulacion = signal<SimulacionCredito | null>(null);
+  protected readonly simPag = signal({ page: 0, size: 10 });
+
+  protected readonly simCuotasPag = computed(() => {
+    const s = this.simulacion();
+    const p = this.simPag();
+    if (!s) return [];
+    const start = p.page * p.size;
+    return s.cuotas.slice(start, start + p.size);
+  });
+
+  protected readonly simTotalPages = computed(() => {
+    const s = this.simulacion();
+    if (!s) return 0;
+    return Math.ceil(s.cuotas.length / this.simPag().size);
+  });
+
   protected readonly moraResultado = signal<MoraProcesada | null>(null);
   protected readonly cartera = signal<CarteraItem[]>([]);
   protected readonly morosidad = signal<Morosidad | null>(null);
@@ -500,6 +516,48 @@ export class CreditosComponent implements OnInit {
         this.toast.error('No se pudo exportar el reporte.');
       }
     });
+  }
+
+  simularPagina(p: number): void {
+    this.simPag.update(s => ({ ...s, page: p }));
+  }
+
+  simularTamano(t: number): void {
+    this.simPag.update(s => ({ ...s, size: t, page: 0 }));
+  }
+
+  imprimirSimulacion(): void {
+    const s = this.simulacion();
+    if (!s) return;
+    const form = this.simuladorForm.getRawValue();
+    const rows = s.cuotas.map(c =>
+      `<tr><td>#${c.numero}</td><td>${c.fechaVencimiento}</td><td>$${c.capital.toFixed(2)}</td><td>$${c.interes.toFixed(2)}</td><td><strong>$${c.cuota.toFixed(2)}</strong></td><td>$${c.saldo.toFixed(2)}</td></tr>`
+    ).join('');
+    const html = `<!DOCTYPE html><html><head><title>Simulación de Crédito</title>
+<style>body{font-family:Arial,sans-serif;padding:20px}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #ddd;padding:6px 8px;text-align:right;font-size:12px}th{background:#1e293b;color:#fff;text-align:center}td:first-child,td:nth-child(2){text-align:center}.summary{background:#f0f9ff;padding:12px;border-radius:6px;margin-bottom:16px;font-size:14px}.summary strong{color:#1d4ed8}@media print{th{background:#1e293b!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>
+<h2>Simulación de Crédito — ${s.sistemaAmortizacion}</h2>
+<div class="summary">Monto: <strong>$${form.monto}</strong> · Plazo: <strong>${form.plazoMeses} meses</strong> · Tasa: <strong>${form.tasaInteres}%</strong><br>
+Cuota mensual: <strong>$${s.cuotaMensual.toFixed(2)}</strong> · Interés total: <strong>$${s.totalInteres.toFixed(2)}</strong> · Total a pagar: <strong>$${s.totalPagar.toFixed(2)}</strong></div>
+<table><thead><tr><th>Cuota</th><th>Vencimiento</th><th>Capital</th><th>Interés</th><th>Cuota Total</th><th>Saldo Capital</th></tr></thead><tbody>${rows}</tbody></table>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); w.print(); }
+  }
+
+  exportarSimulacionPdf(): void {
+    const form = this.simuladorForm.getRawValue();
+    this.descargarReporte(
+      this.reporteService.simulacionReporte(Number(form.monto), Number(form.tasaInteres), Number(form.plazoMeses), form.sistemaAmortizacion, 'pdf'),
+      'simulacion.pdf'
+    );
+  }
+
+  exportarSimulacionExcel(): void {
+    const form = this.simuladorForm.getRawValue();
+    this.descargarReporte(
+      this.reporteService.simulacionReporte(Number(form.monto), Number(form.tasaInteres), Number(form.plazoMeses), form.sistemaAmortizacion, 'xlsx'),
+      'simulacion.xlsx'
+    );
   }
 
   simular(): void {

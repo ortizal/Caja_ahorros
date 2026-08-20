@@ -112,3 +112,29 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.sim-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sim-paginator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sim-pag-info {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.sim-pag-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
