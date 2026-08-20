@@ -225,106 +225,205 @@
   @if (creditoSeleccionado()) {
     <div class="card" data-testid="detalle-panel">
       <div class="card-header">
-        <h3 class="card-title">Detalle Crédito #{{ creditoSeleccionado()!.id }} — {{ creditoSeleccionado()!.socioNombre }}</h3>
-        <span class="badge badge-success" style="font-size: 14px; padding: 4px 12px;">
-          Saldo Capital: \${{ creditoSeleccionado()!.saldoCapital | number: '1.2-2' }}
-        </span>
+        <h3 class="card-title">Detalle Credito #{{ creditoSeleccionado()!.id }} — {{ creditoSeleccionado()!.socioNombre }}</h3>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span class="badge badge-success" style="font-size: 14px; padding: 4px 12px;">
+            Saldo Capital: \${{ creditoSeleccionado()!.saldoCapital | number: '1.2-2' }}
+          </span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="descargarContratoPdf()" [disabled]="exportando()" data-testid="btn-contrato-pdf">
+            📄 Contrato PDF
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="descargarContratoExcel()" [disabled]="exportando()" data-testid="btn-contrato-xlsx">
+            📊 Contrato Excel
+          </button>
+        </div>
       </div>
 
-      <div class="section-title">Tabla de Amortización</div>
-      <div class="table-responsive" style="margin-bottom: 20px;">
-        <table class="table" data-testid="cuotas-table">
-          <thead>
-            <tr>
-              <th>Cuota</th>
-              <th>Vencimiento</th>
-              <th>Capital</th>
-              <th>Interés</th>
-              <th>Total</th>
-              <th>Saldo</th>
-              <th>Mora</th>
-              <th>Estado</th>
-              <th style="text-align: right;">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (q of cuotas(); track q.id) {
-              <tr>
-                <td><strong>#{{ q.numeroCuota }}</strong></td>
-                <td>{{ q.fechaVencimiento }}</td>
-                <td>\${{ q.capital | number: '1.2-2' }}</td>
-                <td>\${{ q.interes | number: '1.2-2' }}</td>
-                <td><strong>\${{ q.cuotaTotal | number: '1.2-2' }}</strong></td>
-                <td>\${{ q.saldoCapital | number: '1.2-2' }}</td>
-                <td>\${{ q.mora | number: '1.2-2' }}</td>
-                <td>
-                  <span class="badge" [class.badge-success]="q.estado === 'PAGADA'" [class.badge-warning]="q.estado === 'PENDIENTE'" [class.badge-danger]="q.estado === 'VENCIDA'">
-                    {{ q.estado }}
-                  </span>
-                </td>
-                <td style="text-align: right;">
-                  @if (puedeCrear() && (q.estado === 'PENDIENTE' || q.estado === 'VENCIDA')) {
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-pagar-cuota" (click)="pagarCuota(creditoSeleccionado()!, q)">
-                      💵 Cobrar
-                    </button>
-                  }
-                </td>
-              </tr>
+      <div class="detail-tabs">
+        <button type="button" class="tab-btn" [class.active]="detalleTab() === 'resumen'" (click)="cambiarDetalleTab('resumen')">Datos Socio / Resumen</button>
+        <button type="button" class="tab-btn" [class.active]="detalleTab() === 'amortizacion'" (click)="cambiarDetalleTab('amortizacion')">Tabla de Amortizacion</button>
+        <button type="button" class="tab-btn" [class.active]="detalleTab() === 'pagos'" (click)="cambiarDetalleTab('pagos')">Historial de Pagos</button>
+        <button type="button" class="tab-btn" [class.active]="detalleTab() === 'historial'" (click)="cambiarDetalleTab('historial')">Historial de Estados</button>
+      </div>
+
+      @if (detalleTab() === 'resumen' && creditoDetalle()) {
+        <div class="detail-resumen">
+          <div class="resumen-section">
+            <h4>Datos del Socio</h4>
+            @if (creditoDetalle()!.socio; as s) {
+              <div class="resumen-grid">
+                <div class="resumen-field"><span class="label">Codigo:</span> {{ s.codigo }}</div>
+                <div class="resumen-field"><span class="label">Identificacion:</span> {{ s.identificacion }}</div>
+                <div class="resumen-field"><span class="label">Nombres:</span> {{ s.nombres }}</div>
+                <div class="resumen-field"><span class="label">Apellidos:</span> {{ s.apellidos }}</div>
+                <div class="resumen-field"><span class="label">Telefono:</span> {{ s.telefono ?? '—' }}</div>
+                <div class="resumen-field"><span class="label">Email:</span> {{ s.email ?? '—' }}</div>
+                <div class="resumen-field"><span class="label">Direccion:</span> {{ s.direccion ?? '—' }}</div>
+                <div class="resumen-field"><span class="label">Fecha Ingreso:</span> {{ s.fechaIngreso }}</div>
+                <div class="resumen-field"><span class="label">Estado Socio:</span>
+                  <span class="badge" [class.badge-success]="s.estado === 'ACTIVO'" [class.badge-secondary]="s.estado !== 'ACTIVO'">{{ s.estado }}</span>
+                </div>
+              </div>
+            } @else {
+              <p class="empty-text">No se encontraron datos del socio.</p>
             }
-          </tbody>
-        </table>
-      </div>
-      <app-paginador [page]="cuotasPag().page" [size]="cuotasPag().size" [totalElements]="cuotasPag().totalElements" [totalPages]="cuotasPag().totalPages"
-                     (pageChange)="cambiarPaginaCuotas($event)" (sizeChange)="cambiarTamanoCuotas($event)" />
+          </div>
 
-      @if (puedeAprobar()) {
-        <div class="card" style="margin-bottom: 20px; background: #f8fafc;">
-          <h4 style="margin: 0 0 10px 0;">Refinanciar Crédito</h4>
-          <form [formGroup]="refinanciarForm" (ngSubmit)="refinanciar()" class="form-inline" data-testid="refinanciar-form">
-            <label class="field">
-              <span>Nuevo Plazo (meses)</span>
-              <input type="number" class="form-control form-control-sm" formControlName="plazoMeses" placeholder="24" data-testid="input-plazo-refinanciar" />
-            </label>
-            <label class="field">
-              <span>Nueva Tasa (%)</span>
-              <input type="number" class="form-control form-control-sm" formControlName="tasaInteres" placeholder="10.0" data-testid="input-tasa-refinanciar" />
-            </label>
-            <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-refinanciar" [disabled]="refinanciarForm.invalid || guardando()">
-              🔄 Refinanciar
-            </button>
-          </form>
+          <div class="resumen-section">
+            <h4>Resumen del Credito</h4>
+            <div class="resumen-grid">
+              <div class="resumen-field"><span class="label">Producto:</span> {{ creditoDetalle()!.credito.nombreProducto }}</div>
+              <div class="resumen-field"><span class="label">Monto Desembolsado:</span> <strong>\${{ creditoDetalle()!.credito.montoDesembolsado | number: '1.2-2' }}</strong></div>
+              <div class="resumen-field"><span class="label">Tasa Interes:</span> {{ creditoDetalle()!.credito.tasaInteres | number }}%</div>
+              <div class="resumen-field"><span class="label">Plazo:</span> {{ creditoDetalle()!.credito.plazoMeses }} meses</div>
+              <div class="resumen-field"><span class="label">Fecha Desembolso:</span> {{ creditoDetalle()!.credito.fechaDesembolso ?? '—' }}</div>
+              <div class="resumen-field"><span class="label">Estado:</span>
+                <span class="badge" [class.badge-success]="creditoDetalle()!.credito.estado === 'VIGENTE'" [class.badge-danger]="creditoDetalle()!.credito.estado === 'EN_MORA'" [class.badge-secondary]="creditoDetalle()!.credito.estado !== 'VIGENTE' && creditoDetalle()!.credito.estado !== 'EN_MORA'">
+                  {{ creditoDetalle()!.credito.estado }}
+                </span>
+              </div>
+              <div class="resumen-field"><span class="label">Cuotas Pagadas:</span> {{ creditoDetalle()!.cuotasPagadas }}</div>
+              <div class="resumen-field"><span class="label">Cuotas Pendientes:</span> {{ creditoDetalle()!.cuotasPendientes }}</div>
+              <div class="resumen-field"><span class="label">Cuotas Vencidas:</span> <span class="badge badge-danger">{{ creditoDetalle()!.cuotasVencidas }}</span></div>
+              <div class="resumen-field"><span class="label">Mora Acumulada:</span> <strong>\${{ creditoDetalle()!.moraTotal | number: '1.2-2' }}</strong></div>
+            </div>
+          </div>
+
+          @if (puedeAprobar()) {
+            <div class="resumen-section">
+              <h4>Refinanciar Credito</h4>
+              <form [formGroup]="refinanciarForm" (ngSubmit)="refinanciar()" class="form-inline" data-testid="refinanciar-form">
+                <label class="field">
+                  <span>Nuevo Plazo (meses)</span>
+                  <input type="number" class="form-control form-control-sm" formControlName="plazoMeses" placeholder="24" data-testid="input-plazo-refinanciar" />
+                </label>
+                <label class="field">
+                  <span>Nueva Tasa (%)</span>
+                  <input type="number" class="form-control form-control-sm" formControlName="tasaInteres" placeholder="10.0" data-testid="input-tasa-refinanciar" />
+                </label>
+                <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-refinanciar" [disabled]="refinanciarForm.invalid || guardando()">
+                  Refinanciar
+                </button>
+              </form>
+            </div>
+          }
         </div>
       }
 
-      <div class="section-title">Historial de Pagos</div>
-      <div class="table-responsive">
-        <table class="table" data-testid="pagos-table">
-          <thead>
-            <tr>
-              <th>Cuota</th>
-              <th>Capital</th>
-              <th>Interés</th>
-              <th>Mora</th>
-              <th>Comprobante</th>
-              <th>Fecha de Pago</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of pagos(); track p.id) {
+      @if (detalleTab() === 'amortizacion') {
+        <div class="table-responsive" style="margin-bottom: 20px;">
+          <table class="table" data-testid="cuotas-table">
+            <thead>
               <tr>
-                <td>#{{ p.cuotaId }}</td>
-                <td>\${{ p.montoCapital | number: '1.2-2' }}</td>
-                <td>\${{ p.montoInteres | number: '1.2-2' }}</td>
-                <td>\${{ p.montoMora | number: '1.2-2' }}</td>
-                <td><code>{{ p.comprobanteNumero ?? '—' }}</code></td>
-                <td>{{ p.pagadoAt | date: 'short' }}</td>
+                <th>Cuota</th>
+                <th>Vencimiento</th>
+                <th>Capital</th>
+                <th>Interes</th>
+                <th>Total</th>
+                <th>Saldo</th>
+                <th>Mora</th>
+                <th>Estado</th>
+                <th style="text-align: right;">Accion</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      <app-paginador [page]="pagosPag().page" [size]="pagosPag().size" [totalElements]="pagosPag().totalElements" [totalPages]="pagosPag().totalPages"
-                     (pageChange)="cambiarPaginaPagos($event)" (sizeChange)="cambiarTamanoPagos($event)" />
+            </thead>
+            <tbody>
+              @for (q of cuotas(); track q.id) {
+                <tr>
+                  <td><strong>#{{ q.numeroCuota }}</strong></td>
+                  <td>{{ q.fechaVencimiento }}</td>
+                  <td>\${{ q.capital | number: '1.2-2' }}</td>
+                  <td>\${{ q.interes | number: '1.2-2' }}</td>
+                  <td><strong>\${{ q.cuotaTotal | number: '1.2-2' }}</strong></td>
+                  <td>\${{ q.saldoCapital | number: '1.2-2' }}</td>
+                  <td>\${{ q.mora | number: '1.2-2' }}</td>
+                  <td>
+                    <span class="badge" [class.badge-success]="q.estado === 'PAGADA'" [class.badge-warning]="q.estado === 'PENDIENTE'" [class.badge-danger]="q.estado === 'VENCIDA'">
+                      {{ q.estado }}
+                    </span>
+                  </td>
+                  <td style="text-align: right;">
+                    @if (puedeCrear() && (q.estado === 'PENDIENTE' || q.estado === 'VENCIDA')) {
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-pagar-cuota" (click)="pagarCuota(creditoSeleccionado()!, q)">
+                        Cobrar
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <app-paginador [page]="cuotasPag().page" [size]="cuotasPag().size" [totalElements]="cuotasPag().totalElements" [totalPages]="cuotasPag().totalPages"
+                       (pageChange)="cambiarPaginaCuotas($event)" (sizeChange)="cambiarTamanoCuotas($event)" />
+      }
+
+      @if (detalleTab() === 'pagos') {
+        <div class="table-responsive">
+          <table class="table" data-testid="pagos-table">
+            <thead>
+              <tr>
+                <th>Cuota</th>
+                <th>Capital</th>
+                <th>Interes</th>
+                <th>Mora</th>
+                <th>Comprobante</th>
+                <th>Fecha de Pago</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of pagos(); track p.id) {
+                <tr>
+                  <td>#{{ p.cuotaId }}</td>
+                  <td>\${{ p.montoCapital | number: '1.2-2' }}</td>
+                  <td>\${{ p.montoInteres | number: '1.2-2' }}</td>
+                  <td>\${{ p.montoMora | number: '1.2-2' }}</td>
+                  <td><code>{{ p.comprobanteNumero ?? '—' }}</code></td>
+                  <td>{{ p.pagadoAt | date: 'short' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="empty-state">No hay pagos registrados para este credito.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <app-paginador [page]="pagosPag().page" [size]="pagosPag().size" [totalElements]="pagosPag().totalElements" [totalPages]="pagosPag().totalPages"
+                       (pageChange)="cambiarPaginaPagos($event)" (sizeChange)="cambiarTamanoPagos($event)" />
+      }
+
+      @if (detalleTab() === 'historial') {
+        <div class="table-responsive">
+          <table class="table" data-testid="historial-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Estado Anterior</th>
+                <th>Estado Nuevo</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of creditoDetalle()!.historial; track h.id) {
+                <tr>
+                  <td>{{ h.changedAt | date: 'short' }}</td>
+                  <td>{{ h.estadoAnterior ?? '—' }}</td>
+                  <td>
+                    <span class="badge" [class.badge-success]="h.estadoNuevo === 'VIGENTE'" [class.badge-danger]="h.estadoNuevo === 'EN_MORA'" [class.badge-secondary]="true">
+                      {{ h.estadoNuevo }}
+                    </span>
+                  </td>
+                  <td>{{ h.motivo ?? '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="empty-state">No hay historial de estados.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   }
 }

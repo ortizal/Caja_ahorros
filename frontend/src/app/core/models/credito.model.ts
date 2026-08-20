@@ -141,3 +141,37 @@ export interface SimulacionCreditoRequest {
   tasaInteres: number;
   sistemaAmortizacion: string;
 }
+
+export interface SocioCredito {
+  id: number;
+  codigo: string;
+  identificacion: string;
+  nombres: string;
+  apellidos: string;
+  telefono?: string;
+  email?: string;
+  direccion?: string;
+  fechaIngreso: string;
+  estado: string;
+}
+
+export interface HistorialEstado {
+  id: number;
+  estadoAnterior?: string;
+  estadoNuevo: string;
+  motivo?: string;
+  changedAt: string;
+}
+
+export interface CreditoDetalle {
+  credito: Credito;
+  socio?: SocioCredito;
+  producto?: ProductoCredito;
+  cuotas: CuotaCredito[];
+  pagos: PagoCuota[];
+  historial: HistorialEstado[];
+  moraTotal: number;
+  cuotasPagadas: number;
+  cuotasPendientes: number;
+  cuotasVencidas: number;
+}

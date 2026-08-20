@@ -6,6 +6,7 @@ import com.alantek.caja.modulo.caja.entity.Comprobante;
 import com.alantek.caja.modulo.caja.repository.ComprobanteRepository;
 import com.alantek.caja.modulo.caja.service.CajaService;
 import com.alantek.caja.modulo.creditos.dto.AprobarSolicitudRequest;
+import com.alantek.caja.modulo.creditos.dto.CreditoDetalleResponse;
 import com.alantek.caja.modulo.creditos.dto.CreditoResponse;
 import com.alantek.caja.modulo.creditos.dto.CuotaCreditoResponse;
 import com.alantek.caja.modulo.creditos.dto.MoraResponse;
@@ -35,9 +36,15 @@ import com.alantek.caja.modulo.socios.repository.SocioRepository;
 import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
 import com.alantek.caja.shared.exception.BusinessException;
+import com.alantek.caja.shared.reports.JasperReportService;
+import com.alantek.caja.shared.reports.ReportBeans;
 import com.alantek.caja.shared.security.CurrentUserService;
+import com.lowagie.text.DocumentException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,6 +76,7 @@ public class CreditoService {
     private final AmortizacionService amortizacionService;
     private final CurrentUserService currentUserService;
     private final AuditService auditService;
+    private final JasperReportService jasperReportService;
 
     public CreditoService(ProductoCreditoRepository productoRepository,
                           SolicitudCreditoRepository solicitudRepository,
@@ -81,7 +89,8 @@ public class CreditoService {
                           CajaService cajaService,
                           AmortizacionService amortizacionService,
                           CurrentUserService currentUserService,
-                          AuditService auditService) {
+                          AuditService auditService,
+                          JasperReportService jasperReportService) {
         this.productoRepository = productoRepository;
         this.solicitudRepository = solicitudRepository;
         this.creditoRepository = creditoRepository;
@@ -94,6 +103,7 @@ public class CreditoService {
         this.amortizacionService = amortizacionService;
         this.currentUserService = currentUserService;
         this.auditService = auditService;
+        this.jasperReportService = jasperReportService;
     }
 
     // ---------------- Productos ----------------
@@ -474,6 +484,123 @@ public class CreditoService {
     public SimulacionCreditoResponse simular(SimulacionCreditoRequest request) {
         return amortizacionService.simular(request.monto(), request.tasaInteres(),
                 request.plazoMeses(), request.sistemaAmortizacion());
+    }
+
+    // ---------------- Detalle Credito ----------------
+
+    public CreditoDetalleResponse detalle(Long id) {
+        Credito credito = creditoRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Credito no encontrado: " + id));
+        Socio socio = socioRepository.findById(credito.getSocioId()).orElse(null);
+        ProductoCredito producto = productoRepository.findById(credito.getProductoId()).orElse(null);
+
+        List<CuotaCredito> cuotasAll = cuotaRepository.findByCreditoIdOrderByNumeroCuotaAsc(credito.getId());
+        List<CuotaCredito> cuotas = cuotasAll.stream()
+                .filter(c -> !"REFINANCIADA".equals(c.getEstado()))
+                .toList();
+        List<PagoCuota> pagos = pagoRepository.findByCreditoIdOrderByPagadoAtAsc(credito.getId());
+        List<CreditoEstadoHistorial> historialAll = historialRepository.findByCreditoIdOrderByChangedAtAsc(credito.getId());
+
+        BigDecimal moraTotal = cuotas.stream()
+                .map(CuotaCredito::getMora)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int pagadas = (int) cuotas.stream().filter(c -> "PAGADA".equals(c.getEstado())).count();
+        int pendientes = (int) cuotas.stream().filter(c -> "PENDIENTE".equals(c.getEstado())).count();
+        int vencidas = (int) cuotas.stream().filter(c -> "VENCIDA".equals(c.getEstado())).count();
+
+        CreditoDetalleResponse.SocioCredito socioDto = socio != null
+                ? new CreditoDetalleResponse.SocioCredito(
+                        socio.getId(), socio.getCodigo(), socio.getIdentificacion(),
+                        socio.getNombres(), socio.getApellidos(),
+                        socio.getTelefono(), socio.getEmail(), socio.getDireccion(),
+                        socio.getFechaIngreso(), socio.getEstado())
+                : null;
+
+        List<CreditoDetalleResponse.HistorialEstado> historial = historialAll.stream()
+                .map(h -> new CreditoDetalleResponse.HistorialEstado(
+                        h.getId(), h.getEstadoAnterior(), h.getEstadoNuevo(),
+                        h.getMotivo(), h.getChangedAt()))
+                .toList();
+
+        return new CreditoDetalleResponse(
+                toResponse(credito),
+                socioDto,
+                producto != null ? toResponse(producto) : null,
+                cuotas.stream().map(this::toResponse).toList(),
+                pagos.stream().map(this::toResponse).toList(),
+                historial,
+                moraTotal, pagadas, pendientes, vencidas);
+    }
+
+    // ---------------- Contrato ----------------
+
+    public ResponseEntity<byte[]> generarContrato(Long creditoId, String formato)
+            throws DocumentException, java.io.IOException {
+        CreditoDetalleResponse det = detalle(creditoId);
+        CreditoResponse c = det.credito();
+        CreditoDetalleResponse.SocioCredito s = det.socio();
+
+        String cuotaMensual = det.cuotas().isEmpty() ? "0.00"
+                : det.cuotas().getFirst().cuotaTotal().toPlainString();
+        BigDecimal totalInteres = det.cuotas().stream()
+                .map(CuotaCreditoResponse::interes)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalPagar = det.cuotas().stream()
+                .map(CuotaCreditoResponse::cuotaTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        ReportBeans.ContratoData contratoData = new ReportBeans.ContratoData(
+                "CTR-" + c.id(),
+                c.fechaDesembolso() != null ? c.fechaDesembolso().toString() : java.time.LocalDate.now().toString(),
+                c.socioCodigo(),
+                s != null ? s.identificacion() : "",
+                s != null ? s.nombres() : "",
+                s != null ? s.apellidos() : "",
+                s != null ? s.telefono() : "",
+                s != null ? s.email() : "",
+                s != null ? s.direccion() : "",
+                c.nombreProducto(),
+                det.producto() != null ? det.producto().sistemaAmortizacion() : "FRANCES",
+                c.montoDesembolsado().toPlainString(),
+                c.tasaInteres().toPlainString(),
+                det.producto() != null ? det.producto().tasaMora().toPlainString() : "1.0000",
+                String.valueOf(c.plazoMeses()),
+                cuotaMensual,
+                totalInteres.toPlainString(),
+                totalPagar.toPlainString(),
+                c.fechaDesembolso() != null ? c.fechaDesembolso().toString() : "",
+                c.estado());
+
+        List<ReportBeans.CuotaContratoData> cuotasData = det.cuotas().stream()
+                .map(q -> new ReportBeans.CuotaContratoData(
+                        String.valueOf(q.numeroCuota()),
+                        q.fechaVencimiento() != null ? q.fechaVencimiento().toString() : "",
+                        q.capital().toPlainString(),
+                        q.interes().toPlainString(),
+                        q.cuotaTotal().toPlainString(),
+                        q.saldoCapital().toPlainString()))
+                .toList();
+
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("CUOTAS_DATA", new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource(cuotasData));
+        params.put("FECHA_GENERACION", java.time.LocalDate.now().toString());
+
+        net.sf.jasperreports.engine.data.JRBeanCollectionDataSource dataSource =
+                new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource(
+                        java.util.List.of(contratoData));
+
+        byte[] bytes = jasperReportService.generarReporte("contrato-credito", dataSource, params, formato);
+
+        String contentType = "xlsx".equalsIgnoreCase(formato)
+                ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                : MediaType.APPLICATION_PDF_VALUE;
+        String filename = "contrato-credito-" + c.id() + "." + formato;
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .body(bytes);
     }
 
     // ---------------- Helpers ----------------

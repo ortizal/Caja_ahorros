@@ -8,6 +8,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
 import {
   Credito,
+  CreditoDetalle,
   CuotaCredito,
   MoraProcesada,
   PagoCuota,
@@ -46,6 +47,8 @@ export class CreditosComponent implements OnInit {
   protected readonly solicitudes = signal<SolicitudCredito[]>([]);
   protected readonly creditos = signal<Credito[]>([]);
   protected readonly creditoSeleccionado = signal<Credito | null>(null);
+  protected readonly creditoDetalle = signal<CreditoDetalle | null>(null);
+  protected readonly detalleTab = signal<'resumen' | 'amortizacion' | 'pagos' | 'historial'>('resumen');
   protected readonly cuotas = signal<CuotaCredito[]>([]);
   protected readonly pagos = signal<PagoCuota[]>([]);
   protected readonly simulacion = signal<SimulacionCredito | null>(null);
@@ -242,9 +245,34 @@ export class CreditosComponent implements OnInit {
 
   seleccionarCredito(credito: Credito): void {
     this.creditoSeleccionado.set(credito);
+    this.detalleTab.set('resumen');
     this.refinanciarForm.patchValue({ plazoMeses: credito.plazoMeses, tasaInteres: Number(credito.tasaInteres) });
+    this.cargarDetalle(credito.id);
     this.cargarCuotas(credito.id);
     this.cargarPagos(credito.id);
+  }
+
+  cargarDetalle(creditoId: number): void {
+    this.creditoService.detalleCredito(creditoId).subscribe({
+      next: (d) => this.creditoDetalle.set(d),
+      error: () => this.creditoDetalle.set(null)
+    });
+  }
+
+  cambiarDetalleTab(tab: 'resumen' | 'amortizacion' | 'pagos' | 'historial'): void {
+    this.detalleTab.set(tab);
+  }
+
+  descargarContratoPdf(): void {
+    const credito = this.creditoSeleccionado();
+    if (!credito) return;
+    this.descargarReporte(this.creditoService.contratoCredito(credito.id, 'pdf'), `contrato-credito-${credito.id}.pdf`);
+  }
+
+  descargarContratoExcel(): void {
+    const credito = this.creditoSeleccionado();
+    if (!credito) return;
+    this.descargarReporte(this.creditoService.contratoCredito(credito.id, 'xlsx'), `contrato-credito-${credito.id}.xlsx`);
   }
 
   cargarCuotas(creditoId: number): void {

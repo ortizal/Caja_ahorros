@@ -2,6 +2,7 @@ package com.alantek.caja.modulo.creditos.controller;
 
 import com.alantek.caja.modulo.creditos.dto.AprobarSolicitudRequest;
 import com.alantek.caja.modulo.creditos.dto.CreditoResponse;
+import com.alantek.caja.modulo.creditos.dto.CreditoDetalleResponse;
 import com.alantek.caja.modulo.creditos.dto.CuotaCreditoResponse;
 import com.alantek.caja.modulo.creditos.dto.MoraResponse;
 import com.alantek.caja.modulo.creditos.dto.PagoCuotaRequest;
@@ -16,6 +17,7 @@ import com.alantek.caja.modulo.creditos.dto.SolicitudCreditoResponse;
 import com.alantek.caja.modulo.creditos.service.CreditoService;
 import com.alantek.caja.shared.PageResponse;
 import jakarta.validation.Valid;
+import com.lowagie.text.DocumentException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -143,5 +145,19 @@ public class CreditoController {
     @PreAuthorize("hasAuthority('CREDITOS:VER')")
     public SimulacionCreditoResponse simular(@Valid @RequestBody SimulacionCreditoRequest request) {
         return creditoService.simular(request);
+    }
+
+    @GetMapping("/creditos/{id}/detalle")
+    @PreAuthorize("hasAuthority('CREDITOS:VER')")
+    public CreditoDetalleResponse detalle(@PathVariable Long id) {
+        return creditoService.detalle(id);
+    }
+
+    @GetMapping(value = "/creditos/{id}/contrato", produces = "application/pdf")
+    @PreAuthorize("hasAuthority('CREDITOS:VER')")
+    public org.springframework.http.ResponseEntity<byte[]> contrato(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "pdf") String formato) throws DocumentException, java.io.IOException {
+        return creditoService.generarContrato(id, formato);
     }
 }

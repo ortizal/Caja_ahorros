@@ -80,6 +80,7 @@ export const ENTIDADES = [
   { value: 'AHORRO', label: 'Ahorros' },
   { value: 'APORTACION', label: 'Aportaciones' },
   { value: 'CREDITO', label: 'Creditos' },
+  { value: 'CONTRATO', label: 'Contratos' },
   { value: 'CONTABILIDAD', label: 'Contabilidad' },
   { value: 'TESORERIA', label: 'Tesoreria' },
   { value: 'USUARIO', label: 'Usuarios' },

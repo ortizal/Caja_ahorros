@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   AprobarSolicitudRequest,
   Credito,
+  CreditoDetalle,
   CuotaCredito,
   MoraProcesada,
   PagoCuota,
@@ -95,5 +96,16 @@ export class CreditoService {
 
   simular(request: SimulacionCreditoRequest): Observable<SimulacionCredito> {
     return this.http.post<SimulacionCredito>(`${this.base}/simulador-credito`, request);
+  }
+
+  detalleCredito(id: number): Observable<CreditoDetalle> {
+    return this.http.get<CreditoDetalle>(`${this.base}/creditos/${id}/detalle`);
+  }
+
+  contratoCredito(id: number, formato: 'pdf' | 'xlsx'): Observable<Blob> {
+    return this.http.get(`${this.base}/creditos/${id}/contrato`, {
+      params: { formato },
+      responseType: 'blob'
+    });
   }
 }
