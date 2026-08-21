@@ -180,11 +180,12 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void sembrarUsuarios() {
-        crearUsuarioSiNoExiste("admin", "admin123", "Administrador ALANTEK", Set.of("ADMIN"));
+        crearUsuarioSiNoExiste("admin", "admin1234", "Administrador ALANTEK", Set.of("ADMIN"));
         crearUsuarioSiNoExiste("gerente", "gerente123", "Gerente General", Set.of("GERENTE"));
         crearUsuarioSiNoExiste("contador", "contador123", "Contador General", Set.of("CONTADOR"));
         crearUsuarioSiNoExiste("cajero", "cajero123", "Cajero Principal", Set.of("TESORERO"));
         crearUsuarioSiNoExiste("credito", "credito123", "Analista de Credito", Set.of("CREDITO"));
+        actualizarPasswordSiExiste("admin", "admin1234");
     }
 
     private void crearUsuarioSiNoExiste(String username, String password, String nombreCompleto, Set<String> roles) {
@@ -201,6 +202,13 @@ public class DataSeeder implements ApplicationRunner {
                 .collect(Collectors.toSet());
         usuario.setRoles(rolesSet);
         usuarioRepository.save(usuario);
+    }
+
+    private void actualizarPasswordSiExiste(String username, String password) {
+        usuarioRepository.findByUsername(username).ifPresent(usuario -> {
+            usuario.setPasswordHash(passwordEncoder.encode(password));
+            usuarioRepository.save(usuario);
+        });
     }
 
     private void sembrarPortal() {
