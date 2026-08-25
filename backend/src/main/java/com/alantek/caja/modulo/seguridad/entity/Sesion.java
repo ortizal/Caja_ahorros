@@ -20,7 +20,7 @@ public class Sesion {
     @Column(name = "usuario_id")
     private Long usuarioId;
 
-    @Column(length = 255)
+    @Column(columnDefinition = "TEXT")
     private String token;
 
     @Column(length = 45)
