@@ -23,6 +23,7 @@ export class LoginComponent {
   });
   protected readonly loading = signal(false);
   protected readonly error = signal('');
+  protected readonly showPassword = signal(false);
 
   submit(): void {
     if (this.form.invalid || this.loading()) {

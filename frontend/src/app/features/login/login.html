@@ -21,14 +21,25 @@
 
       <label class="field">
         <span>Contraseña</span>
-        <input
-          class="form-control form-control-sm"
-          formControlName="password"
-          type="password"
-          placeholder="••••••••"
-          autocomplete="current-password"
-          data-testid="password"
-        />
+        <div class="password-wrap">
+          <input
+            class="form-control form-control-sm"
+            formControlName="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            data-testid="password"
+          />
+          <button type="button" class="password-toggle" (click)="showPassword.set(!showPassword())"
+                  [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  data-testid="toggle-password">
+            @if (showPassword()) {
+              👁️‍🗨️
+            } @else {
+              👁️
+            }
+          </button>
+        </div>
       </label>
 
       @if (error()) {
