@@ -70,3 +70,6 @@ Standard Commons Logging discovery in action with spring-jcl: please remove comm
 2026-08-25T23:09:00.196-05:00  WARN 28088 --- [caja-ahorros-backend] [           main] ion$DefaultTemplateResolverConfiguration : Cannot find template location: classpath:/templates/ (please add some templates, check your Thymeleaf configuration, or set spring.thymeleaf.check-template-location=false)
 2026-08-25T23:09:00.426-05:00  INFO 28088 --- [caja-ahorros-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
 2026-08-25T23:09:00.439-05:00  INFO 28088 --- [caja-ahorros-backend] [           main] c.a.caja.CajaAhorrosBackendApplication   : Started CajaAhorrosBackendApplication in 6.304 seconds (process running for 6.608)
+2026-08-25T23:09:27.521-05:00  INFO 28088 --- [caja-ahorros-backend] [nio-8080-exec-4] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-25T23:09:27.521-05:00  INFO 28088 --- [caja-ahorros-backend] [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-08-25T23:09:27.523-05:00  INFO 28088 --- [caja-ahorros-backend] [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
