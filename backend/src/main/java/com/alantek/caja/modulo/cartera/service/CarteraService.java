@@ -7,8 +7,12 @@ import com.alantek.caja.modulo.caja.repository.CajaAperturaRepository;
 import com.alantek.caja.modulo.caja.repository.CajaMovimientoRepository;
 import com.alantek.caja.modulo.caja.service.TipoMovimiento;
 import com.alantek.caja.modulo.cartera.dto.CarteraItemResponse;
+import com.alantek.caja.modulo.cartera.dto.CreditoMoraDetalle;
+import com.alantek.caja.modulo.cartera.dto.CuotaMoraDetalle;
 import com.alantek.caja.modulo.cartera.dto.DashboardGraficosResponse;
 import com.alantek.caja.modulo.cartera.dto.DashboardResumenResponse;
+import com.alantek.caja.modulo.cartera.dto.MoraClienteDetalleResponse;
+import com.alantek.caja.modulo.cartera.dto.MoraClienteResponse;
 import com.alantek.caja.modulo.cartera.dto.MorosidadResponse;
 import com.alantek.caja.modulo.creditos.entity.Credito;
 import com.alantek.caja.modulo.creditos.entity.CuotaCredito;
@@ -131,6 +135,148 @@ public class CarteraService {
                 ? saldoVencido.multiply(BigDecimal.valueOf(100)).divide(carteraColocada, 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
         return new MorosidadResponse(vencidas.size(), saldoVencido, carteraColocada, porcentaje, creditosEnMora);
+    }
+
+    public List<MoraClienteResponse> clientesConMora() {
+        LocalDate hoy = LocalDate.now();
+        List<CuotaCredito> cuotas = cuotaRepository.findByEstadoInOrderByFechaVencimientoAsc(ESTADOS_EN_CARTERA);
+
+        Set<Long> creditoIds = cuotas.stream().map(CuotaCredito::getCreditoId).collect(Collectors.toSet());
+        Map<Long, Credito> creditos = creditoRepository.findAllById(creditoIds).stream()
+                .collect(Collectors.toMap(Credito::getId, Function.identity()));
+        Map<Long, ProductoCredito> productos = productoRepository.findAllById(
+                        creditos.values().stream().map(Credito::getProductoId).collect(Collectors.toSet())).stream()
+                .collect(Collectors.toMap(ProductoCredito::getId, Function.identity()));
+        Map<Long, Socio> socios = socioRepository.findAllById(
+                        creditos.values().stream().map(Credito::getSocioId).collect(Collectors.toSet())).stream()
+                .collect(Collectors.toMap(Socio::getId, Function.identity()));
+
+        List<CuotaCredito> vencidas = cuotas.stream()
+                .filter(c -> c.getFechaVencimiento().isBefore(hoy))
+                .collect(Collectors.toList());
+
+        Map<Long, List<CuotaCredito>> cuotasPorSocio = vencidas.stream()
+                .collect(Collectors.groupingBy(c -> creditos.get(c.getCreditoId()).getSocioId()));
+
+        return cuotasPorSocio.entrySet().stream()
+                .map(entry -> {
+                    Long socioId = entry.getKey();
+                    List<CuotaCredito> socioCuotas = entry.getValue();
+                    Socio socio = socios.get(socioId);
+                    Set<Long> creditosDelSocio = socioCuotas.stream()
+                            .map(CuotaCredito::getCreditoId).collect(Collectors.toSet());
+                    BigDecimal moraTotal = socioCuotas.stream()
+                            .map(CuotaCredito::getMora).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal saldoCapital = socioCuotas.stream()
+                            .map(CuotaCredito::getSaldoCapital).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    long diasMaximo = socioCuotas.stream()
+                            .mapToLong(c -> calcularDiasVencido(c, hoy))
+                            .max().orElse(0);
+
+                    return new MoraClienteResponse(
+                            socioId,
+                            socio != null ? socio.getCodigo() : null,
+                            socio != null ? socio.getNombres() + " " + socio.getApellidos() : null,
+                            socio != null ? socio.getIdentificacion() : null,
+                            socio != null ? socio.getTelefono() : null,
+                            socio != null ? socio.getEmail() : null,
+                            creditosDelSocio.size(),
+                            socioCuotas.size(),
+                            moraTotal,
+                            saldoCapital,
+                            diasMaximo);
+                })
+                .sorted(Comparator.comparing(MoraClienteResponse::diasMoraMaximo).reversed())
+                .collect(Collectors.toList());
+    }
+
+    public MoraClienteDetalleResponse detalleMoraCliente(Long socioId) {
+        LocalDate hoy = LocalDate.now();
+        Socio socio = socioRepository.findById(socioId)
+                .orElseThrow(() -> new RuntimeException("Socio no encontrado: " + socioId));
+
+        List<Credito> creditosDelSocio = creditoRepository.findBySocioIdOrderByCreatedAtDesc(socioId);
+        Set<Long> creditoIds = creditosDelSocio.stream().map(Credito::getId).collect(Collectors.toSet());
+
+        List<CuotaCredito> todasCuotas = cuotaRepository.findByEstadoInOrderByFechaVencimientoAsc(ESTADOS_EN_CARTERA);
+        List<CuotaCredito> cuotasDelSocio = todasCuotas.stream()
+                .filter(c -> creditoIds.contains(c.getCreditoId()))
+                .collect(Collectors.toList());
+
+        Set<Long> productoIds = creditosDelSocio.stream().map(Credito::getProductoId).collect(Collectors.toSet());
+        Map<Long, ProductoCredito> productos = productoRepository.findAllById(productoIds).stream()
+                .collect(Collectors.toMap(ProductoCredito::getId, Function.identity()));
+
+        MoraClienteResponse socioResumen = buildMoraClienteResponse(socio, cuotasDelSocio, hoy);
+
+        List<CreditoMoraDetalle> creditosDetalle = creditosDelSocio.stream()
+                .filter(credito -> {
+                    String estado = credito.getEstado();
+                    return "EN_MORA".equals(estado);
+                })
+                .map(credito -> {
+                    ProductoCredito producto = productos.get(credito.getProductoId());
+                    List<CuotaCredito> cuotasCredito = cuotasDelSocio.stream()
+                            .filter(c -> c.getCreditoId().equals(credito.getId()))
+                            .collect(Collectors.toList());
+                    BigDecimal moraTotal = cuotasCredito.stream()
+                            .map(CuotaCredito::getMora).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    List<CuotaMoraDetalle> cuotasDetalle = cuotasCredito.stream()
+                            .map(c -> new CuotaMoraDetalle(
+                                    c.getId(),
+                                    c.getNumeroCuota(),
+                                    c.getFechaVencimiento(),
+                                    c.getCapital(),
+                                    c.getInteres(),
+                                    c.getCuotaTotal(),
+                                    c.getMora(),
+                                    c.getCuotaTotal().add(c.getMora()),
+                                    calcularDiasVencido(c, hoy),
+                                    c.getEstado()))
+                            .sorted(Comparator.comparing(CuotaMoraDetalle::numeroCuota))
+                            .toList();
+
+                    return new CreditoMoraDetalle(
+                            credito.getId(),
+                            producto != null ? producto.getNombre() : null,
+                            credito.getMontoDesembolsado(),
+                            credito.getSaldoCapital(),
+                            credito.getTasaInteres(),
+                            producto != null ? producto.getTasaMora() : null,
+                            credito.getPlazoMeses(),
+                            credito.getFechaDesembolso(),
+                            credito.getEstado(),
+                            cuotasDetalle,
+                            moraTotal);
+                })
+                .sorted(Comparator.comparing(CreditoMoraDetalle::moraTotalCredito).reversed())
+                .toList();
+
+        return new MoraClienteDetalleResponse(socioResumen, creditosDetalle);
+    }
+
+    private MoraClienteResponse buildMoraClienteResponse(Socio socio, List<CuotaCredito> cuotas, LocalDate hoy) {
+        List<CuotaCredito> vencidas = cuotas.stream()
+                .filter(c -> c.getFechaVencimiento().isBefore(hoy))
+                .collect(Collectors.toList());
+        Set<Long> creditosIds = vencidas.stream().map(CuotaCredito::getCreditoId).collect(Collectors.toSet());
+        BigDecimal moraTotal = vencidas.stream().map(CuotaCredito::getMora).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal saldoCapital = vencidas.stream().map(CuotaCredito::getSaldoCapital).reduce(BigDecimal.ZERO, BigDecimal::add);
+        long diasMaximo = vencidas.stream().mapToLong(c -> calcularDiasVencido(c, hoy)).max().orElse(0);
+
+        return new MoraClienteResponse(
+                socio.getId(),
+                socio.getCodigo(),
+                socio.getNombres() + " " + socio.getApellidos(),
+                socio.getIdentificacion(),
+                socio.getTelefono(),
+                socio.getEmail(),
+                creditosIds.size(),
+                vencidas.size(),
+                moraTotal,
+                saldoCapital,
+                diasMaximo);
     }
 
     public DashboardGraficosResponse graficos() {

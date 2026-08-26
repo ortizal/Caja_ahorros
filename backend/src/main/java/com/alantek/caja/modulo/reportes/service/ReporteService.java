@@ -11,6 +11,8 @@ import com.alantek.caja.modulo.caja.entity.CajaMovimiento;
 import com.alantek.caja.modulo.caja.repository.CajaAperturaRepository;
 import com.alantek.caja.modulo.caja.repository.CajaMovimientoRepository;
 import com.alantek.caja.modulo.caja.service.TipoMovimiento;
+import com.alantek.caja.modulo.cartera.dto.CarteraItemResponse;
+import com.alantek.caja.modulo.cartera.dto.MoraClienteResponse;
 import com.alantek.caja.modulo.cartera.service.CarteraService;
 import com.alantek.caja.modulo.creditos.dto.SimulacionCreditoResponse;
 import com.alantek.caja.modulo.creditos.entity.Credito;
@@ -234,6 +236,8 @@ public class ReporteService {
             case "aportaciones" -> dataSource = prepareAportaciones(params);
             case "creditos" -> dataSource = prepareCreditos(params);
             case "usuarios" -> dataSource = prepareUsuarios();
+            case "mora" -> dataSource = prepareMora();
+            case "cartera-vencida" -> dataSource = prepareCarteraVencida(params);
             default -> throw new BusinessException("Reporte no encontrado: " + nombre);
         }
         return jasperReportService.generarReporte(nombre, dataSource, params != null ? params : Map.of(), formato);
@@ -390,6 +394,48 @@ public class ReporteService {
                         nvl(u.getEstado()),
                         u.getRoles().stream().map(Rol::getNombre).sorted().collect(Collectors.joining(", ")),
                         u.getUltimoAcceso() == null ? "" : u.getUltimoAcceso().toString()))
+                .toList();
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    private JRBeanCollectionDataSource prepareMora() {
+        List<MoraClienteResponse> clientes = carteraService.clientesConMora();
+        List<ReportBeans.MoraData> data = clientes.stream()
+                .map(c -> new ReportBeans.MoraData(
+                        nvl(c.socioCodigo()),
+                        nvl(c.socioNombre()),
+                        nvl(c.socioIdentificacion()),
+                        nvl(c.socioTelefono()),
+                        nvl(c.socioEmail()),
+                        String.valueOf(c.creditosEnMora()),
+                        String.valueOf(c.cuotasVencidas()),
+                        c.moraTotal().toPlainString(),
+                        c.saldoCapitalTotal().toPlainString(),
+                        String.valueOf(c.diasMoraMaximo())))
+                .toList();
+        return new JRBeanCollectionDataSource(data);
+    }
+
+    @SuppressWarnings("unchecked")
+    private JRBeanCollectionDataSource prepareCarteraVencida(Map<String, Object> params) {
+        String estado = params != null ? (String) params.get("estado") : null;
+        Long socioId = null;
+        if (params != null && params.get("socioId") != null) {
+            socioId = Long.valueOf(params.get("socioId").toString());
+        }
+        List<CarteraItemResponse> items = carteraService.listarCartera(estado, socioId);
+        List<ReportBeans.CarteraVencidaData> data = items.stream()
+                .map(c -> new ReportBeans.CarteraVencidaData(
+                        nvl(c.socioCodigo()) + " " + nvl(c.socioNombre()),
+                        nvl(c.nombreProducto()),
+                        String.valueOf(c.numeroCuota()),
+                        c.fechaVencimiento() == null ? "" : c.fechaVencimiento().toString(),
+                        c.saldoCapital().toPlainString(),
+                        c.cuotaTotal().toPlainString(),
+                        c.mora().toPlainString(),
+                        c.totalPagar().toPlainString(),
+                        nvl(c.estado()),
+                        String.valueOf(c.diasVencido())))
                 .toList();
         return new JRBeanCollectionDataSource(data);
     }

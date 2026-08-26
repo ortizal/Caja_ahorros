@@ -16,10 +16,12 @@ import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acc
 import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
 import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
 import { UsuarioDetalleComponent } from './usuario-detalle.component';
+import { EmailConfigComponent } from './email-config.component';
+import { EmailTemplateEditorComponent } from './email-template-editor.component';
 
 @Component({
   selector: 'app-seguridad',
-  imports: [ReactiveFormsModule, DatePipe, RouterLink, AccionesMenuComponent, ModalComponent, ModalFooterDirective, UsuarioDetalleComponent, PaginadorComponent, SortableHeaderDirective],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink, AccionesMenuComponent, ModalComponent, ModalFooterDirective, UsuarioDetalleComponent, PaginadorComponent, SortableHeaderDirective, EmailConfigComponent, EmailTemplateEditorComponent],
   templateUrl: './seguridad.html',
   styleUrl: './seguridad.css'
 })
@@ -68,8 +70,6 @@ export class SeguridadComponent implements OnInit {
   protected readonly permisoSeleccionados = signal<number[]>([]);
   protected readonly modulos = signal<string[]>([]);
 
-  protected readonly correoEmail = signal('');
-  protected readonly enviando = signal(false);
   protected readonly exportando = signal(false);
 
   protected readonly auditoriaForm = this.fb.nonNullable.group({
@@ -227,25 +227,6 @@ export class SeguridadComponent implements OnInit {
           this.toast.error(msg);
         }
       });
-  }
-
-  testCorreo(): void {
-    const email = this.correoEmail();
-    if (!email || this.enviando()) {
-      return;
-    }
-    this.enviando.set(true);
-    this.seguridadService.testEmail(email).subscribe({
-      next: (res) => {
-        this.toast.success(res.message);
-        this.enviando.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo enviar el correo de prueba.';
-        this.toast.error(msg);
-        this.enviando.set(false);
-      }
-    });
   }
 
   exportarPdf(nombre: string): void {

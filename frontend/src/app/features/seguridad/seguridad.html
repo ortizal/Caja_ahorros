@@ -15,7 +15,8 @@
   <button type="button" class="tab-btn" [class.active]="tab() === 'usuarios'" (click)="tab.set('usuarios')">Usuarios</button>
   <button type="button" class="tab-btn" [class.active]="tab() === 'roles'" (click)="tab.set('roles')">Roles y permisos</button>
   <button type="button" class="tab-btn" [class.active]="tab() === 'auditoria'" (click)="tab.set('auditoria')">Auditoría</button>
-  <button type="button" class="tab-btn" [class.active]="tab() === 'correo'" (click)="tab.set('correo')">Correo</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'correo'" (click)="tab.set('correo')">Config Email</button>
+  <button type="button" class="tab-btn" [class.active]="tab() === 'plantillas'" (click)="tab.set('plantillas')">Plantillas Email</button>
 </div>
 
 @if (cargando()) {
@@ -52,6 +53,7 @@
             <th appSortable sortKey="nombreCompleto" [sort]="sortUsuarios()" (sortChange)="ordenarUsuarios($event)">Nombre Completo</th>
             <th appSortable sortKey="email" [sort]="sortUsuarios()" (sortChange)="ordenarUsuarios($event)">Email</th>
             <th>Roles</th>
+            <th appSortable sortKey="ultimoAcceso" [sort]="sortUsuarios()" (sortChange)="ordenarUsuarios($event)">Último Acceso</th>
             <th appSortable sortKey="estado" [sort]="sortUsuarios()" (sortChange)="ordenarUsuarios($event)">Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
@@ -68,6 +70,9 @@
                     <span class="badge badge-info">{{ r }}</span>
                   }
                 </div>
+              </td>
+              <td>
+                <span class="badge badge-secondary">{{ u.ultimoAcceso ? (u.ultimoAcceso | date:'short') : 'Nunca' }}</span>
               </td>
               <td>
                 <span class="badge" [class.badge-success]="u.estado === 'ACTIVO'" [class.badge-secondary]="u.estado !== 'ACTIVO'">
@@ -256,34 +261,11 @@
 }
 
 @if (tab() === 'correo') {
-  <div class="card" data-testid="correo-panel">
-    <div class="card-header">
-      <h3 class="card-title">Prueba de Configuración de Correo</h3>
-    </div>
-    <div style="padding: 16px;">
-      <p style="margin: 0 0 16px 0; color: var(--color-text-secondary);">
-        Envía un correo de prueba para verificar la configuración SMTP del servidor.
-      </p>
-      <div class="form-inline" style="gap: 8px;">
-        <label class="field" style="flex: 1;">
-          <span>Dirección de correo destino</span>
-          <input class="form-control form-control-sm" type="email" placeholder="correo@ejemplo.com"
-                 [value]="correoEmail()" (input)="correoEmail.set($any($event.target).value)"
-                 data-testid="input-correo-email" />
-        </label>
-        <div style="display: flex; align-items: flex-end; padding-bottom: 2px;">
-          <button type="button" class="btn btn-sm btn-primary" data-testid="btn-enviar-correo"
-                  [disabled]="enviando() || !correoEmail()" (click)="testCorreo()">
-            @if (enviando()) {
-              Enviando…
-            } @else {
-              Enviar correo de prueba
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <app-email-config data-testid="email-config-panel" />
+}
+
+@if (tab() === 'plantillas') {
+  <app-email-template-editor data-testid="email-templates-panel" />
 }
 
 <app-modal [abierto]="infoAbierto()" [titulo]="detalle()?.username ? 'Usuario ' + detalle()!.username : 'Usuario'" (cerrar)="cerrarInfo()">

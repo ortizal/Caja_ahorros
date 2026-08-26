@@ -1,0 +1,200 @@
+.detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.detalle-socio .card-title {
+  margin-bottom: 12px;
+}
+
+.socio-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.campo-label {
+  font-size: var(--font-xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.campo-valor {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.mora-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mora-stat {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 130px;
+}
+
+.mora-stat--danger {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.mora-stat--warning {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.mora-stat--critical {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.mora-stat-label {
+  font-size: var(--font-xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.mora-stat-valor {
+  font-size: var(--font-xl);
+  font-weight: 700;
+}
+
+.mora-stat--danger .mora-stat-valor,
+.mora-stat--critical .mora-stat-valor {
+  color: var(--color-danger);
+}
+
+.mora-stat--warning .mora-stat-valor {
+  color: var(--color-warning-text);
+}
+
+.credito-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin: 12px 16px;
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+
+.credito-card--expandido {
+  border-color: var(--color-primary-border);
+}
+
+.credito-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: var(--color-surface);
+  transition: background-color var(--transition-fast);
+  gap: 12px;
+}
+
+.credito-header:hover {
+  background: #f8fafc;
+}
+
+.credito-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.credito-id {
+  font-weight: 700;
+  font-size: var(--font-lg);
+  color: var(--color-primary);
+}
+
+.credito-producto {
+  font-size: var(--font-md);
+  color: var(--color-muted);
+}
+
+.credito-header-montos {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: var(--font-sm);
+  color: var(--color-muted);
+  flex-wrap: wrap;
+}
+
+.credito-monto,
+.credito-saldo {
+  white-space: nowrap;
+}
+
+.credito-mora-total {
+  white-space: nowrap;
+}
+
+.credito-expand-icon {
+  font-size: 10px;
+  color: var(--color-muted);
+  margin-left: 4px;
+}
+
+.credito-detalle {
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  background: #fafbfc;
+}
+
+.credito-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+
+.cuotas-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--color-text);
+}
+
+.table-sm {
+  font-size: var(--font-sm);
+}
+
+.table-sm th,
+.table-sm td {
+  padding: 6px 8px;
+}
+
+.text-danger {
+  color: var(--color-danger);
+}
+
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}

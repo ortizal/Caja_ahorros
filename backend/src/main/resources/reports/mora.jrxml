@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="mora" pageWidth="842" pageHeight="595"
+              columnWidth="802" leftMargin="20" rightMargin="20"
+              topMargin="20" bottomMargin="20">
+    <parameter name="subtitle" class="java.lang.String"/>
+    <field name="socioCodigo" class="java.lang.String"/>
+    <field name="socioNombre" class="java.lang.String"/>
+    <field name="socioIdentificacion" class="java.lang.String"/>
+    <field name="socioTelefono" class="java.lang.String"/>
+    <field name="socioEmail" class="java.lang.String"/>
+    <field name="creditosEnMora" class="java.lang.String"/>
+    <field name="cuotasVencidas" class="java.lang.String"/>
+    <field name="moraTotal" class="java.lang.String"/>
+    <field name="saldoCapital" class="java.lang.String"/>
+    <field name="diasMoraMaximo" class="java.lang.String"/>
+    <title>
+        <band height="50">
+            <staticText>
+                <reportElement x="0" y="0" width="802" height="25"/>
+                <textElement>
+                    <font size="14" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Reporte de Seguimiento de Mora]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="0" y="25" width="802" height="20"/>
+                <textElement>
+                    <font size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{subtitle}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+    <columnHeader>
+        <band height="25">
+            <staticText>
+                <reportElement x="0" y="0" width="60" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Codigo]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="60" y="0" width="130" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Nombre]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="190" y="0" width="90" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Identificacion]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="280" y="0" width="70" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Telefono]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="350" y="0" width="50" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Cred. Mora]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="400" y="0" width="55" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Cuotas Venc.]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="455" y="0" width="80" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Mora Total]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="535" y="0" width="85" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Saldo Capital]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="620" y="0" width="80" height="25"/>
+                <textElement><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Dias Mora (max)]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="60" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{socioCodigo}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="60" y="0" width="130" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{socioNombre}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="190" y="0" width="90" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{socioIdentificacion}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="280" y="0" width="70" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{socioTelefono}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="350" y="0" width="50" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{creditosEnMora}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="400" y="0" width="55" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{cuotasVencidas}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="455" y="0" width="80" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{moraTotal}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="535" y="0" width="85" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{saldoCapital}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="620" y="0" width="80" height="20"/>
+                <textElement><font size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{diasMoraMaximo}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+</jasperReport>

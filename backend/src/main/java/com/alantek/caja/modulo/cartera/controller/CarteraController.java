@@ -3,6 +3,8 @@ package com.alantek.caja.modulo.cartera.controller;
 import com.alantek.caja.modulo.cartera.dto.CarteraItemResponse;
 import com.alantek.caja.modulo.cartera.dto.DashboardGraficosResponse;
 import com.alantek.caja.modulo.cartera.dto.DashboardResumenResponse;
+import com.alantek.caja.modulo.cartera.dto.MoraClienteDetalleResponse;
+import com.alantek.caja.modulo.cartera.dto.MoraClienteResponse;
 import com.alantek.caja.modulo.cartera.dto.MorosidadResponse;
 import com.alantek.caja.modulo.cartera.service.CarteraService;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +41,18 @@ public class CarteraController {
     @PreAuthorize("hasAuthority('CREDITOS:VER')")
     public MorosidadResponse morosidad() {
         return carteraService.morosidad();
+    }
+
+    @GetMapping("/mora/clientes")
+    @PreAuthorize("hasAuthority('CREDITOS:VER')")
+    public List<MoraClienteResponse> clientesConMora() {
+        return carteraService.clientesConMora();
+    }
+
+    @GetMapping("/mora/clientes/{socioId}")
+    @PreAuthorize("hasAuthority('CREDITOS:VER')")
+    public MoraClienteDetalleResponse detalleMoraCliente(@PathVariable Long socioId) {
+        return carteraService.detalleMoraCliente(socioId);
     }
 
     @GetMapping("/dashboard/resumen")

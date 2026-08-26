@@ -16,6 +16,7 @@ const MENU: MenuItem[] = [
   { ruta: '/aportaciones', etiqueta: 'Aportaciones', permiso: 'APORTACIONES:VER' },
   { ruta: '/ahorros', etiqueta: 'Ahorros', permiso: 'AHORROS:VER' },
   { ruta: '/creditos', etiqueta: 'Creditos', permiso: 'CREDITOS:VER' },
+  { ruta: '/mora', etiqueta: 'Mora', permiso: 'CREDITOS:VER' },
   { ruta: '/tesoreria', etiqueta: 'Tesorería', permiso: 'TESORERIA:VER' },
   { ruta: '/seguridad', etiqueta: 'Seguridad', permiso: 'SEGURIDAD:VER' },
   { ruta: '/reportes', etiqueta: 'Reportes', permiso: 'SEGURIDAD:VER' }

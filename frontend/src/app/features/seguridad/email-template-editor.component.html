@@ -1,0 +1,124 @@
+@if (cargando()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando plantillas…</div>
+  </div>
+} @else {
+  @if (!editando()) {
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div class="form-inline" style="gap: 8px;">
+        <select class="form-control form-control-sm" [value]="moduloFiltro()" (change)="moduloFiltro.set($any($event.target).value); cargarPlantillas()">
+          <option value="">Todos los módulos</option>
+          @for (m of modulos; track m) {
+            <option [value]="m">{{ m }}</option>
+          }
+        </select>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary" (click)="nuevo()" data-testid="btn-nueva-plantilla">+ Nueva Plantilla</button>
+    </div>
+
+    @if (plantillas().length === 0) {
+      <div class="empty-state" style="padding: 24px;">
+        <div class="empty-state-text">No hay plantillas creadas.</div>
+      </div>
+    } @else {
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        @for (p of plantillas(); track p.id) {
+          <div class="template-card">
+            <div class="template-info">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <strong>{{ p.nombre }}</strong>
+                <span class="badge" [class.badge-success]="p.activo" [class.badge-secondary]="!p.activo">
+                  {{ p.activo ? 'Activa' : 'Inactiva' }}
+                </span>
+              </div>
+              <div style="font-size: 12px; color: var(--color-text-secondary, #6b7280);">
+                <span class="badge badge-info" style="font-size: 11px;">{{ p.modulo }}</span>
+                Asunto: {{ p.asunto }}
+                @if (p.variables) {
+                  <span style="margin-left: 8px;">Variables: {{ p.variables }}</span>
+                }
+              </div>
+            </div>
+            <div class="template-actions">
+              <button type="button" class="btn btn-xs btn-outline-primary" (click)="editar(p)">✏️ Editar</button>
+              <button type="button" class="btn btn-xs" [class.btn-outline-warning]="p.activo" [class.btn-outline-success]="!p.activo"
+                      (click)="toggleActivo(p)">
+                {{ p.activo ? 'Desactivar' : 'Activar' }}
+              </button>
+              <button type="button" class="btn btn-xs btn-outline-danger" (click)="eliminar(p)">🗑️</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">{{ plantillaActual() ? 'Editar Plantilla' : 'Nueva Plantilla' }}</h3>
+      </div>
+      <div style="padding: 16px;">
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="field">
+            <label class="form-label">Módulo</label>
+            <select class="form-control form-control-sm" formControlName="modulo">
+              @for (m of modulos; track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label class="form-label">Nombre de la plantilla</label>
+            <input class="form-control form-control-sm" type="text" formControlName="nombre"
+                   placeholder="Ej: bienvenida, recordatorio_pago" />
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <label class="form-label">Asunto del correo</label>
+            <input class="form-control form-control-sm" type="text" formControlName="asunto"
+                   placeholder="Use dobles llaves para valores dinámicos, ej: nombre_usuario" />
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <label class="form-label">Variables disponibles (separadas por coma)</label>
+            <input class="form-control form-control-sm" type="text" formControlName="variables"
+                   placeholder="nombre_usuario, mensaje, fecha" />
+            @if (form.get('variables')?.value) {
+              <small style="color: var(--color-text-secondary);">Interpolación: {{ VariablesHelper() }}</small>
+            }
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <label class="form-label">Estado</label>
+            <select class="form-control form-control-sm" formControlName="activo">
+              <option [value]="true">Activa</option>
+              <option [value]="false">Inactiva</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="form-label" style="margin: 0; font-weight: 600;">Cuerpo HTML</label>
+            <button type="button" class="btn btn-xs btn-outline-secondary" (click)="togglePreview()">
+              {{ preview() ? 'Editar' : 'Vista Previa' }}
+            </button>
+          </div>
+          @if (preview()) {
+            <div style="border: 1px solid var(--color-border, #e5e7eb); border-radius: 4px; padding: 16px; background: #fff; min-height: 200px;"
+                 [innerHTML]="form.get('cuerpoHtml')?.value">
+            </div>
+          } @else {
+            <textarea class="form-control form-control-sm" formControlName="cuerpoHtml" rows="16"
+                      style="font-family: 'Courier New', monospace; font-size: 12px; resize: vertical;"
+                      placeholder="HTML del correo"></textarea>
+          }
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Cancelar</button>
+          <button type="button" class="btn btn-sm btn-primary" (click)="guardar()" [disabled]="guardando() || form.invalid">
+            @if (guardando()) { Guardando… } @else { Guardar Plantilla }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}

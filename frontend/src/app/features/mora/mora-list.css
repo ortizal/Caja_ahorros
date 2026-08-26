@@ -1,0 +1,87 @@
+.mora-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mora-resumen-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mora-resumen-item--danger {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.mora-resumen-label {
+  font-size: var(--font-sm);
+  color: var(--color-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mora-resumen-valor {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.mora-resumen-item--danger .mora-resumen-valor {
+  color: var(--color-danger);
+}
+
+.mora-row {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.mora-row:hover {
+  background-color: var(--color-primary-light);
+}
+
+.td-mono {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: var(--font-sm);
+}
+
+.text-danger {
+  color: var(--color-danger);
+}
+
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.form-control-sm {
+  height: 32px;
+  padding: 4px 10px;
+  font-size: var(--font-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  min-width: 260px;
+}
+
+.form-control-sm:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}

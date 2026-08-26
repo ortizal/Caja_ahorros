@@ -1,0 +1,109 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Seguimiento de Mora</h1>
+    <p class="page-subtitle">Clientes con cuotas vencidas y saldos en mora</p>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="exportando()" (click)="exportarMora('pdf')" data-testid="btn-export-pdf">
+      PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="exportando()" (click)="exportarMora('xlsx')" data-testid="btn-export-excel">
+      Excel
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cargar()" data-testid="btn-recargar">
+      Actualizar
+    </button>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="mora-error">
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<div class="mora-resumen" data-testid="mora-resumen">
+  <div class="mora-resumen-item">
+    <span class="mora-resumen-label">Clientes en Mora</span>
+    <span class="mora-resumen-valor">{{ clientes().length }}</span>
+  </div>
+  <div class="mora-resumen-item">
+    <span class="mora-resumen-label">Créditos en Mora</span>
+    <span class="mora-resumen-valor">{{ totalCreditosEnMora() }}</span>
+  </div>
+  <div class="mora-resumen-item">
+    <span class="mora-resumen-label">Cuotas Vencidas</span>
+    <span class="mora-resumen-valor">{{ totalCuotasVencidas() }}</span>
+  </div>
+  <div class="mora-resumen-item mora-resumen-item--danger">
+    <span class="mora-resumen-label">Mora Total</span>
+    <span class="mora-resumen-valor">${{ totalMora() | number: '1.2-2' }}</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Clientes</h3>
+    <div class="header-actions">
+      <input
+        type="text"
+        class="form-control form-control-sm"
+        placeholder="Buscar por código, nombre o identificación..."
+        [value]="buscar()"
+        (input)="onBuscar($event)"
+        data-testid="input-buscar"
+      />
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="empty-state">
+      <div class="empty-state-icon">⌛</div>
+      <div class="empty-state-text">Cargando clientes con mora...</div>
+    </div>
+  } @else if (clientesFiltrados().length === 0) {
+    <div class="empty-state">
+      <div class="empty-state-icon">✅</div>
+      <div class="empty-state-text">No hay clientes con mora pendiente</div>
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table" data-testid="mora-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Identificación</th>
+            <th>Teléfono</th>
+            <th>Créditos en Mora</th>
+            <th>Cuotas Vencidas</th>
+            <th>Mora Total</th>
+            <th>Saldo Capital</th>
+            <th>Días Mora (máx)</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cliente of clientesFiltrados(); track cliente.socioId) {
+            <tr class="mora-row" (click)="verDetalle(cliente.socioId)" data-testid="mora-cliente-row">
+              <td class="td-mono">{{ cliente.socioCodigo }}</td>
+              <td><strong>{{ cliente.socioNombre }}</strong></td>
+              <td>{{ cliente.socioIdentificacion }}</td>
+              <td>{{ cliente.socioTelefono ?? '—' }}</td>
+              <td><span class="badge badge-danger">{{ cliente.creditosEnMora }}</span></td>
+              <td><span class="badge badge-warning">{{ cliente.cuotasVencidas }}</span></td>
+              <td><strong class="text-danger">${{ cliente.moraTotal | number: '1.2-2' }}</strong></td>
+              <td>${{ cliente.saldoCapitalTotal | number: '1.2-2' }}</td>
+              <td><span [class]="badgeDias(cliente.diasMoraMaximo)">{{ cliente.diasMoraMaximo }} días</span></td>
+              <td class="td-actions">
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="verDetalle(cliente.socioId); $event.stopPropagation()" data-testid="btn-detalle">
+                  Ver Detalle
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

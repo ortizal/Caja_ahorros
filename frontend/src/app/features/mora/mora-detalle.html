@@ -1,0 +1,139 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Detalle de Mora</h1>
+    @if (detalle(); as d) {
+      <p class="page-subtitle">{{ d.socio.socioCodigo }} — {{ d.socio.socioNombre }}</p>
+    }
+  </div>
+  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="volver()" data-testid="btn-volver">
+    ← Volver
+  </button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (cargando()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando detalle...</div>
+  </div>
+} @else if (detalle(); as d) {
+  <div class="detalle-grid">
+    <div class="card detalle-socio">
+      <h3 class="card-title">Información del Socio</h3>
+      <div class="socio-campos">
+        <div class="campo"><span class="campo-label">Código</span><span class="campo-valor">{{ d.socio.socioCodigo }}</span></div>
+        <div class="campo"><span class="campo-label">Nombre</span><span class="campo-valor">{{ d.socio.socioNombre }}</span></div>
+        <div class="campo"><span class="campo-label">Identificación</span><span class="campo-valor">{{ d.socio.socioIdentificacion }}</span></div>
+        <div class="campo"><span class="campo-label">Teléfono</span><span class="campo-valor">{{ d.socio.socioTelefono ?? '—' }}</span></div>
+        <div class="campo"><span class="campo-label">Email</span><span class="campo-valor">{{ d.socio.socioEmail ?? '—' }}</span></div>
+      </div>
+
+      <div class="mora-stats">
+        <div class="mora-stat mora-stat--danger">
+          <span class="mora-stat-label">Créditos en Mora</span>
+          <span class="mora-stat-valor">{{ d.socio.creditosEnMora }}</span>
+        </div>
+        <div class="mora-stat mora-stat--warning">
+          <span class="mora-stat-label">Cuotas Vencidas</span>
+          <span class="mora-stat-valor">{{ d.socio.cuotasVencidas }}</span>
+        </div>
+        <div class="mora-stat mora-stat--danger">
+          <span class="mora-stat-label">Mora Total</span>
+          <span class="mora-stat-valor">${{ d.socio.moraTotal | number: '1.2-2' }}</span>
+        </div>
+        <div class="mora-stat">
+          <span class="mora-stat-label">Saldo Capital</span>
+          <span class="mora-stat-valor">${{ d.socio.saldoCapitalTotal | number: '1.2-2' }}</span>
+        </div>
+        <div class="mora-stat mora-stat--critical">
+          <span class="mora-stat-label">Días Mora (máx)</span>
+          <span class="mora-stat-valor">{{ d.socio.diasMoraMaximo }} días</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
+    <div class="card-header">
+      <h3 class="card-title">Créditos en Mora ({{ d.creditos.length }})</h3>
+    </div>
+
+    @if (d.creditos.length === 0) {
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <div class="empty-state-text">Este socio no tiene créditos actualmente en mora</div>
+      </div>
+    } @else {
+      @for (credito of d.creditos; track credito.creditoId) {
+        <div class="credito-card" [class.credito-card--expandido]="creditoExpandido() === credito.creditoId" data-testid="credito-card">
+          <div class="credito-header" (click)="toggleCredito(credito.creditoId)">
+            <div class="credito-header-info">
+              <span class="credito-id">#{{ credito.creditoId }}</span>
+              <span class="credito-producto">{{ credito.nombreProducto }}</span>
+              <span class="badge badge-danger">{{ credito.estado }}</span>
+            </div>
+            <div class="credito-header-montos">
+              <span class="credito-monto">Monto: ${{ credito.montoDesembolsado | number: '1.2-2' }}</span>
+              <span class="credito-saldo">Saldo: ${{ credito.saldoCapital | number: '1.2-2' }}</span>
+              <span class="credito-mora-total">Mora: <strong class="text-danger">${{ credito.moraTotalCredito | number: '1.2-2' }}</strong></span>
+              <span class="credito-expand-icon">{{ creditoExpandido() === credito.creditoId ? '▼' : '▶' }}</span>
+            </div>
+          </div>
+
+          @if (creditoExpandido() === credito.creditoId) {
+            <div class="credito-detalle">
+              <div class="credito-info-grid">
+                <div class="campo"><span class="campo-label">Tasa Interés</span><span class="campo-valor">{{ credito.tasaInteres }}%</span></div>
+                <div class="campo"><span class="campo-label">Tasa Mora</span><span class="campo-valor">{{ credito.tasaMora }}%</span></div>
+                <div class="campo"><span class="campo-label">Plazo</span><span class="campo-valor">{{ credito.plazoMeses }} meses</span></div>
+                <div class="campo"><span class="campo-label">Desembolso</span><span class="campo-valor">{{ credito.fechaDesembolso }}</span></div>
+                <div class="campo">
+                  <button type="button" class="btn btn-sm btn-outline-primary" (click)="verCredito(credito.creditoId); $event.stopPropagation()" data-testid="btn-ver-credito">
+                    Ver Crédito Completo
+                  </button>
+                </div>
+              </div>
+
+              <h4 class="cuotas-title">Cuotas con Mora ({{ credito.cuotasConMora.length }})</h4>
+              <div class="table-responsive">
+                <table class="table table-sm" data-testid="cuotas-table">
+                  <thead>
+                    <tr>
+                      <th># Cuota</th>
+                      <th>Vencimiento</th>
+                      <th>Capital</th>
+                      <th>Interés</th>
+                      <th>Cuota Total</th>
+                      <th>Mora</th>
+                      <th>Total a Pagar</th>
+                      <th>Días Vencido</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (cuota of credito.cuotasConMora; track cuota.cuotaId) {
+                      <tr>
+                        <td>{{ cuota.numeroCuota }}</td>
+                        <td>{{ cuota.fechaVencimiento }}</td>
+                        <td>${{ cuota.capital | number: '1.2-2' }}</td>
+                        <td>${{ cuota.interes | number: '1.2-2' }}</td>
+                        <td>${{ cuota.cuotaTotal | number: '1.2-2' }}</td>
+                        <td><strong class="text-danger">${{ cuota.mora | number: '1.2-2' }}</strong></td>
+                        <td><strong>${{ cuota.totalPagar | number: '1.2-2' }}</strong></td>
+                        <td><span [class]="badgeDias(cuota.diasVencido)">{{ cuota.diasVencido }} días</span></td>
+                        <td><span [class]="badgeEstado(cuota.estado)">{{ cuota.estado }}</span></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+}

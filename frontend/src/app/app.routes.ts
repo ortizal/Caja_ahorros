@@ -57,6 +57,11 @@ export const routes: Routes = [
         loadChildren: () => import('./features/creditos/creditos.routes').then((m) => m.creditosRoutes)
       },
       {
+        path: 'mora',
+        canActivate: [permisoGuard('CREDITOS:VER')],
+        loadChildren: () => import('./features/mora/mora.routes').then((m) => m.moraRoutes)
+      },
+      {
         path: 'tesoreria',
         canActivate: [permisoGuard('TESORERIA:VER')],
         loadChildren: () => import('./features/tesoreria/tesoreria.routes').then((m) => m.tesoreriaRoutes)

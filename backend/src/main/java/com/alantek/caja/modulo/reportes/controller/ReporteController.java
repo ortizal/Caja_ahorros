@@ -142,6 +142,8 @@ public class ReporteController {
             case "aportaciones" -> "Todas las aportaciones";
             case "creditos" -> "Todos los creditos";
             case "usuarios" -> "Todos los usuarios";
+            case "mora" -> "Clientes con mora";
+            case "cartera-vencida" -> "Cartera vencida";
             default -> "";
         };
     }

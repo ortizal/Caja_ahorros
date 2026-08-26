@@ -58,6 +58,38 @@ CREATE TABLE IF NOT EXISTS sesiones (
   cerrada_at TIMESTAMPTZ
 );
 
+CREATE TABLE IF NOT EXISTS email_configuracion (
+  id BIGSERIAL PRIMARY KEY,
+  metodo VARCHAR(20) NOT NULL DEFAULT 'SMTP',
+  smtp_host VARCHAR(150),
+  smtp_port INT DEFAULT 587,
+  smtp_username VARCHAR(150),
+  smtp_password VARCHAR(255),
+  smtp_use_tls BOOLEAN DEFAULT TRUE,
+  smtp_use_ssl BOOLEAN DEFAULT FALSE,
+  api_url VARCHAR(500),
+  api_key VARCHAR(500),
+  api_provider VARCHAR(50),
+  from_email VARCHAR(150),
+  from_name VARCHAR(150),
+  activo BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS email_plantilla (
+  id BIGSERIAL PRIMARY KEY,
+  modulo VARCHAR(50) NOT NULL,
+  nombre VARCHAR(100) NOT NULL,
+  asunto VARCHAR(200) NOT NULL,
+  cuerpo_html TEXT NOT NULL,
+  variables TEXT,
+  activo BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ,
+  UNIQUE (modulo, nombre)
+);
+
 CREATE TABLE IF NOT EXISTS auditoria (
   id BIGSERIAL PRIMARY KEY,
   usuario_id BIGINT REFERENCES usuarios(id),

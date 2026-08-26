@@ -1,0 +1,165 @@
+<div class="email-config-grid">
+  @if (cargando()) {
+    <div class="empty-state">
+      <div class="empty-state-icon">⌛</div>
+      <div class="empty-state-text">Cargando configuración…</div>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Método de Envío</h3>
+      </div>
+      <div style="padding: 16px;">
+        <div class="form-grid">
+          <div class="field">
+            <label class="form-label">Método</label>
+            <select class="form-control" formControlName="metodo">
+              <option value="SMTP">SMTP Genérico</option>
+              <option value="GMAIL">Gmail (SMTP)</option>
+              <option value="HOTMAIL">Hotmail (SMTP)</option>
+              <option value="API">API REST</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="form-label">Estado</label>
+            <select class="form-control" formControlName="activo">
+              <option [value]="true">Activo</option>
+              <option [value]="false">Inactivo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (showSmtp()) {
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Configuración SMTP</h3>
+          @if (form.get('metodo')?.value === 'GMAIL') {
+            <span class="badge badge-info" style="font-size: 11px;">smtp.gmail.com / 587</span>
+          }
+          @if (form.get('metodo')?.value === 'HOTMAIL') {
+            <span class="badge badge-info" style="font-size: 11px;">smtp-mail.outlook.com / 587</span>
+          }
+        </div>
+        <div style="padding: 16px;">
+          <div class="form-grid">
+            <div class="field">
+              <label class="form-label">Host</label>
+              <input class="form-control form-control-sm" type="text" formControlName="smtpHost"
+                     placeholder="smtp.ejemplo.com" />
+            </div>
+            <div class="field">
+              <label class="form-label">Puerto</label>
+              <input class="form-control form-control-sm" type="number" formControlName="smtpPort" />
+            </div>
+            <div class="field">
+              <label class="form-label">Usuario</label>
+              <input class="form-control form-control-sm" type="text" formControlName="smtpUsername"
+                     placeholder="usuario@correo.com" />
+            </div>
+            <div class="field">
+              <label class="form-label">Contraseña</label>
+              <input class="form-control form-control-sm" type="password" formControlName="smtpPassword"
+                     placeholder="••••••" />
+            </div>
+            <div class="field">
+              <label class="form-label">TLS</label>
+              <select class="form-control form-control-sm" formControlName="smtpUseTls">
+                <option [value]="true">Activado</option>
+                <option [value]="false">Desactivado</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="form-label">SSL</label>
+              <select class="form-control form-control-sm" formControlName="smtpUseSsl">
+                <option [value]="false">Desactivado</option>
+                <option [value]="true">Activado</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (!showSmtp()) {
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Configuración API REST</h3>
+        </div>
+        <div style="padding: 16px;">
+          <div class="form-grid">
+            <div class="field">
+              <label class="form-label">URL del endpoint</label>
+              <input class="form-control form-control-sm" type="url" formControlName="apiUrl"
+                     placeholder="https://api.sendgrid.com/v3/mail/send" />
+            </div>
+            <div class="field">
+              <label class="form-label">API Key</label>
+              <input class="form-control form-control-sm" type="password" formControlName="apiKey"
+                     placeholder="Bearer token o API key" />
+            </div>
+            <div class="field">
+              <label class="form-label">Proveedor</label>
+              <select class="form-control form-control-sm" formControlName="apiProvider">
+                <option value="">Seleccionar</option>
+                <option value="sendgrid">SendGrid</option>
+                <option value="mailgun">Mailgun</option>
+                <option value="ses">AWS SES</option>
+                <option value="mailchimp">Mailchimp</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Remitente</h3>
+      </div>
+      <div style="padding: 16px;">
+        <div class="form-grid">
+          <div class="field">
+            <label class="form-label">Email del remitente</label>
+            <input class="form-control form-control-sm" type="email" formControlName="fromEmail"
+                   placeholder="noreply@caja-ahorros.com" />
+          </div>
+          <div class="field">
+            <label class="form-label">Nombre del remitente</label>
+            <input class="form-control form-control-sm" type="text" formControlName="fromName"
+                   placeholder="Caja de Ahorros" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button type="button" class="btn btn-primary btn-sm" (click)="guardar()" [disabled]="guardando() || form.invalid">
+        @if (guardando()) { Guardando… } @else { Guardar Configuración }
+      </button>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="card-header">
+        <h3 class="card-title">Enviar Correo de Prueba</h3>
+      </div>
+      <div style="padding: 16px;">
+        <div class="form-inline" style="gap: 8px;">
+          <label class="field" style="flex: 1;">
+            <span>Dirección destino</span>
+            <input class="form-control form-control-sm" type="email" placeholder="correo@ejemplo.com"
+                   [value]="testEmail()" (input)="testEmail.set($any($event.target).value)" />
+          </label>
+          <div style="display: flex; align-items: flex-end; padding-bottom: 2px;">
+            <button type="button" class="btn btn-sm btn-outline-primary"
+                    [disabled]="enviandoTest() || !testEmail()" (click)="enviarTest()">
+              @if (enviandoTest()) { Enviando… } @else { Enviar prueba }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

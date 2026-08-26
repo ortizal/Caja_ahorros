@@ -45,6 +45,14 @@ export class ReporteService {
     return this.exportar('cartera', 'pdf');
   }
 
+  exportarMora(formato: 'pdf' | 'xlsx'): Observable<Blob> {
+    return this.descargarReporte('mora', formato);
+  }
+
+  exportarCarteraVencida(formato: 'pdf' | 'xlsx'): Observable<Blob> {
+    return this.descargarReporte('cartera-vencida', formato);
+  }
+
   exportarSocios(formato: 'csv' | 'xlsx' | 'pdf'): Observable<Blob> {
     return this.exportar('socios', formato);
   }

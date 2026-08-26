@@ -41,4 +41,14 @@ public final class ReportBeans {
     public record CuotaContratoData(String numero, String fechaVencimiento,
                                     String capital, String interes,
                                     String cuotaTotal, String saldoCapital) {}
+
+    public record MoraData(String socioCodigo, String socioNombre, String socioIdentificacion,
+                           String socioTelefono, String socioEmail, String creditosEnMora,
+                           String cuotasVencidas, String moraTotal, String saldoCapital,
+                           String diasMoraMaximo) {}
+
+    public record CarteraVencidaData(String socio, String producto, String numeroCuota,
+                                     String fechaVencimiento, String capital, String cuotaTotal,
+                                     String mora, String totalPagar, String estado,
+                                     String diasVencido) {}
 }

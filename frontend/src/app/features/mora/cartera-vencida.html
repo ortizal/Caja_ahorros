@@ -1,0 +1,126 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Cartera Vencida</h1>
+    <p class="page-subtitle">Administración de cartera por vencer y vencida</p>
+  </div>
+  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cargar()" data-testid="btn-recargar">
+    Actualizar
+  </button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (morosidad(); as m) {
+  <div class="cartera-resumen" data-testid="cartera-resumen">
+    <div class="cartera-resumen-item">
+      <span class="cartera-resumen-label">Cuotas Vencidas</span>
+      <span class="cartera-resumen-valor">{{ m.cuotasVencidas }}</span>
+    </div>
+    <div class="cartera-resumen-item">
+      <span class="cartera-resumen-label">Créditos en Mora</span>
+      <span class="cartera-resumen-valor">{{ m.creditosEnMora }}</span>
+    </div>
+    <div class="cartera-resumen-item cartera-resumen-item--danger">
+      <span class="cartera-resumen-label">Saldo Vencido</span>
+      <span class="cartera-resumen-valor">${{ m.saldoVencido | number: '1.2-2' }}</span>
+    </div>
+    <div class="cartera-resumen-item">
+      <span class="cartera-resumen-label">Cartera Colocada</span>
+      <span class="cartera-resumen-valor">${{ m.carteraColocada | number: '1.2-2' }}</span>
+    </div>
+    <div class="cartera-resumen-item cartera-resumen-item--warning">
+      <span class="cartera-resumen-label">% Morosidad</span>
+      <span class="cartera-resumen-valor">{{ m.porcentajeMorosidad | number: '1.2-2' }}%</span>
+    </div>
+  </div>
+}
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Cuotas en Cartera</h3>
+    <div class="header-actions">
+      <input
+        type="text"
+        class="form-control form-control-sm"
+        placeholder="Buscar socio o producto..."
+        [value]="buscar()"
+        (input)="onBuscar($event)"
+        data-testid="input-buscar"
+      />
+    </div>
+  </div>
+
+  <div class="cartera-toolbar" data-testid="cartera-toolbar">
+    <div class="filter-group" role="group" aria-label="Filtro de estado">
+      @for (opcion of filtros; track opcion) {
+        <button type="button" class="btn btn-sm"
+                [class.btn-primary]="filtroEstado() === opcion"
+                [class.btn-outline]="filtroEstado() !== opcion"
+                (click)="filtrar(opcion)"
+                [attr.data-testid]="'filtro-' + opcion.toLowerCase()">
+          {{ opcion }}
+        </button>
+      }
+    </div>
+    <div class="export-group">
+      <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="exportando()" (click)="exportarCsv()" data-testid="btn-csv">
+        CSV
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="exportando()" (click)="exportarExcel()" data-testid="btn-excel">
+        Excel
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="exportando()" (click)="exportarPdf()" data-testid="btn-pdf">
+        PDF
+      </button>
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="empty-state">
+      <div class="empty-state-icon">⌛</div>
+      <div class="empty-state-text">Cargando cartera...</div>
+    </div>
+  } @else if (itemsFiltrados().length === 0) {
+    <div class="empty-state">
+      <div class="empty-state-icon">✅</div>
+      <div class="empty-state-text">No hay cuotas en la cartera seleccionada</div>
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table" data-testid="cartera-table">
+        <thead>
+          <tr>
+            <th>Socio</th>
+            <th>Producto</th>
+            <th>Cuota</th>
+            <th>Vencimiento</th>
+            <th>Capital</th>
+            <th>Cuota Total</th>
+            <th>Mora</th>
+            <th>Total a Pagar</th>
+            <th>Días Vencido</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of itemsFiltrados(); track item.id) {
+            <tr>
+              <td><strong>{{ item.socioCodigo }}</strong> — {{ item.socioNombre }}</td>
+              <td>{{ item.nombreProducto ?? '—' }}</td>
+              <td>#{{ item.numeroCuota }}</td>
+              <td>{{ item.fechaVencimiento }}</td>
+              <td>${{ item.saldoCapital | number: '1.2-2' }}</td>
+              <td>${{ item.cuotaTotal | number: '1.2-2' }}</td>
+              <td><strong class="text-danger">${{ item.mora | number: '1.2-2' }}</strong></td>
+              <td><strong>${{ item.totalPagar | number: '1.2-2' }}</strong></td>
+              <td><span [class]="item.diasVencido > 30 ? 'badge badge-danger' : 'badge badge-warning'">{{ item.diasVencido }} días</span></td>
+              <td><span [class]="badgeEstado(item.estado)">{{ item.estado }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
