@@ -6,6 +6,7 @@ import java.time.LocalDate;
 public record ProductoCreditoResponse(
         Long id,
         String nombre,
+        boolean permiteNoSocio,
         BigDecimal tasaInteres,
         BigDecimal tasaMora,
         String sistemaAmortizacion,

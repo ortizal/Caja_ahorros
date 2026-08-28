@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">Detalle Credito #{{ creditoDetalle()?.credito?.id ?? '...' }}</h1>
-    <p class="page-subtitle">{{ creditoDetalle()?.credito?.socioNombre ?? 'Cargando...' }}</p>
+    <p class="page-subtitle">{{ creditoDetalle()?.credito?.socioNombre ?? creditoDetalle()?.credito?.clienteNoSocioNombre ?? 'Cargando...' }}</p>
   </div>
   <div class="header-actions">
     <button type="button" class="btn btn-sm btn-outline-secondary" (click)="volver()" data-testid="btn-volver">
@@ -23,7 +23,7 @@
 } @else if (creditoDetalle(); as det) {
   <div class="card" data-testid="detalle-panel">
     <div class="card-header">
-      <h3 class="card-title">Credito #{{ det.credito.id }} — {{ det.credito.socioNombre }}</h3>
+      <h3 class="card-title">Credito #{{ det.credito.id }} — {{ det.credito.socioNombre ?? det.credito.clienteNoSocioNombre }}</h3>
       <div style="display: flex; gap: 8px; align-items: center;">
         <span class="badge badge-success" style="font-size: 14px; padding: 4px 12px;">
           Saldo: ${{ det.credito.saldoCapital | number: '1.2-2' }}
@@ -47,7 +47,7 @@
     @if (detalleTab() === 'resumen') {
       <div class="detail-resumen">
         <div class="resumen-section">
-          <h4>Datos del Socio</h4>
+          <h4>Datos del Cliente</h4>
           @if (det.socio; as s) {
             <div class="resumen-grid">
               <div class="resumen-field"><span class="label">Codigo:</span> {{ s.codigo }}</div>
@@ -63,7 +63,12 @@
               </div>
             </div>
           } @else {
-            <p class="empty-text">No se encontraron datos del socio.</p>
+            <div class="resumen-grid">
+              <div class="resumen-field"><span class="label">Tipo:</span> No Socio</div>
+              <div class="resumen-field"><span class="label">Nombre:</span> {{ det.credito.clienteNoSocioNombre }}</div>
+              <div class="resumen-field"><span class="label">Identificacion:</span> {{ det.credito.clienteNoSocioIdentificacion }}</div>
+              <div class="resumen-field"><span class="label">Telefono:</span> {{ det.credito.clienteNoSocioTelefono ?? '-' }}</div>
+            </div>
           }
         </div>
 
@@ -75,6 +80,8 @@
             <div class="resumen-field"><span class="label">Tasa Interes:</span> {{ det.credito.tasaInteres | number }}%</div>
             <div class="resumen-field"><span class="label">Plazo:</span> {{ det.credito.plazoMeses }} meses</div>
             <div class="resumen-field"><span class="label">Fecha Desembolso:</span> {{ det.credito.fechaDesembolso ?? '-' }}</div>
+            <div class="resumen-field"><span class="label">Saldo Actual:</span> <strong>${{ det.credito.saldoCapital | number: '1.2-2' }}</strong></div>
+            <div class="resumen-field"><span class="label">Total Abonado a Capital:</span> ${{ det.credito.abonoCapitalTotal | number: '1.2-2' }}</div>
             <div class="resumen-field"><span class="label">Estado:</span>
               <span class="badge" [class.badge-success]="det.credito.estado === 'VIGENTE'" [class.badge-danger]="det.credito.estado === 'EN_MORA'" [class.badge-secondary]="det.credito.estado !== 'VIGENTE' && det.credito.estado !== 'EN_MORA'">
                 {{ det.credito.estado }}
@@ -103,8 +110,71 @@
                 Refinanciar
               </button>
             </form>
+  </div>
+
+  @if (pagoSeleccionado(); as cuota) {
+    <div class="modal-overlay" data-testid="pago-modal">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">
+            @if (tipoPago() === 'abono') {
+              Abono a Capital — Cuota #{{ cuota.numeroCuota }}
+            } @else if (tipoPago() === 'adelantado') {
+              Pago Adelantado — Cuota #{{ cuota.numeroCuota }}
+            } @else {
+              Cobrar Cuota #{{ cuota.numeroCuota }}
+            }
+          </h3>
+          <button type="button" class="modal-close" (click)="cerrarPago()" aria-label="Cerrar">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="resumen-grid">
+            <div class="resumen-field"><span class="label">Capital cuota:</span> ${{ cuota.capital | number: '1.2-2' }}</div>
+            <div class="resumen-field"><span class="label">Interes cuota:</span> ${{ cuota.interes | number: '1.2-2' }}</div>
+            @if (tipoPago() === 'abono') {
+              <div class="resumen-field"><span class="label">Saldo actual credito:</span> ${{ creditoDetalle()?.credito?.saldoCapital | number: '1.2-2' }}</div>
+            }
           </div>
-        }
+          @if (error()) {
+            <div class="alert alert-error" style="margin-top: 12px;">
+              <span>{{ error() }}</span>
+            </div>
+          }
+          @if (tipoPago() === 'abono') {
+            <div class="form" style="margin-top: 12px;">
+              <div class="form-grid">
+                <label class="field">
+                  <span>Monto a abonar ($) *</span>
+                  <input type="number" class="form-control form-control-sm" [value]="abonoMonto()" min="0.01"
+                         [max]="cuota.capital" (input)="abonoMonto.set($any($event.target).valueAsNumber || 0)"
+                         data-testid="input-abono-monto" />
+                </label>
+                <label class="field">
+                  <span>Descripcion</span>
+                  <input class="form-control form-control-sm" [value]="abonoDescripcion()"
+                         (input)="abonoDescripcion.set($any($event.target).value)"
+                         placeholder="Opcional" data-testid="input-abono-descripcion" />
+                </label>
+              </div>
+              <p class="form-hint">El abono se aplicara a esta cuota y a las siguientes pendientes, reduciendo su capital.</p>
+            </div>
+          } @else if (tipoPago() === 'adelantado') {
+            <p class="form-hint" style="margin-top: 12px;">Se marcara la cuota {{ cuota.numeroCuota }} como pagada por adelantado (capital + interes), aun sin vencer.</p>
+          } @else {
+            <p class="form-hint" style="margin-top: 12px;">El pago cubrira la cuota completa (capital + interes{{ tipoPago() === 'normal' ? ' + mora' : '' }}).</p>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cerrarPago()">Cancelar</button>
+          <button type="button" class="btn btn-sm btn-primary" [disabled]="guardando()"
+                  (click)="registrarPago()" data-testid="btn-confirmar-pago">
+            {{ guardando() ? 'Procesando…' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}
       </div>
     }
 
@@ -140,10 +210,24 @@
                   </span>
                 </td>
                 <td style="text-align: right;">
-                  @if (puedeCrear() && (q.estado === 'PENDIENTE' || q.estado === 'VENCIDA')) {
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-pagar-cuota" (click)="pagarCuota(q)">
-                      Cobrar
-                    </button>
+                  @if (puedeCrear()) {
+                    @if (q.estado === 'PENDIENTE') {
+                      <div style="display: inline-flex; gap: 6px;">
+                        <button type="button" class="btn btn-sm btn-primary" data-testid="btn-pagar-cuota" (click)="pagarCuota(q, 'normal')">
+                          Cobrar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" title="Pago adelantado" (click)="pagarCuota(q, 'adelantado')">
+                          Adelantar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success" title="Abono a capital" (click)="pagarCuota(q, 'abono')">
+                          Abono
+                        </button>
+                      </div>
+                    } @else if (q.estado === 'VENCIDA') {
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-pagar-cuota" (click)="pagarCuota(q, 'normal')">
+                        Cobrar
+                      </button>
+                    }
                   }
                 </td>
               </tr>
@@ -160,10 +244,12 @@
         <table class="table" data-testid="pagos-table">
           <thead>
             <tr>
+              <th>Tipo</th>
               <th>Cuota</th>
               <th>Capital</th>
               <th>Interes</th>
               <th>Mora</th>
+              <th>Abono Cap.</th>
               <th>Comprobante</th>
               <th>Fecha de Pago</th>
             </tr>
@@ -171,16 +257,22 @@
           <tbody>
             @for (p of pagos(); track p.id) {
               <tr>
-                <td>#{{ p.cuotaId }}</td>
+                <td>
+                  <span class="badge" [class.badge-success]="p.tipo === 'ABONO'" [class.badge-primary]="p.tipo === 'ADELANTADO'" [class.badge-secondary]="p.tipo === 'CUOTA'">
+                    {{ p.tipo }}
+                  </span>
+                </td>
+                <td>{{ p.cuotaNumero != null ? '#' + p.cuotaNumero : '-' }}</td>
                 <td>${{ p.montoCapital | number: '1.2-2' }}</td>
                 <td>${{ p.montoInteres | number: '1.2-2' }}</td>
                 <td>${{ p.montoMora | number: '1.2-2' }}</td>
+                <td>${{ p.montoAbonoCapital | number: '1.2-2' }}</td>
                 <td><code>{{ p.comprobanteNumero ?? '-' }}</code></td>
                 <td>{{ p.pagadoAt | date: 'short' }}</td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="6" class="empty-state">No hay pagos registrados para este credito.</td>
+                <td colspan="8" class="empty-state">No hay pagos registrados para este credito.</td>
               </tr>
             }
           </tbody>

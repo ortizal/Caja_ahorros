@@ -22,8 +22,17 @@ public class Credito {
     @Column(name = "solicitud_id")
     private Long solicitudId;
 
-    @Column(name = "socio_id", nullable = false)
+    @Column(name = "socio_id")
     private Long socioId;
+
+    @Column(name = "cliente_no_socio_nombre", length = 150)
+    private String clienteNoSocioNombre;
+
+    @Column(name = "cliente_no_socio_identificacion", length = 20)
+    private String clienteNoSocioIdentificacion;
+
+    @Column(name = "cliente_no_socio_telefono", length = 30)
+    private String clienteNoSocioTelefono;
 
     @Column(name = "producto_id", nullable = false)
     private Long productoId;
@@ -42,6 +51,9 @@ public class Credito {
 
     @Column(name = "saldo_capital", nullable = false)
     private BigDecimal saldoCapital;
+
+    @Column(name = "abono_capital_total", nullable = false)
+    private BigDecimal abonoCapitalTotal = BigDecimal.ZERO;
 
     @Column(nullable = false, length = 20)
     private String estado = "APROBADA";
@@ -74,6 +86,30 @@ public class Credito {
 
     public void setSocioId(Long socioId) {
         this.socioId = socioId;
+    }
+
+    public String getClienteNoSocioNombre() {
+        return clienteNoSocioNombre;
+    }
+
+    public void setClienteNoSocioNombre(String clienteNoSocioNombre) {
+        this.clienteNoSocioNombre = clienteNoSocioNombre;
+    }
+
+    public String getClienteNoSocioIdentificacion() {
+        return clienteNoSocioIdentificacion;
+    }
+
+    public void setClienteNoSocioIdentificacion(String clienteNoSocioIdentificacion) {
+        this.clienteNoSocioIdentificacion = clienteNoSocioIdentificacion;
+    }
+
+    public String getClienteNoSocioTelefono() {
+        return clienteNoSocioTelefono;
+    }
+
+    public void setClienteNoSocioTelefono(String clienteNoSocioTelefono) {
+        this.clienteNoSocioTelefono = clienteNoSocioTelefono;
     }
 
     public Long getProductoId() {
@@ -122,6 +158,14 @@ public class Credito {
 
     public void setSaldoCapital(BigDecimal saldoCapital) {
         this.saldoCapital = saldoCapital;
+    }
+
+    public BigDecimal getAbonoCapitalTotal() {
+        return abonoCapitalTotal;
+    }
+
+    public void setAbonoCapitalTotal(BigDecimal abonoCapitalTotal) {
+        this.abonoCapitalTotal = abonoCapitalTotal;
     }
 
     public String getEstado() {

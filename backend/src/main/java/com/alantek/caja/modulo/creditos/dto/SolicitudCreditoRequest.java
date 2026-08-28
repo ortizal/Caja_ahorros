@@ -8,7 +8,10 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record SolicitudCreditoRequest(
-        @NotNull(message = "El socio es obligatorio") Long socioId,
+        Long socioId,
+        String clienteNoSocioNombre,
+        String clienteNoSocioIdentificacion,
+        String clienteNoSocioTelefono,
         @NotNull(message = "El producto es obligatorio") Long productoId,
         @NotNull(message = "El monto solicitado es obligatorio")
         @DecimalMin(value = "0.01", message = "El monto debe ser mayor a cero") BigDecimal montoSolicitado,

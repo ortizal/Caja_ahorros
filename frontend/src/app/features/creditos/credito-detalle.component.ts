@@ -45,6 +45,11 @@ export class CreditoDetalleComponent implements OnInit {
     tasaInteres: [18, [Validators.required, Validators.min(0)]]
   });
 
+  protected readonly tipoPago = signal<'normal' | 'adelantado' | 'abono'>('normal');
+  protected readonly pagoSeleccionado = signal<CuotaCredito | null>(null);
+  protected readonly abonoMonto = signal(0);
+  protected readonly abonoDescripcion = signal('');
+
   private creditoId = 0;
 
   ngOnInit(): void {
@@ -106,16 +111,45 @@ export class CreditoDetalleComponent implements OnInit {
     });
   }
 
-  pagarCuota(cuota: CuotaCredito): void {
+  pagarCuota(cuota: CuotaCredito, tipo: 'normal' | 'adelantado' | 'abono'): void {
+    this.pagoSeleccionado.set(cuota);
+    this.tipoPago.set(tipo);
+    if (tipo === 'abono') {
+      this.abonoMonto.set(cuota.capital);
+      this.abonoDescripcion.set('');
+    }
+  }
+
+  registrarPago(): void {
     if (this.guardando()) return;
+    const cuota = this.pagoSeleccionado();
+    if (!cuota) return;
+    const tipo = this.tipoPago();
     this.guardando.set(true);
     this.error.set('');
+    let request: Record<string, unknown>;
+    if (tipo === 'abono') {
+      const monto = Number(this.abonoMonto());
+      if (!monto || monto <= 0) {
+        this.error.set('Debe indicar un monto de abono a capital valido.');
+        this.toast.error(this.error());
+        this.guardando.set(false);
+        return;
+      }
+      request = { cuotaId: cuota.id, montoAbonoCapital: monto, tipo: 'ABONO', descripcion: this.abonoDescripcion() || undefined };
+    } else if (tipo === 'adelantado') {
+      request = { cuotaId: cuota.id, tipo: 'ADELANTADO' };
+    } else {
+      request = { cuotaId: cuota.id, tipo: 'CUOTA' };
+    }
     this.creditoService
-      .pagarCuota(this.creditoId, { cuotaId: cuota.id })
+      .pagarCuota(this.creditoId, request as any)
       .pipe(finalize(() => this.guardando.set(false)))
       .subscribe({
         next: () => {
-          this.toast.success(`Cuota ${cuota.numeroCuota} pagada.`);
+          const label = tipo === 'abono' ? 'Abono a capital registrado' : (tipo === 'adelantado' ? `Cuota ${cuota.numeroCuota} pagada por adelantado` : `Cuota ${cuota.numeroCuota} pagada`);
+          this.toast.success(label + '.');
+          this.pagoSeleccionado.set(null);
           this.cargarDetalle();
           this.cargarCuotas();
           this.cargarPagos();
@@ -126,6 +160,17 @@ export class CreditoDetalleComponent implements OnInit {
           this.toast.error(msg);
         }
       });
+  }
+
+  cerrarPago(): void {
+    this.pagoSeleccionado.set(null);
+  }
+
+  private nombreCliente(): string {
+    const det = this.creditoDetalle();
+    if (!det) return '';
+    if (det.credito.socioNombre) return det.credito.socioNombre;
+    return det.credito.clienteNoSocioNombre ?? '';
   }
 
   refinanciar(): void {

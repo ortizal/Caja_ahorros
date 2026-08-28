@@ -119,6 +119,7 @@ public class CreditoService {
         }
         ProductoCredito producto = new ProductoCredito();
         producto.setNombre(request.nombre());
+        producto.setPermiteNoSocio(request.permiteNoSocio() != null && request.permiteNoSocio());
         producto.setTasaInteres(request.tasaInteres());
         producto.setTasaMora(request.tasaMora() == null ? BigDecimal.ONE : request.tasaMora());
         producto.setSistemaAmortizacion(request.sistemaAmortizacion() == null
@@ -150,11 +151,33 @@ public class CreditoService {
 
     @Transactional
     public SolicitudCreditoResponse crearSolicitud(SolicitudCreditoRequest request) {
-        Socio socio = socioRepository.findById(request.socioId())
-                .orElseThrow(() -> new BusinessException("Socio no encontrado: " + request.socioId()));
-        if (!"ACTIVO".equals(socio.getEstado())) {
-            throw new BusinessException("El socio no se encuentra ACTIVO");
+        boolean esSocio = request.socioId() != null;
+        if (esSocio) {
+            Socio socio = socioRepository.findById(request.socioId())
+                    .orElseThrow(() -> new BusinessException("Socio no encontrado: " + request.socioId()));
+            if (!"ACTIVO".equals(socio.getEstado())) {
+                throw new BusinessException("El socio no se encuentra ACTIVO");
+            }
+            if (solicitudRepository.existsBySocioIdAndEstadoIn(socio.getId(), ESTADOS_SOLICITUD_ABIERTA)) {
+                throw new BusinessException("El socio ya tiene una solicitud en tramite");
+            }
+            if (creditoRepository.existsBySocioIdAndEstadoIn(socio.getId(), ESTADOS_CREDITO_VIGENTE)) {
+                throw new BusinessException("El socio ya tiene un credito vigente");
+            }
+        } else {
+            if (request.clienteNoSocioNombre() == null || request.clienteNoSocioNombre().isBlank()) {
+                throw new BusinessException("Debe indicar el nombre del cliente (no socio)");
+            }
+            if (request.clienteNoSocioIdentificacion() == null || request.clienteNoSocioIdentificacion().isBlank()) {
+                throw new BusinessException("Debe indicar la identificacion del cliente (no socio)");
+            }
+            ProductoCredito prod = productoRepository.findById(request.productoId())
+                    .orElseThrow(() -> new BusinessException("Producto de credito no encontrado: " + request.productoId()));
+            if (!prod.isPermiteNoSocio()) {
+                throw new BusinessException("El producto seleccionado no permite creditos a no socios");
+            }
         }
+
         ProductoCredito producto = productoRepository.findById(request.productoId())
                 .orElseThrow(() -> new BusinessException("Producto de credito no encontrado: " + request.productoId()));
         if (!producto.isActivo()) {
@@ -170,15 +193,12 @@ public class CreditoService {
             throw new BusinessException("El plazo supera el maximo del producto ("
                     + producto.getPlazoMaxMeses() + " meses)");
         }
-        if (solicitudRepository.existsBySocioIdAndEstadoIn(socio.getId(), ESTADOS_SOLICITUD_ABIERTA)) {
-            throw new BusinessException("El socio ya tiene una solicitud en tramite");
-        }
-        if (creditoRepository.existsBySocioIdAndEstadoIn(socio.getId(), ESTADOS_CREDITO_VIGENTE)) {
-            throw new BusinessException("El socio ya tiene un credito vigente");
-        }
 
         SolicitudCredito solicitud = new SolicitudCredito();
-        solicitud.setSocioId(socio.getId());
+        solicitud.setSocioId(esSocio ? request.socioId() : null);
+        solicitud.setClienteNoSocioNombre(esSocio ? null : request.clienteNoSocioNombre());
+        solicitud.setClienteNoSocioIdentificacion(esSocio ? null : request.clienteNoSocioIdentificacion());
+        solicitud.setClienteNoSocioTelefono(esSocio ? null : request.clienteNoSocioTelefono());
         solicitud.setProductoId(producto.getId());
         solicitud.setMontoSolicitado(request.montoSolicitado());
         solicitud.setPlazoMeses(request.plazoMeses());
@@ -254,6 +274,9 @@ public class CreditoService {
         Credito credito = new Credito();
         credito.setSolicitudId(solicitud.getId());
         credito.setSocioId(solicitud.getSocioId());
+        credito.setClienteNoSocioNombre(solicitud.getClienteNoSocioNombre());
+        credito.setClienteNoSocioIdentificacion(solicitud.getClienteNoSocioIdentificacion());
+        credito.setClienteNoSocioTelefono(solicitud.getClienteNoSocioTelefono());
         credito.setProductoId(producto.getId());
         credito.setMontoDesembolsado(solicitud.getMontoSolicitado());
         credito.setTasaInteres(producto.getTasaInteres());
@@ -335,16 +358,24 @@ public class CreditoService {
 
     @Transactional
     public PagoCuotaResponse pagarCuota(PagoCuotaRequest request) {
+        String tipo = request.tipo() == null || request.tipo().isBlank() ? "CUOTA" : request.tipo().toUpperCase();
+        return switch (tipo) {
+            case "ABONO" -> pagarAbonoCapital(request);
+            case "ADELANTADO" -> pagarCuotaAdelantada(request);
+            default -> pagarCuotaNormal(request);
+        };
+    }
+
+    private PagoCuotaResponse pagarCuotaNormal(PagoCuotaRequest request) {
+        if (request.cuotaId() == null) {
+            throw new BusinessException("Debe indicar la cuota a pagar");
+        }
         CuotaCredito cuota = cuotaRepository.findById(request.cuotaId())
                 .orElseThrow(() -> new BusinessException("Cuota no encontrada: " + request.cuotaId()));
         if (!"PENDIENTE".equals(cuota.getEstado()) && !"VENCIDA".equals(cuota.getEstado())) {
             throw new BusinessException("La cuota ya fue pagada o no esta vigente");
         }
-        Credito credito = creditoRepository.findById(cuota.getCreditoId())
-                .orElseThrow(() -> new BusinessException("Credito no encontrado: " + cuota.getCreditoId()));
-        if (!ESTADOS_CREDITO_VIGENTE.contains(credito.getEstado())) {
-            throw new BusinessException("El credito no se encuentra vigente");
-        }
+        Credito credito = creditoVigente(cuota.getCreditoId());
 
         BigDecimal capital = request.montoCapital() == null ? cuota.getCapital() : request.montoCapital();
         BigDecimal interes = request.montoInteres() == null ? cuota.getInteres() : request.montoInteres();
@@ -367,6 +398,7 @@ public class CreditoService {
         PagoCuota pago = new PagoCuota();
         pago.setCuotaId(cuota.getId());
         pago.setCreditoId(credito.getId());
+        pago.setTipo("CUOTA");
         pago.setMontoCapital(capital);
         pago.setMontoInteres(interes);
         pago.setMontoMora(mora);
@@ -376,8 +408,112 @@ public class CreditoService {
 
         cuota.setEstado("PAGADA");
         cuotaRepository.save(cuota);
+        actualizarSaldoYEstado(credito, capital);
+        auditService.registrar("pago_cuota", saved.getId(), "CREAR", null, request);
+        return toResponse(saved);
+    }
 
-        BigDecimal nuevoSaldo = credito.getSaldoCapital().subtract(capital);
+    private PagoCuotaResponse pagarCuotaAdelantada(PagoCuotaRequest request) {
+        if (request.cuotaId() == null) {
+            throw new BusinessException("Debe indicar la cuota a pagar por adelantado");
+        }
+        CuotaCredito cuota = cuotaRepository.findById(request.cuotaId())
+                .orElseThrow(() -> new BusinessException("Cuota no encontrada: " + request.cuotaId()));
+        if (!"PENDIENTE".equals(cuota.getEstado())) {
+            throw new BusinessException("Solo se pueden pagar por adelantado cuotas PENDIENTES");
+        }
+        Credito credito = creditoVigente(cuota.getCreditoId());
+        if (cuota.getFechaVencimiento().isBefore(LocalDate.now())) {
+            throw new BusinessException("La cuota esta vencida; pague la cuota normal con su mora");
+        }
+
+        BigDecimal capital = request.montoCapital() == null ? cuota.getCapital() : request.montoCapital();
+        BigDecimal interes = request.montoInteres() == null ? cuota.getInteres() : request.montoInteres();
+        if (capital.compareTo(cuota.getCapital()) != 0 || interes.compareTo(cuota.getInteres()) != 0) {
+            throw new BusinessException("El pago adelantado debe cubrir la cuota completa (capital + interes)");
+        }
+        BigDecimal total = capital.add(interes);
+        CajaMovimientoResponse cajaMovimiento = cajaService.registrarMovimiento(new CajaMovimientoRequest(
+                "COBRO_CREDITO", total, "credito", credito.getId(),
+                "Pago adelantado cuota " + cuota.getNumeroCuota() + " credito #" + credito.getId(),
+                capital, interes, BigDecimal.ZERO));
+
+        PagoCuota pago = new PagoCuota();
+        pago.setCuotaId(cuota.getId());
+        pago.setCreditoId(credito.getId());
+        pago.setTipo("ADELANTADO");
+        pago.setMontoCapital(capital);
+        pago.setMontoInteres(interes);
+        pago.setMontoMora(BigDecimal.ZERO);
+        pago.setDescripcion("Pago adelantado");
+        pago.setComprobanteId(cajaMovimiento.comprobanteId());
+        pago.setRegistradoPor(currentUserService.requireUserId());
+        PagoCuota saved = pagoRepository.save(pago);
+
+        cuota.setEstado("PAGADA");
+        cuotaRepository.save(cuota);
+        actualizarSaldoYEstado(credito, capital);
+        auditService.registrar("pago_cuota", saved.getId(), "CREAR", null, request);
+        return toResponse(saved);
+    }
+
+    private PagoCuotaResponse pagarAbonoCapital(PagoCuotaRequest request) {
+        if (request.montoAbonoCapital() == null || request.montoAbonoCapital().signum() <= 0) {
+            throw new BusinessException("Debe indicar el monto a abonar a capital");
+        }
+        if (request.cuotaId() == null) {
+            throw new BusinessException("Debe indicar la cuota a la que desea aplicar el abono a capital");
+        }
+        CuotaCredito cuota = cuotaRepository.findById(request.cuotaId())
+                .orElseThrow(() -> new BusinessException("Cuota no encontrada: " + request.cuotaId()));
+        if (!"PENDIENTE".equals(cuota.getEstado())) {
+            throw new BusinessException("El abono a capital solo puede aplicarse a una cuota PENDIENTE");
+        }
+        Credito credito = creditoVigente(cuota.getCreditoId());
+
+        BigDecimal abono = request.montoAbonoCapital();
+        if (abono.compareTo(credito.getSaldoCapital()) > 0) {
+            throw new BusinessException("El abono no puede superar el saldo de capital del credito");
+        }
+
+        CajaMovimientoResponse cajaMovimiento = cajaService.registrarMovimiento(new CajaMovimientoRequest(
+                "COBRO_CREDITO", abono, "credito", credito.getId(),
+                "Abono a capital credito #" + credito.getId(),
+                abono, BigDecimal.ZERO, BigDecimal.ZERO));
+
+        PagoCuota pago = new PagoCuota();
+        pago.setCuotaId(cuota.getId());
+        pago.setCreditoId(credito.getId());
+        pago.setTipo("ABONO");
+        pago.setMontoCapital(abono);
+        pago.setMontoInteres(BigDecimal.ZERO);
+        pago.setMontoMora(BigDecimal.ZERO);
+        pago.setMontoAbonoCapital(abono);
+        pago.setDescripcion(request.descripcion() != null ? request.descripcion() : "Abono a capital");
+        pago.setComprobanteId(cajaMovimiento.comprobanteId());
+        pago.setRegistradoPor(currentUserService.requireUserId());
+        PagoCuota saved = pagoRepository.save(pago);
+
+        actualizarSaldoYEstado(credito, abono);
+        auditoriaPagoAbono(credito, cuota, abono);
+        auditService.registrar("pago_cuota", saved.getId(), "CREAR", null, request);
+        return toResponse(saved);
+    }
+
+    private Credito creditoVigente(Long creditoId) {
+        Credito credito = creditoRepository.findById(creditoId)
+                .orElseThrow(() -> new BusinessException("Credito no encontrado: " + creditoId));
+        if (!ESTADOS_CREDITO_VIGENTE.contains(credito.getEstado())) {
+            throw new BusinessException("El credito no se encuentra vigente");
+        }
+        return credito;
+    }
+
+    private void actualizarSaldoYEstado(Credito credito, BigDecimal capitalReducido) {
+        BigDecimal nuevoSaldo = credito.getSaldoCapital().subtract(capitalReducido);
+        if (nuevoSaldo.compareTo(BigDecimal.ZERO) < 0) {
+            nuevoSaldo = BigDecimal.ZERO;
+        }
         credito.setSaldoCapital(nuevoSaldo);
         long pendientes = cuotaRepository.countByCreditoIdAndEstado(credito.getId(), "PENDIENTE")
                 + cuotaRepository.countByCreditoIdAndEstado(credito.getId(), "VENCIDA");
@@ -386,8 +522,35 @@ public class CreditoService {
             registrarHistorial(credito, "VIGENTE", "CANCELADO", "Todas las cuotas pagadas");
         }
         creditoRepository.save(credito);
-        auditService.registrar("pago_cuota", saved.getId(), "CREAR", null, request);
-        return toResponse(saved);
+    }
+
+    private void auditoriaPagoAbono(Credito credito, CuotaCredito cuota, BigDecimal abono) {
+        List<CuotaCredito> cuotas = cuotaRepository.findByCreditoIdOrderByNumeroCuotaAsc(credito.getId());
+        int cuotaIndex = 0;
+        for (int i = 0; i < cuotas.size(); i++) {
+            if (cuotas.get(i).getId().equals(cuota.getId())) {
+                cuotaIndex = i;
+                break;
+            }
+        }
+        BigDecimal restante = abono;
+        BigDecimal capitalNeto = credito.getSaldoCapital().add(abono);
+        BigDecimal acumulado = BigDecimal.ZERO;
+        for (int i = cuotaIndex; i < cuotas.size() && restante.signum() > 0; i++) {
+            CuotaCredito c = cuotas.get(i);
+            if (!"PENDIENTE".equals(c.getEstado())) {
+                continue;
+            }
+            BigDecimal aplicable = c.getCapital().min(restante);
+            c.setCapital(c.getCapital().subtract(aplicable));
+            if (c.getCuotaTotal() != null) {
+                c.setCuotaTotal(c.getCuotaTotal().subtract(aplicable));
+            }
+            acumulado = acumulado.add(aplicable);
+            c.setSaldoCapital(capitalNeto.subtract(acumulado));
+            cuotaRepository.save(c);
+            restante = restante.subtract(aplicable);
+        }
     }
 
     @Transactional
@@ -491,7 +654,7 @@ public class CreditoService {
     public CreditoDetalleResponse detalle(Long id) {
         Credito credito = creditoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Credito no encontrado: " + id));
-        Socio socio = socioRepository.findById(credito.getSocioId()).orElse(null);
+        Socio socio = credito.getSocioId() != null ? socioRepository.findById(credito.getSocioId()).orElse(null) : null;
         ProductoCredito producto = productoRepository.findById(credito.getProductoId()).orElse(null);
 
         List<CuotaCredito> cuotasAll = cuotaRepository.findByCreditoIdOrderByNumeroCuotaAsc(credito.getId());
@@ -553,11 +716,11 @@ public class CreditoService {
         ReportBeans.ContratoData contratoData = new ReportBeans.ContratoData(
                 "CTR-" + c.id(),
                 c.fechaDesembolso() != null ? c.fechaDesembolso().toString() : java.time.LocalDate.now().toString(),
-                c.socioCodigo(),
-                s != null ? s.identificacion() : "",
-                s != null ? s.nombres() : "",
+                s != null ? c.socioCodigo() : "",
+                s != null ? s.identificacion() : c.clienteNoSocioIdentificacion(),
+                s != null ? s.nombres() : c.clienteNoSocioNombre(),
                 s != null ? s.apellidos() : "",
-                s != null ? s.telefono() : "",
+                s != null ? s.telefono() : c.clienteNoSocioTelefono(),
                 s != null ? s.email() : "",
                 s != null ? s.direccion() : "",
                 c.nombreProducto(),
@@ -616,18 +779,22 @@ public class CreditoService {
     }
 
     private ProductoCreditoResponse toResponse(ProductoCredito producto) {
-        return new ProductoCreditoResponse(producto.getId(), producto.getNombre(), producto.getTasaInteres(),
+        return new ProductoCreditoResponse(producto.getId(), producto.getNombre(), producto.isPermiteNoSocio(),
+                producto.getTasaInteres(),
                 producto.getTasaMora(), producto.getSistemaAmortizacion(), producto.getPlazoMaxMeses(),
                 producto.getMontoMin(), producto.getMontoMax(), producto.isRequiereGarante(),
                 producto.getVigenteDesde(), producto.getVigenteHasta(), producto.isActivo());
     }
 
     private SolicitudCreditoResponse toResponse(SolicitudCredito solicitud) {
-        Socio socio = socioRepository.findById(solicitud.getSocioId()).orElse(null);
+        Socio socio = solicitud.getSocioId() != null ? socioRepository.findById(solicitud.getSocioId()).orElse(null) : null;
         ProductoCredito producto = productoRepository.findById(solicitud.getProductoId()).orElse(null);
         return new SolicitudCreditoResponse(solicitud.getId(), solicitud.getSocioId(),
                 socio != null ? socio.getCodigo() : null,
                 socio != null ? socio.getNombres() + " " + socio.getApellidos() : null,
+                solicitud.getClienteNoSocioNombre(),
+                solicitud.getClienteNoSocioIdentificacion(),
+                solicitud.getClienteNoSocioTelefono(),
                 solicitud.getProductoId(),
                 producto != null ? producto.getNombre() : null,
                 solicitud.getMontoSolicitado(), solicitud.getPlazoMeses(), solicitud.getDestino(),
@@ -636,17 +803,21 @@ public class CreditoService {
     }
 
     private CreditoResponse toResponse(Credito credito) {
-        Socio socio = socioRepository.findById(credito.getSocioId()).orElse(null);
+        Socio socio = credito.getSocioId() != null ? socioRepository.findById(credito.getSocioId()).orElse(null) : null;
         ProductoCredito producto = productoRepository.findById(credito.getProductoId()).orElse(null);
         long pendientes = cuotaRepository.countByCreditoIdAndEstado(credito.getId(), "PENDIENTE")
                 + cuotaRepository.countByCreditoIdAndEstado(credito.getId(), "VENCIDA");
         return new CreditoResponse(credito.getId(), credito.getSolicitudId(), credito.getSocioId(),
                 socio != null ? socio.getCodigo() : null,
                 socio != null ? socio.getNombres() + " " + socio.getApellidos() : null,
+                credito.getClienteNoSocioNombre(),
+                credito.getClienteNoSocioIdentificacion(),
+                credito.getClienteNoSocioTelefono(),
                 credito.getProductoId(),
                 producto != null ? producto.getNombre() : null,
                 credito.getMontoDesembolsado(), credito.getTasaInteres(), credito.getPlazoMeses(),
-                credito.getFechaDesembolso(), credito.getSaldoCapital(), credito.getEstado(),
+                credito.getFechaDesembolso(), credito.getSaldoCapital(), credito.getAbonoCapitalTotal(),
+                credito.getEstado(),
                 (int) pendientes, credito.getCreatedAt());
     }
 
@@ -660,8 +831,14 @@ public class CreditoService {
         Comprobante comprobante = pago.getComprobanteId() != null
                 ? comprobanteRepository.findById(pago.getComprobanteId()).orElse(null)
                 : null;
-        return new PagoCuotaResponse(pago.getId(), pago.getCuotaId(), pago.getCreditoId(),
-                pago.getMontoCapital(), pago.getMontoInteres(), pago.getMontoMora(),
+        Integer cuotaNumero = null;
+        if (pago.getCuotaId() != null) {
+            cuotaNumero = cuotaRepository.findById(pago.getCuotaId())
+                    .map(CuotaCredito::getNumeroCuota).orElse(null);
+        }
+        return new PagoCuotaResponse(pago.getId(), pago.getCuotaId(), cuotaNumero, pago.getCreditoId(),
+                pago.getTipo(), pago.getMontoCapital(), pago.getMontoInteres(), pago.getMontoMora(),
+                pago.getMontoAbonoCapital(), pago.getDescripcion(),
                 pago.getComprobanteId(),
                 comprobante != null ? comprobante.getNumero() : null,
                 pago.getPagadoAt());

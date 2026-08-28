@@ -27,6 +27,9 @@ public class CuentaAhorro {
     @Column(name = "numero_cuenta", unique = true, nullable = false, length = 20)
     private String numeroCuenta;
 
+    @Column(name = "tipo_ahorro", nullable = false, length = 20)
+    private String tipoAhorro = "NORMAL";
+
     @Column(nullable = false)
     private BigDecimal saldo = BigDecimal.ZERO;
 
@@ -69,6 +72,14 @@ public class CuentaAhorro {
 
     public void setNumeroCuenta(String numeroCuenta) {
         this.numeroCuenta = numeroCuenta;
+    }
+
+    public String getTipoAhorro() {
+        return tipoAhorro;
+    }
+
+    public void setTipoAhorro(String tipoAhorro) {
+        this.tipoAhorro = tipoAhorro;
     }
 
     public BigDecimal getSaldo() {

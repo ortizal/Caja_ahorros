@@ -11,6 +11,7 @@ public record CuentaAhorroResponse(
         Long productoId,
         String nombreProducto,
         String numeroCuenta,
+        String tipoAhorro,
         BigDecimal saldo,
         String estado,
         LocalDate fechaApertura,

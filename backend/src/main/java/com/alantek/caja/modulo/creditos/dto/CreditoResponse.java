@@ -10,6 +10,9 @@ public record CreditoResponse(
         Long socioId,
         String socioCodigo,
         String socioNombre,
+        String clienteNoSocioNombre,
+        String clienteNoSocioIdentificacion,
+        String clienteNoSocioTelefono,
         Long productoId,
         String nombreProducto,
         BigDecimal montoDesembolsado,
@@ -17,6 +20,7 @@ public record CreditoResponse(
         Integer plazoMeses,
         LocalDate fechaDesembolso,
         BigDecimal saldoCapital,
+        BigDecimal abonoCapitalTotal,
         String estado,
         int cuotasPendientes,
         LocalDateTime createdAt) {

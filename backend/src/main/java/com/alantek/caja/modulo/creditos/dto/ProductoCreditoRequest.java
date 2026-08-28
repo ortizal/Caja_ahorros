@@ -11,6 +11,7 @@ import java.time.LocalDate;
 
 public record ProductoCreditoRequest(
         @NotBlank(message = "El nombre es obligatorio") String nombre,
+        Boolean permiteNoSocio,
         @NotNull(message = "La tasa de interes es obligatoria")
         @DecimalMin(value = "0.0", message = "La tasa de interes no puede ser negativa") BigDecimal tasaInteres,
         @DecimalMin(value = "0.0", message = "La tasa de mora no puede ser negativa") BigDecimal tasaMora,

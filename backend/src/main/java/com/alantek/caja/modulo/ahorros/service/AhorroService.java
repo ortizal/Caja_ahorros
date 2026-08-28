@@ -118,6 +118,8 @@ public class AhorroService {
         cuenta.setSocioId(socio.getId());
         cuenta.setProductoId(producto.getId());
         cuenta.setNumeroCuenta("AH-" + String.format("%07d", cuentaRepository.maxId() + 1));
+        cuenta.setTipoAhorro(request.tipoAhorro() == null || request.tipoAhorro().isBlank()
+                ? "NORMAL" : request.tipoAhorro().toUpperCase());
         cuenta.setSaldo(BigDecimal.ZERO);
         cuenta.setEstado("ACTIVA");
         cuenta.setFechaApertura(LocalDate.now());
@@ -267,7 +269,7 @@ public class AhorroService {
                 socio != null ? socio.getNombres() + " " + socio.getApellidos() : null,
                 cuenta.getProductoId(),
                 producto != null ? producto.getNombre() : null,
-                cuenta.getNumeroCuenta(), cuenta.getSaldo(), cuenta.getEstado(),
+                cuenta.getNumeroCuenta(), cuenta.getTipoAhorro(), cuenta.getSaldo(), cuenta.getEstado(),
                 cuenta.getFechaApertura(), cuenta.getFechaCierre());
     }
 

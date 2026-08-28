@@ -23,8 +23,13 @@ export class CreditoSolicitudFormComponent implements OnInit {
   private readonly socioService = inject(SocioService);
   private readonly toast = inject(ToastService);
 
+  protected readonly tipoCliente = signal<'socio' | 'no_socio'>('socio');
+
   protected readonly form = this.fb.nonNullable.group({
-    socioId: [0, [Validators.required, Validators.min(1)]],
+    socioId: [0, [Validators.min(1)]],
+    clienteNoSocioNombre: [''],
+    clienteNoSocioIdentificacion: [''],
+    clienteNoSocioTelefono: [''],
     productoId: [0, [Validators.required, Validators.min(1)]],
     montoSolicitado: [500, [Validators.required, Validators.min(0.01)]],
     plazoMeses: [12, [Validators.required, Validators.min(1)]],
@@ -46,6 +51,26 @@ export class CreditoSolicitudFormComponent implements OnInit {
     });
   }
 
+  cambiarTipo(tipo: 'socio' | 'no_socio'): void {
+    this.tipoCliente.set(tipo);
+    const socio = this.form.get('socioId');
+    const nombre = this.form.get('clienteNoSocioNombre');
+    const ident = this.form.get('clienteNoSocioIdentificacion');
+    if (tipo === 'socio') {
+      socio?.setValidators([Validators.min(1)]);
+      nombre?.clearValidators();
+      ident?.clearValidators();
+    } else {
+      socio?.clearValidators();
+      nombre?.setValidators([Validators.required]);
+      ident?.setValidators([Validators.required]);
+    }
+    socio?.setValue(0);
+    socio?.updateValueAndValidity();
+    nombre?.updateValueAndValidity();
+    ident?.updateValueAndValidity();
+  }
+
   cancelar(): void {
     this.router.navigate(['/creditos']);
   }
@@ -55,11 +80,15 @@ export class CreditoSolicitudFormComponent implements OnInit {
       return;
     }
     const raw = this.form.getRawValue();
+    const esSocio = this.tipoCliente() === 'socio';
     this.guardando.set(true);
     this.error.set('');
     this.creditoService
       .crearSolicitud({
-        socioId: Number(raw.socioId),
+        socioId: esSocio ? Number(raw.socioId) || undefined : undefined,
+        clienteNoSocioNombre: esSocio ? undefined : raw.clienteNoSocioNombre || undefined,
+        clienteNoSocioIdentificacion: esSocio ? undefined : raw.clienteNoSocioIdentificacion || undefined,
+        clienteNoSocioTelefono: esSocio ? undefined : raw.clienteNoSocioTelefono || undefined,
         productoId: Number(raw.productoId),
         montoSolicitado: Number(raw.montoSolicitado),
         plazoMeses: Number(raw.plazoMeses),

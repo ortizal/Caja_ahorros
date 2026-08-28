@@ -351,6 +351,7 @@ CREATE TABLE IF NOT EXISTS cuenta_ahorro (
   socio_id BIGINT NOT NULL REFERENCES socios(id),
   producto_id BIGINT NOT NULL REFERENCES producto_ahorro(id),
   numero_cuenta VARCHAR(20) UNIQUE NOT NULL,
+  tipo_ahorro VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
   saldo NUMERIC(14,2) NOT NULL DEFAULT 0,
   estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVA',
   fecha_apertura DATE NOT NULL,
@@ -390,6 +391,10 @@ CREATE INDEX IF NOT EXISTS idx_movimiento_ahorro_cuenta ON movimiento_ahorro(cue
 CREATE TABLE IF NOT EXISTS producto_credito (
   id BIGSERIAL PRIMARY KEY,
   nombre VARCHAR(80) NOT NULL,
+  permite_no_socio BOOLEAN NOT NULL DEFAULT false,
+  tasa_interes NUMERIC(7,4) NOT NULL,
+  id BIGSERIAL PRIMARY KEY,
+  nombre VARCHAR(80) NOT NULL,
   tasa_interes NUMERIC(7,4) NOT NULL,
   tasa_mora NUMERIC(7,4) NOT NULL DEFAULT 1.0000,
   sistema_amortizacion VARCHAR(20) NOT NULL DEFAULT 'FRANCES',
@@ -404,7 +409,10 @@ CREATE TABLE IF NOT EXISTS producto_credito (
 
 CREATE TABLE IF NOT EXISTS solicitud_credito (
   id BIGSERIAL PRIMARY KEY,
-  socio_id BIGINT NOT NULL REFERENCES socios(id),
+  socio_id BIGINT REFERENCES socios(id),
+  cliente_no_socio_nombre VARCHAR(150),
+  cliente_no_socio_identificacion VARCHAR(20),
+  cliente_no_socio_telefono VARCHAR(30),
   producto_id BIGINT NOT NULL REFERENCES producto_credito(id),
   monto_solicitado NUMERIC(14,2) NOT NULL,
   plazo_meses INT NOT NULL,
@@ -421,13 +429,17 @@ CREATE TABLE IF NOT EXISTS solicitud_credito (
 CREATE TABLE IF NOT EXISTS credito (
   id BIGSERIAL PRIMARY KEY,
   solicitud_id BIGINT REFERENCES solicitud_credito(id),
-  socio_id BIGINT NOT NULL REFERENCES socios(id),
+  socio_id BIGINT REFERENCES socios(id),
+  cliente_no_socio_nombre VARCHAR(150),
+  cliente_no_socio_identificacion VARCHAR(20),
+  cliente_no_socio_telefono VARCHAR(30),
   producto_id BIGINT NOT NULL REFERENCES producto_credito(id),
   monto_desembolsado NUMERIC(14,2) NOT NULL,
   tasa_interes NUMERIC(7,4) NOT NULL,
   plazo_meses INT NOT NULL,
   fecha_desembolso DATE,
   saldo_capital NUMERIC(14,2) NOT NULL,
+  abono_capital_total NUMERIC(14,2) NOT NULL DEFAULT 0,
   estado VARCHAR(20) NOT NULL DEFAULT 'VIGENTE',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by BIGINT
@@ -449,11 +461,14 @@ CREATE TABLE IF NOT EXISTS tabla_amortizacion (
 
 CREATE TABLE IF NOT EXISTS pago_cuota (
   id BIGSERIAL PRIMARY KEY,
-  cuota_id BIGINT NOT NULL REFERENCES tabla_amortizacion(id),
+  cuota_id BIGINT REFERENCES tabla_amortizacion(id),
   credito_id BIGINT NOT NULL REFERENCES credito(id),
+  tipo VARCHAR(20) NOT NULL DEFAULT 'CUOTA',
   monto_capital NUMERIC(14,2) NOT NULL,
-  monto_interes NUMERIC(14,2) NOT NULL,
+  monto_interes NUMERIC(14,2) NOT NULL DEFAULT 0,
   monto_mora NUMERIC(14,2) NOT NULL DEFAULT 0,
+  monto_abono_capital NUMERIC(14,2) NOT NULL DEFAULT 0,
+  descripcion VARCHAR(255),
   comprobante_id BIGINT REFERENCES comprobantes(id),
   pagado_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   registrado_por BIGINT

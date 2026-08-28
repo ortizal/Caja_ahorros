@@ -152,7 +152,52 @@ describe('CreditoService', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/creditos/1/pagos`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ cuotaId: 1 });
-    req.flush({ id: 1, cuotaId: 1, creditoId: 1, montoCapital: 41.67, montoInteres: 7.5, montoMora: 0, pagadoAt: '2026-08-12T00:00:00Z' });
+    req.flush({ id: 1, cuotaId: 1, creditoId: 1, tipo: 'CUOTA', montoCapital: 41.67, montoInteres: 7.5, montoMora: 0, montoAbonoCapital: 0, pagadoAt: '2026-08-12T00:00:00Z' });
+  });
+
+  it('pagarCuota con abono a capital envia tipo ABONO', () => {
+    service.pagarCuota(1, { cuotaId: 1, montoAbonoCapital: 100, tipo: 'ABONO', descripcion: 'Abono' }).subscribe((res) => {
+      expect(res.tipo).toBe('ABONO');
+      expect(res.montoAbonoCapital).toBe(100);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/creditos/1/pagos`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ cuotaId: 1, montoAbonoCapital: 100, tipo: 'ABONO', descripcion: 'Abono' });
+    req.flush({ id: 2, cuotaId: 1, creditoId: 1, tipo: 'ABONO', montoCapital: 100, montoInteres: 0, montoMora: 0, montoAbonoCapital: 100, descripcion: 'Abono', pagadoAt: '2026-08-12T00:00:00Z' });
+  });
+
+  it('pagarCuota adelantada envia tipo ADELANTADO', () => {
+    service.pagarCuota(1, { cuotaId: 3, tipo: 'ADELANTADO' }).subscribe((res) => {
+      expect(res.tipo).toBe('ADELANTADO');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/creditos/1/pagos`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ cuotaId: 3, tipo: 'ADELANTADO' });
+    req.flush({ id: 3, cuotaId: 3, cuotaNumero: 3, creditoId: 1, tipo: 'ADELANTADO', montoCapital: 41.67, montoInteres: 7.5, montoMora: 0, montoAbonoCapital: 0, pagadoAt: '2026-08-12T00:00:00Z' });
+  });
+
+  it('crearSolicitud de no socio envia datos del cliente', () => {
+    service.crearSolicitud({ clienteNoSocioNombre: 'JUAN PEREZ', clienteNoSocioIdentificacion: '1712345678', productoId: 1, montoSolicitado: 500, plazoMeses: 12 }).subscribe((res) => {
+      expect(res.clienteNoSocioNombre).toBe('JUAN PEREZ');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/solicitudes-credito`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ clienteNoSocioNombre: 'JUAN PEREZ', clienteNoSocioIdentificacion: '1712345678', productoId: 1, montoSolicitado: 500, plazoMeses: 12 });
+    req.flush({ id: 2, clienteNoSocioNombre: 'JUAN PEREZ', clienteNoSocioIdentificacion: '1712345678', productoId: 1, montoSolicitado: 500, plazoMeses: 12, estado: 'PENDIENTE', createdAt: '2026-08-12T00:00:00Z' });
+  });
+
+  it('crearProducto envia permiteNoSocio', () => {
+    service.crearProducto({ nombre: 'CREDITO NO SOCIO', permiteNoSocio: true, tasaInteres: 18, plazoMaxMeses: 12, vigenteDesde: '2026-01-01' }).subscribe((res) => {
+      expect(res.permiteNoSocio).toBe(true);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/productos-credito`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ nombre: 'CREDITO NO SOCIO', permiteNoSocio: true, tasaInteres: 18, plazoMaxMeses: 12, vigenteDesde: '2026-01-01' });
+    req.flush({ id: 3, nombre: 'CREDITO NO SOCIO', permiteNoSocio: true, tasaInteres: 18, plazoMaxMeses: 12, vigenteDesde: '2026-01-01', activo: true });
   });
 
   it('refinanciar hace POST a /refinanciar', () => {

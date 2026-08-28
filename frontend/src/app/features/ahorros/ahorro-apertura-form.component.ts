@@ -25,7 +25,8 @@ export class AhorroAperturaFormComponent implements OnInit {
 
   protected readonly form = this.fb.nonNullable.group({
     socioId: [0, [Validators.required, Validators.min(1)]],
-    productoId: [0, [Validators.required, Validators.min(1)]]
+    productoId: [0, [Validators.required, Validators.min(1)]],
+    tipoAhorro: ['NORMAL', [Validators.required]]
   });
   protected readonly socios = signal<Socio[]>([]);
   protected readonly productos = signal<ProductoAhorro[]>([]);
@@ -55,7 +56,11 @@ export class AhorroAperturaFormComponent implements OnInit {
     this.guardando.set(true);
     this.error.set('');
     this.ahorroService
-      .aperturar({ socioId: Number(raw.socioId), productoId: Number(raw.productoId) })
+      .aperturar({
+        socioId: Number(raw.socioId),
+        productoId: Number(raw.productoId),
+        tipoAhorro: raw.tipoAhorro
+      })
       .pipe(finalize(() => this.guardando.set(false)))
       .subscribe({
         next: () => {

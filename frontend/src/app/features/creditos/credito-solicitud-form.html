@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
     <h1 class="page-title" data-testid="form-title">Nueva Solicitud de Crédito</h1>
-    <p class="page-subtitle">Registro de solicitudes de crédito de los socios</p>
+    <p class="page-subtitle">Registro de solicitudes de crédito de socios y no socios</p>
   </div>
   <div class="header-actions">
     <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelar()">Volver</button>
@@ -21,20 +21,43 @@
     </div>
     <div class="form-grid">
       <label class="field">
-        <span>Socio Solicitante *</span>
-        <select class="form-select form-select-sm" formControlName="socioId" data-testid="input-socio-solicitud">
-          <option [ngValue]="0" disabled>Seleccionar socio</option>
-          @for (s of socios(); track s.id) {
-            <option [ngValue]="s.id">{{ s.codigo }} - {{ s.nombres }} {{ s.apellidos }}</option>
-          }
+        <span>Tipo de Cliente *</span>
+        <select class="form-select form-select-sm" [value]="tipoCliente()"
+                (change)="cambiarTipo($any($event.target).value)" data-testid="input-tipo-cliente">
+          <option value="socio">Socio</option>
+          <option value="no_socio">No Socio</option>
         </select>
       </label>
+      @if (tipoCliente() === 'socio') {
+        <label class="field">
+          <span>Socio Solicitante *</span>
+          <select class="form-select form-select-sm" formControlName="socioId" data-testid="input-socio-solicitud">
+            <option [ngValue]="0" disabled>Seleccionar socio</option>
+            @for (s of socios(); track s.id) {
+              <option [ngValue]="s.id">{{ s.codigo }} - {{ s.nombres }} {{ s.apellidos }}</option>
+            }
+          </select>
+        </label>
+      } @else {
+        <label class="field">
+          <span>Nombre del Cliente *</span>
+          <input class="form-control form-control-sm" formControlName="clienteNoSocioNombre" placeholder="Nombre completo" data-testid="input-cliente-nombre" />
+        </label>
+        <label class="field">
+          <span>Identificación *</span>
+          <input class="form-control form-control-sm" formControlName="clienteNoSocioIdentificacion" placeholder="Cédula / RUC" data-testid="input-cliente-identificacion" />
+        </label>
+        <label class="field">
+          <span>Teléfono</span>
+          <input class="form-control form-control-sm" formControlName="clienteNoSocioTelefono" placeholder="Teléfono" data-testid="input-cliente-telefono" />
+        </label>
+      }
       <label class="field">
         <span>Producto de Crédito *</span>
         <select class="form-select form-select-sm" formControlName="productoId" data-testid="input-producto-solicitud">
           <option [ngValue]="0" disabled>Seleccionar producto</option>
           @for (p of productos(); track p.id) {
-            @if (p.activo) {
+            @if (p.activo && (tipoCliente() === 'socio' || p.permiteNoSocio)) {
               <option [ngValue]="p.id">{{ p.nombre }}</option>
             }
           }

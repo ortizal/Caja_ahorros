@@ -18,11 +18,14 @@ public class PagoCuota {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "cuota_id", nullable = false)
+    @Column(name = "cuota_id")
     private Long cuotaId;
 
     @Column(name = "credito_id", nullable = false)
     private Long creditoId;
+
+    @Column(nullable = false, length = 20)
+    private String tipo = "CUOTA";
 
     @Column(name = "monto_capital", nullable = false)
     private BigDecimal montoCapital;
@@ -32,6 +35,12 @@ public class PagoCuota {
 
     @Column(name = "monto_mora", nullable = false)
     private BigDecimal montoMora = BigDecimal.ZERO;
+
+    @Column(name = "monto_abono_capital", nullable = false)
+    private BigDecimal montoAbonoCapital = BigDecimal.ZERO;
+
+    @Column(length = 255)
+    private String descripcion;
 
     @Column(name = "comprobante_id")
     private Long comprobanteId;
@@ -66,6 +75,14 @@ public class PagoCuota {
         this.creditoId = creditoId;
     }
 
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
     public BigDecimal getMontoCapital() {
         return montoCapital;
     }
@@ -88,6 +105,22 @@ public class PagoCuota {
 
     public void setMontoMora(BigDecimal montoMora) {
         this.montoMora = montoMora;
+    }
+
+    public BigDecimal getMontoAbonoCapital() {
+        return montoAbonoCapital;
+    }
+
+    public void setMontoAbonoCapital(BigDecimal montoAbonoCapital) {
+        this.montoAbonoCapital = montoAbonoCapital;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 
     public Long getComprobanteId() {

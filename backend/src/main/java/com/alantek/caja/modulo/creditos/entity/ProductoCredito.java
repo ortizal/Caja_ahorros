@@ -21,6 +21,9 @@ public class ProductoCredito {
     @Column(nullable = false, length = 80)
     private String nombre;
 
+    @Column(name = "permite_no_socio", nullable = false)
+    private boolean permiteNoSocio = false;
+
     @Column(name = "tasa_interes", nullable = false)
     private BigDecimal tasaInteres;
 
@@ -65,6 +68,14 @@ public class ProductoCredito {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public boolean isPermiteNoSocio() {
+        return permiteNoSocio;
+    }
+
+    public void setPermiteNoSocio(boolean permiteNoSocio) {
+        this.permiteNoSocio = permiteNoSocio;
     }
 
     public BigDecimal getTasaInteres() {

@@ -18,6 +18,7 @@ export interface CuentaAhorro {
   productoId: number;
   nombreProducto?: string;
   numeroCuenta: string;
+  tipoAhorro: string;
   saldo: number;
   estado: string;
   fechaApertura: string;
@@ -49,6 +50,7 @@ export interface ProductoAhorroRequest {
 export interface CuentaAhorroRequest {
   socioId: number;
   productoId: number;
+  tipoAhorro?: string;
 }
 
 export interface MovimientoAhorroRequest {

@@ -93,6 +93,7 @@
           <tr>
             <th appSortable sortKey="numeroCuenta" [sort]="sortCuentas()" (sortChange)="ordenarCuentas($event)">Número Cuenta</th>
             <th>Socio Titular</th>
+            <th>Tipo</th>
             <th>Producto</th>
             <th appSortable sortKey="saldo" [sort]="sortCuentas()" (sortChange)="ordenarCuentas($event)">Saldo Disponible</th>
             <th appSortable sortKey="estado" [sort]="sortCuentas()" (sortChange)="ordenarCuentas($event)">Estado</th>
@@ -105,6 +106,9 @@
             <tr>
               <td><code>{{ c.numeroCuenta }}</code></td>
               <td><strong>{{ c.socioCodigo }}</strong> — {{ c.socioNombre }}</td>
+              <td>
+                <span class="badge badge-info">{{ c.tipoAhorro }}</span>
+              </td>
               <td>{{ c.nombreProducto }}</td>
               <td><strong>\${{ c.saldo | number: '1.2-2' }}</strong></td>
               <td>

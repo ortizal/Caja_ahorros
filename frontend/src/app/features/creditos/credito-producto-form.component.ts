@@ -27,6 +27,7 @@ export class CreditoProductoFormComponent {
     plazoMaxMeses: [36, [Validators.required, Validators.min(1)]],
     montoMin: [0, [Validators.min(0)]],
     montoMax: [5000, [Validators.min(0)]],
+    permiteNoSocio: [false],
     requiereGarante: [false],
     vigenteDesde: [this.hoy(), [Validators.required]]
   });
@@ -57,6 +58,7 @@ export class CreditoProductoFormComponent {
         plazoMaxMeses: Number(raw.plazoMaxMeses),
         montoMin: Number(raw.montoMin),
         montoMax: Number(raw.montoMax),
+        permiteNoSocio: Boolean(raw.permiteNoSocio),
         requiereGarante: Boolean(raw.requiereGarante),
         vigenteDesde: raw.vigenteDesde
       })

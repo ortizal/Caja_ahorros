@@ -94,7 +94,7 @@
           @for (s of solicitudes(); track s.id) {
             <tr>
               <td><strong>#{{ s.id }}</strong></td>
-              <td><strong>{{ s.socioCodigo }}</strong> — {{ s.socioNombre }}</td>
+              <td><strong>{{ s.socioCodigo ? s.socioCodigo + ' — ' : '' }}{{ s.socioNombre ?? s.clienteNoSocioNombre }}</strong></td>
               <td>{{ s.nombreProducto }}</td>
               <td><strong>\${{ s.montoSolicitado | number: '1.2-2' }}</strong></td>
               <td>{{ s.plazoMeses }} meses</td>
@@ -189,7 +189,7 @@
           @for (c of creditos(); track c.id) {
             <tr>
               <td><strong>#{{ c.id }}</strong></td>
-              <td><strong>{{ c.socioCodigo }}</strong> — {{ c.socioNombre }}</td>
+              <td><strong>{{ c.socioCodigo ? c.socioCodigo + ' — ' : '' }}{{ c.socioNombre ?? c.clienteNoSocioNombre }}</strong></td>
               <td>{{ c.nombreProducto }}</td>
               <td>\${{ c.montoDesembolsado | number: '1.2-2' }}</td>
               <td>{{ c.tasaInteres | number }}%</td>

@@ -1,6 +1,7 @@
 export interface ProductoCredito {
   id: number;
   nombre: string;
+  permiteNoSocio: boolean;
   tasaInteres: number;
   tasaMora: number;
   sistemaAmortizacion: string;
@@ -15,9 +16,12 @@ export interface ProductoCredito {
 
 export interface SolicitudCredito {
   id: number;
-  socioId: number;
+  socioId?: number;
   socioCodigo?: string;
   socioNombre?: string;
+  clienteNoSocioNombre?: string;
+  clienteNoSocioIdentificacion?: string;
+  clienteNoSocioTelefono?: string;
   productoId: number;
   nombreProducto?: string;
   montoSolicitado: number;
@@ -34,9 +38,12 @@ export interface SolicitudCredito {
 export interface Credito {
   id: number;
   solicitudId?: number;
-  socioId: number;
+  socioId?: number;
   socioCodigo?: string;
   socioNombre?: string;
+  clienteNoSocioNombre?: string;
+  clienteNoSocioIdentificacion?: string;
+  clienteNoSocioTelefono?: string;
   productoId: number;
   nombreProducto?: string;
   montoDesembolsado: number;
@@ -44,6 +51,7 @@ export interface Credito {
   plazoMeses: number;
   fechaDesembolso?: string;
   saldoCapital: number;
+  abonoCapitalTotal: number;
   estado: string;
   cuotasPendientes: number;
   createdAt: string;
@@ -64,11 +72,15 @@ export interface CuotaCredito {
 
 export interface PagoCuota {
   id: number;
-  cuotaId: number;
+  cuotaId?: number;
+  cuotaNumero?: number;
   creditoId: number;
+  tipo: string;
   montoCapital: number;
   montoInteres: number;
   montoMora: number;
+  montoAbonoCapital: number;
+  descripcion?: string;
   comprobanteId?: number;
   comprobanteNumero?: string;
   pagadoAt: string;
@@ -99,6 +111,7 @@ export interface MoraProcesada {
 
 export interface ProductoCreditoRequest {
   nombre: string;
+  permiteNoSocio?: boolean;
   tasaInteres: number;
   tasaMora?: number;
   sistemaAmortizacion?: string;
@@ -111,7 +124,10 @@ export interface ProductoCreditoRequest {
 }
 
 export interface SolicitudCreditoRequest {
-  socioId: number;
+  socioId?: number;
+  clienteNoSocioNombre?: string;
+  clienteNoSocioIdentificacion?: string;
+  clienteNoSocioTelefono?: string;
   productoId: number;
   montoSolicitado: number;
   plazoMeses: number;
@@ -124,10 +140,13 @@ export interface AprobarSolicitudRequest {
 }
 
 export interface PagoCuotaRequest {
-  cuotaId: number;
+  cuotaId?: number;
   montoCapital?: number;
   montoInteres?: number;
   montoMora?: number;
+  montoAbonoCapital?: number;
+  tipo?: string;
+  descripcion?: string;
 }
 
 export interface RefinanciarRequest {

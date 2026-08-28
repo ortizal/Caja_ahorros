@@ -67,7 +67,18 @@ describe('AhorroService', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/cuentas-ahorro`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ socioId: 2, productoId: 1 });
-    req.flush({ id: 2, socioId: 2, productoId: 1, numeroCuenta: 'AH-0000002', saldo: 0, estado: 'ACTIVA', fechaApertura: '2026-08-12' });
+    req.flush({ id: 2, socioId: 2, productoId: 1, numeroCuenta: 'AH-0000002', tipoAhorro: 'NORMAL', saldo: 0, estado: 'ACTIVA', fechaApertura: '2026-08-12' });
+  });
+
+  it('aperturar con tipoAhorro DECIMO13 lo envia en el cuerpo', () => {
+    service.aperturar({ socioId: 2, productoId: 1, tipoAhorro: 'DECIMO13' }).subscribe((res) => {
+      expect(res.tipoAhorro).toBe('DECIMO13');
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/cuentas-ahorro`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ socioId: 2, productoId: 1, tipoAhorro: 'DECIMO13' });
+    req.flush({ id: 3, socioId: 2, productoId: 1, numeroCuenta: 'AH-0000003', tipoAhorro: 'DECIMO13', saldo: 0, estado: 'ACTIVA', fechaApertura: '2026-08-12' });
   });
 
   it('depositar hace POST a /depositos', () => {
