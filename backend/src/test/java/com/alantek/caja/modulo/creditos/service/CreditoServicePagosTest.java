@@ -74,6 +74,7 @@ class CreditoServicePagosTest {
         credito.setId(10L);
         credito.setEstado("VIGENTE");
         credito.setSaldoCapital(saldo);
+        credito.setAbonoCapitalTotal(BigDecimal.ZERO);
         return credito;
     }
 
@@ -194,6 +195,7 @@ class CreditoServicePagosTest {
         assertThat(resp.tipo()).isEqualTo("ABONO");
         assertThat(resp.montoAbonoCapital()).isEqualByComparingTo(new BigDecimal("120.00"));
         assertThat(credito.getSaldoCapital()).isEqualByComparingTo(new BigDecimal("880.00"));
+        assertThat(credito.getAbonoCapitalTotal()).isEqualByComparingTo(new BigDecimal("120.00"));
         assertThat(q1.getCapital()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(q2.getCapital()).isEqualByComparingTo(new BigDecimal("80.00"));
         assertThat(q3.getCapital()).isEqualByComparingTo(new BigDecimal("100.00"));

@@ -1,0 +1,55 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.3)
+
+2026-08-27T21:58:10.956-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] c.a.caja.CajaAhorrosBackendApplication   : Starting CajaAhorrosBackendApplication using Java 26.0.2 with PID 10092 (D:\PROYECTOS\PERSONAL\Caja_ahorros\backend\target\classes started by Alexi in D:\PROYECTOS\PERSONAL\Caja_ahorros\backend)
+2026-08-27T21:58:10.958-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] c.a.caja.CajaAhorrosBackendApplication   : The following 1 profile is active: "dev"
+2026-08-27T21:58:11.752-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-27T21:58:11.874-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 116 ms. Found 40 JPA repository interfaces.
+2026-08-27T21:58:12.385-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-08-27T21:58:12.395-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-08-27T21:58:12.395-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.42]
+2026-08-27T21:58:12.444-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-08-27T21:58:12.444-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1440 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+2026-08-27T21:58:12.598-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-08-27T21:58:12.731-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@606d6d2c
+2026-08-27T21:58:12.732-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-08-27T21:58:12.840-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-27T21:58:12.877-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.18.Final
+2026-08-27T21:58:12.900-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-08-27T21:58:13.105-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-27T21:58:13.176-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 18.4
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-08-27T21:58:14.285-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-27T21:58:14.288-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-27T21:58:14.595-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-08-27T21:58:15.957-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-08-27T21:58:15.958-05:00  WARN 10092 --- [caja-ahorros-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-08-27T21:58:16.322-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-08-27T21:58:16.547-05:00  WARN 10092 --- [caja-ahorros-backend] [           main] ion$DefaultTemplateResolverConfiguration : Cannot find template location: classpath:/templates/ (please add some templates, check your Thymeleaf configuration, or set spring.thymeleaf.check-template-location=false)
+2026-08-27T21:58:16.737-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-08-27T21:58:16.749-05:00  INFO 10092 --- [caja-ahorros-backend] [           main] c.a.caja.CajaAhorrosBackendApplication   : Started CajaAhorrosBackendApplication in 6.167 seconds (process running for 6.477)
+2026-08-27T21:58:47.493-05:00  INFO 10092 --- [caja-ahorros-backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-27T21:58:47.494-05:00  INFO 10092 --- [caja-ahorros-backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-08-27T21:58:47.497-05:00  INFO 10092 --- [caja-ahorros-backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.3:run (default-cli) on project caja-ahorros-backend: Process terminated with exit code: -1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

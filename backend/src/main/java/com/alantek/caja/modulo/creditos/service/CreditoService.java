@@ -494,6 +494,7 @@ public class CreditoService {
         pago.setRegistradoPor(currentUserService.requireUserId());
         PagoCuota saved = pagoRepository.save(pago);
 
+        credito.setAbonoCapitalTotal(credito.getAbonoCapitalTotal().add(abono));
         actualizarSaldoYEstado(credito, abono);
         auditoriaPagoAbono(credito, cuota, abono);
         auditService.registrar("pago_cuota", saved.getId(), "CREAR", null, request);
