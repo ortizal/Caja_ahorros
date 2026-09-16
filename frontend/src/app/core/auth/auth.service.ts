@@ -25,7 +25,7 @@ export class AuthService {
   }
 
   hasPermiso(permiso: string): boolean {
-    return this.user()?.permisos.includes(permiso) ?? false;
+    return this.user()?.permisos?.includes(permiso) ?? false;
   }
 
   hasRol(...roles: string[]): boolean {

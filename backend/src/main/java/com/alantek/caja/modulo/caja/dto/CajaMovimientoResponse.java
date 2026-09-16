@@ -12,5 +12,6 @@ public record CajaMovimientoResponse(
         BigDecimal monto,
         String referenciaTabla,
         Long referenciaId,
+        String personaNombre,
         Instant createdAt) {
 }

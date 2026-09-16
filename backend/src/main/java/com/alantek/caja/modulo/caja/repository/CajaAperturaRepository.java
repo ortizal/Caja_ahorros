@@ -13,6 +13,8 @@ public interface CajaAperturaRepository extends JpaRepository<CajaApertura, Long
 
     Optional<CajaApertura> findFirstByCajeroIdAndFechaAndEstado(Long cajeroId, LocalDate fecha, String estado);
 
+    Optional<CajaApertura> findFirstByCajeroIdAndEstado(Long cajeroId, String estado);
+
     List<CajaApertura> findByFechaOrderByOpenedAtAsc(LocalDate fecha);
 
     List<CajaApertura> findByCajeroIdOrderByOpenedAtDesc(Long cajeroId);

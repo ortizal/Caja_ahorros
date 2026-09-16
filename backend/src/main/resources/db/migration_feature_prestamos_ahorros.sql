@@ -56,6 +56,10 @@ CREATE INDEX IF NOT EXISTS idx_producto_credito_permite_no_socio ON producto_cre
 CREATE INDEX IF NOT EXISTS idx_credito_cliente_no_socio ON credito(cliente_no_socio_identificacion);
 CREATE INDEX IF NOT EXISTS idx_solicitud_cliente_no_socio ON solicitud_credito(cliente_no_socio_identificacion);
 
+-- 6. CAJA: persona afectada por el movimiento ------------------------------
+--    Nombre legible (socio/cliente) de a quién afectó el movimiento de caja.
+ALTER TABLE caja_movimiento ADD COLUMN IF NOT EXISTS persona_nombre VARCHAR(150);
+
 COMMIT;
 
 -- ============================================================================

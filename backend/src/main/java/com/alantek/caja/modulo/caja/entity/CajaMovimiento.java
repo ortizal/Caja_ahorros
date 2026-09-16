@@ -36,6 +36,9 @@ public class CajaMovimiento {
     @Column(name = "referencia_id")
     private Long referenciaId;
 
+    @Column(name = "persona_nombre", length = 150)
+    private String personaNombre;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -56,6 +59,8 @@ public class CajaMovimiento {
     public void setReferenciaTabla(String referenciaTabla) { this.referenciaTabla = referenciaTabla; }
     public Long getReferenciaId() { return referenciaId; }
     public void setReferenciaId(Long referenciaId) { this.referenciaId = referenciaId; }
+    public String getPersonaNombre() { return personaNombre; }
+    public void setPersonaNombre(String personaNombre) { this.personaNombre = personaNombre; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Long getCreatedBy() { return createdBy; }

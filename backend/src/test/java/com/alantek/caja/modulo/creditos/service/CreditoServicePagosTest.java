@@ -103,7 +103,7 @@ class CreditoServicePagosTest {
         when(cuotaRepository.findById(1L)).thenReturn(Optional.of(cuota));
         when(cajaService.registrarMovimiento(any(CajaMovimientoRequest.class)))
                 .thenReturn(new CajaMovimientoResponse(200L, 1L, 300L, "COMP-001", "COBRO_CREDITO",
-                        new BigDecimal("98.33"), "credito", 10L, null));
+                        new BigDecimal("98.33"), "credito", 10L, null, null));
         when(cuotaRepository.countByCreditoIdAndEstado(10L, "PENDIENTE")).thenReturn(2L);
         when(cuotaRepository.countByCreditoIdAndEstado(10L, "VENCIDA")).thenReturn(0L);
         when(pagoRepository.save(any(PagoCuota.class))).thenAnswer(inv -> {
@@ -132,7 +132,7 @@ class CreditoServicePagosTest {
         when(cuotaRepository.findById(3L)).thenReturn(Optional.of(cuota));
         when(cajaService.registrarMovimiento(any(CajaMovimientoRequest.class)))
                 .thenReturn(new CajaMovimientoResponse(201L, 1L, 301L, "COMP-002", "COBRO_CREDITO",
-                        new BigDecimal("97.12"), "credito", 10L, null));
+                        new BigDecimal("97.12"), "credito", 10L, null, null));
         when(cuotaRepository.countByCreditoIdAndEstado(10L, "PENDIENTE")).thenReturn(1L);
         when(cuotaRepository.countByCreditoIdAndEstado(10L, "VENCIDA")).thenReturn(0L);
         when(pagoRepository.save(any(PagoCuota.class))).thenAnswer(inv -> {
@@ -180,7 +180,7 @@ class CreditoServicePagosTest {
         when(cuotaRepository.findByCreditoIdOrderByNumeroCuotaAsc(10L)).thenReturn(List.of(q1, q2, q3));
         when(cajaService.registrarMovimiento(any(CajaMovimientoRequest.class)))
                 .thenReturn(new CajaMovimientoResponse(202L, 1L, 302L, "COMP-003", "COBRO_CREDITO",
-                        new BigDecimal("120.00"), "credito", 10L, null));
+                        new BigDecimal("120.00"), "credito", 10L, null, null));
         when(cuotaRepository.countByCreditoIdAndEstado(10L, "PENDIENTE")).thenReturn(3L);
         when(cuotaRepository.countByCreditoIdAndEstado(10L, "VENCIDA")).thenReturn(0L);
         when(pagoRepository.save(any(PagoCuota.class))).thenAnswer(inv -> {

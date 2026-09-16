@@ -17,6 +17,7 @@ export interface CajaMovimiento {
   monto: number;
   referenciaTabla: string | null;
   referenciaId: number | null;
+  personaNombre: string | null;
   createdAt: string;
 }
 
@@ -43,6 +44,7 @@ export interface CajaMovimientoRequest {
   descripcion?: string;
   referenciaTabla?: string;
   referenciaId?: number;
+  personaNombre?: string;
   montoCapital?: number;
   montoInteres?: number;
   montoMora?: number;
@@ -55,3 +57,20 @@ export const TIPOS_MOVIMIENTO_CAJA = [
   'RETIRO',
   'DESEMBOLSO'
 ] as const;
+
+export type TipoReferenciaCaja = 'socio' | 'cuenta_ahorro' | 'credito' | null;
+
+export function referenciaParaTipo(tipo: string): TipoReferenciaCaja {
+  switch (tipo) {
+    case 'APORTACION':
+      return 'socio';
+    case 'DEPOSITO':
+    case 'RETIRO':
+      return 'cuenta_ahorro';
+    case 'COBRO_CREDITO':
+    case 'DESEMBOLSO':
+      return 'credito';
+    default:
+      return null;
+  }
+}

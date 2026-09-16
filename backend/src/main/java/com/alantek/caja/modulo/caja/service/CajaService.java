@@ -15,6 +15,9 @@ import com.alantek.caja.modulo.caja.repository.CajaAperturaRepository;
 import com.alantek.caja.modulo.caja.repository.CajaArqueoRepository;
 import com.alantek.caja.modulo.caja.repository.CajaMovimientoRepository;
 import com.alantek.caja.modulo.caja.repository.ComprobanteRepository;
+import com.alantek.caja.modulo.ahorros.repository.CuentaAhorroRepository;
+import com.alantek.caja.modulo.creditos.repository.CreditoRepository;
+import com.alantek.caja.modulo.socios.repository.SocioRepository;
 import com.alantek.caja.modulo.contabilidad.service.AsientoAutomaticoService;
 import com.alantek.caja.shared.PageResponse;
 import com.alantek.caja.shared.audit.AuditService;
@@ -40,6 +43,9 @@ public class CajaService {
     private final AsientoAutomaticoService asientoService;
     private final CurrentUserService currentUserService;
     private final AuditService auditService;
+    private final SocioRepository socioRepository;
+    private final CuentaAhorroRepository cuentaAhorroRepository;
+    private final CreditoRepository creditoRepository;
 
     public CajaService(CajaAperturaRepository aperturaRepository,
                        ComprobanteRepository comprobanteRepository,
@@ -47,7 +53,10 @@ public class CajaService {
                        CajaArqueoRepository arqueoRepository,
                        AsientoAutomaticoService asientoService,
                        CurrentUserService currentUserService,
-                       AuditService auditService) {
+                       AuditService auditService,
+                       SocioRepository socioRepository,
+                       CuentaAhorroRepository cuentaAhorroRepository,
+                       CreditoRepository creditoRepository) {
         this.aperturaRepository = aperturaRepository;
         this.comprobanteRepository = comprobanteRepository;
         this.movimientoRepository = movimientoRepository;
@@ -55,6 +64,9 @@ public class CajaService {
         this.asientoService = asientoService;
         this.currentUserService = currentUserService;
         this.auditService = auditService;
+        this.socioRepository = socioRepository;
+        this.cuentaAhorroRepository = cuentaAhorroRepository;
+        this.creditoRepository = creditoRepository;
     }
 
     @Transactional
@@ -62,9 +74,9 @@ public class CajaService {
         Long cajeroId = currentUserService.requireUserId();
         LocalDate fecha = request.fecha() != null ? request.fecha() : LocalDate.now();
 
-        aperturaRepository.findFirstByCajeroIdAndFechaAndEstado(cajeroId, fecha, "ABIERTA")
+        aperturaRepository.findFirstByCajeroIdAndEstado(cajeroId, "ABIERTA")
                 .ifPresent(apertura -> {
-                    throw new BusinessException("Ya existe una caja ABIERTA para el día de hoy");
+                    throw new BusinessException("Ya existe una caja ABIERTA; cierre la caja actual antes de abrir otra");
                 });
 
         CajaApertura apertura = new CajaApertura();
@@ -115,6 +127,7 @@ public class CajaService {
         movimiento.setMonto(request.monto());
         movimiento.setReferenciaTabla(request.referenciaTabla());
         movimiento.setReferenciaId(request.referenciaId());
+        movimiento.setPersonaNombre(resolverPersona(request.referenciaTabla(), request.referenciaId()));
         movimiento.setCreatedBy(cajeroId);
 
         CajaMovimiento saved = movimientoRepository.save(movimiento);
@@ -229,6 +242,37 @@ public class CajaService {
         return movimiento != null && !movimiento.isEgreso();
     }
 
+    private String resolverPersona(String referenciaTabla, Long referenciaId) {
+        if (referenciaTabla == null || referenciaId == null) {
+            return null;
+        }
+        try {
+            return switch (referenciaTabla) {
+                case "socio" -> socioRepository.findById(referenciaId)
+                        .map(s -> s.getNombres() + " " + s.getApellidos())
+                        .orElse(null);
+                case "cuenta_ahorro" -> cuentaAhorroRepository.findById(referenciaId)
+                        .map(cuenta -> socioRepository.findById(cuenta.getSocioId())
+                                .map(s -> s.getNombres() + " " + s.getApellidos())
+                                .orElse(null))
+                        .orElse(null);
+                case "credito" -> creditoRepository.findById(referenciaId)
+                        .map(c -> {
+                            if (c.getSocioId() != null) {
+                                return socioRepository.findById(c.getSocioId())
+                                        .map(s -> s.getNombres() + " " + s.getApellidos())
+                                        .orElse(null);
+                            }
+                            return c.getClienteNoSocioNombre();
+                        })
+                        .orElse(null);
+                default -> null;
+            };
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private CajaMovimientoResponse toResponse(CajaMovimiento movimiento, Comprobante comprobante) {
         return new CajaMovimientoResponse(
                 movimiento.getId(),
@@ -239,6 +283,7 @@ public class CajaService {
                 movimiento.getMonto(),
                 movimiento.getReferenciaTabla(),
                 movimiento.getReferenciaId(),
+                movimiento.getPersonaNombre(),
                 movimiento.getCreatedAt());
     }
 

@@ -42,7 +42,14 @@ export class ShellComponent implements OnInit {
   protected readonly mobileMenuOpen = signal(false);
 
   ngOnInit(): void {
+    this.refrescarSesion();
     this.cargar();
+  }
+
+  private refrescarSesion(): void {
+    if (this.auth.isAuthenticated()) {
+      this.auth.refresh().subscribe({ error: () => undefined });
+    }
   }
 
   visibleMenu(): MenuItem[] {

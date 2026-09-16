@@ -180,8 +180,9 @@ CREATE TABLE IF NOT EXISTS caja_movimiento (
   comprobante_id BIGINT REFERENCES comprobantes(id),
   tipo VARCHAR(20) NOT NULL,
   monto NUMERIC(14,2) NOT NULL,
-  referencia_tabla VARCHAR(60),
+referencia_tabla VARCHAR(60),
   referencia_id BIGINT,
+  persona_nombre VARCHAR(150),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by BIGINT
 );

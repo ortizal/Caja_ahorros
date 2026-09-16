@@ -73,3 +73,35 @@
 .texto-error {
   color: var(--color-danger);
 }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 16px 0 0;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: 10px 14px;
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text);
+  background: #f8fafc;
+}
+
+.tab-activa {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  background: #eff6ff;
+}

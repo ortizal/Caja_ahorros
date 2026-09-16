@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { finalize, Observable } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiError } from '../../core/models/auth.model';
@@ -11,11 +11,18 @@ import {
   CajaArqueo,
   CajaMovimiento,
   SaldoCaja,
-  TIPOS_MOVIMIENTO_CAJA
+  TIPOS_MOVIMIENTO_CAJA,
+  referenciaParaTipo
 } from '../../core/models/caja.model';
 import { CajaService } from '../../core/services/caja.service';
 import { ReporteService } from '../../core/services/reporte.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SocioService } from '../../core/services/socio.service';
+import { AhorroService } from '../../core/services/ahorro.service';
+import { CreditoService } from '../../core/services/credito.service';
+import { Socio } from '../../core/models/socio.model';
+import { CuentaAhorro } from '../../core/models/ahorro.model';
+import { Credito } from '../../core/models/credito.model';
 import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
 import { SortState } from '../../core/models/paginado.model';
 import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
@@ -23,16 +30,20 @@ import { SortableHeaderDirective } from '../../shared/components/sortable-header
 
 @Component({
   selector: 'app-caja',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
   templateUrl: './caja.html',
   styleUrl: './caja.css'
 })
 export class CajaComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
   private readonly cajaService = inject(CajaService);
   private readonly auth = inject(AuthService);
   private readonly reporteService = inject(ReporteService);
   private readonly toast = inject(ToastService);
+  private readonly socioService = inject(SocioService);
+  private readonly ahorroService = inject(AhorroService);
+  private readonly creditoService = inject(CreditoService);
 
   protected readonly cajas = signal<CajaApertura[]>([]);
   protected readonly seleccionada = signal<CajaApertura | null>(null);
@@ -44,6 +55,7 @@ export class CajaComponent implements OnInit {
   protected readonly guardando = signal(false);
   protected readonly exportando = signal(false);
   protected readonly tipos = TIPOS_MOVIMIENTO_CAJA;
+  protected readonly tabActiva = signal<'arqueo' | 'movimientos'>('arqueo');
 
   protected readonly page = signal(0);
   protected readonly size = signal(10);
@@ -57,8 +69,14 @@ export class CajaComponent implements OnInit {
   protected readonly movTotalElements = signal(0);
   protected readonly movTotalPages = signal(0);
 
+  protected readonly socios = signal<Socio[]>([]);
+  protected readonly cuentas = signal<CuentaAhorro[]>([]);
+  protected readonly creditos = signal<Credito[]>([]);
+  protected readonly cargandoOpciones = signal(false);
+
   protected readonly movimientoForm = this.fb.nonNullable.group({
     tipo: ['APORTACION', [Validators.required]],
+    referenciaId: [null as number | null, [Validators.required]],
     monto: [0, [Validators.required, Validators.min(0.01)]],
     descripcion: [''],
     montoCapital: [null as number | null],
@@ -73,16 +91,95 @@ export class CajaComponent implements OnInit {
 
   protected readonly cobroActivo = signal(false);
   protected readonly puedeCrear = computed(() => this.auth.hasPermiso('CAJA:CREAR'));
+  protected readonly tieneCajaAbierta = computed(() => this.cajas().some((c) => c.estado === 'ABIERTA'));
   protected readonly cajaAbierta = computed(
     () => this.seleccionada()?.estado === 'ABIERTA' && this.cajas().some((c) => c.id === this.seleccionada()?.id)
   );
 
+  irAbrirCaja(): void {
+    if (this.tieneCajaAbierta()) {
+      this.toast.warning('Ya existe una caja ABIERTA; cierre la caja actual antes de abrir otra.');
+      return;
+    }
+    this.router.navigate(['/caja/nuevo']);
+  }
+
+  protected readonly tipoReferencia = computed(() => referenciaParaTipo(this.movimientoForm.controls.tipo.value));
+
+  protected readonly opcionesPersona = computed(() => {
+    const tipo = this.tipoReferencia();
+    if (tipo === 'socio') {
+      return this.socios().map((s) => ({ id: s.id, label: `${s.codigo} — ${s.nombres} ${s.apellidos}`, nombre: `${s.nombres} ${s.apellidos}` }));
+    }
+    if (tipo === 'cuenta_ahorro') {
+      return this.cuentas().map((c) => ({
+        id: c.id,
+        label: `${c.numeroCuenta} — ${c.socioNombre ?? 'Socio'}`,
+        nombre: c.socioNombre ?? null
+      }));
+    }
+    if (tipo === 'credito') {
+      return this.creditos().map((c) => ({
+        id: c.id,
+        label: `#${c.id} — ${c.socioNombre ?? c.clienteNoSocioNombre ?? 'Cliente'}`,
+        nombre: c.socioNombre ?? c.clienteNoSocioNombre ?? null
+      }));
+    }
+    return [] as { id: number; label: string; nombre: string | null }[];
+  });
+
+  protected readonly etiquetaPersona = computed(() => {
+    switch (this.tipoReferencia()) {
+      case 'socio':
+        return 'Socio afectado';
+      case 'cuenta_ahorro':
+        return 'Cuenta de Ahorro';
+      case 'credito':
+        return 'Crédito / Cliente';
+      default:
+        return 'Persona';
+    }
+  });
+
   ngOnInit(): void {
     this.cobroActivo.set(this.movimientoForm.getRawValue().tipo === 'COBRO_CREDITO');
-    this.movimientoForm.controls.tipo.valueChanges.subscribe((tipo) =>
-      this.cobroActivo.set(tipo === 'COBRO_CREDITO')
-    );
+    this.movimientoForm.controls.tipo.valueChanges.subscribe((tipo) => {
+      this.cobroActivo.set(tipo === 'COBRO_CREDITO');
+      this.movimientoForm.controls.referenciaId.setValue(null);
+    });
     this.cargarCajas();
+    this.cargarOpcionesPersona();
+  }
+
+  cargarOpcionesPersona(): void {
+    this.cargandoOpciones.set(true);
+    this.socioService.listar({ size: 100 }).subscribe({
+      next: (p) => {
+        this.socios.set(p.content);
+        this.cargarCuentas();
+      },
+      error: () => this.cargarCuentas()
+    });
+  }
+
+  private cargarCuentas(): void {
+    this.ahorroService.cuentas(undefined, { size: 100 }).subscribe({
+      next: (p) => {
+        this.cuentas.set(p.content);
+        this.cargarCreditos();
+      },
+      error: () => this.cargarCreditos()
+    });
+  }
+
+  private cargarCreditos(): void {
+    this.creditoService.creditos(undefined, { size: 100 }).subscribe({
+      next: (p) => {
+        this.creditos.set(p.content);
+        this.cargandoOpciones.set(false);
+      },
+      error: () => this.cargandoOpciones.set(false)
+    });
   }
 
   cargarCajas(): void {
@@ -188,14 +285,22 @@ export class CajaComponent implements OnInit {
     }
     const raw = this.movimientoForm.getRawValue();
     let monto = Number(raw.monto);
+    const targetTipo = referenciaParaTipo(raw.tipo);
     const request: {
       tipo: string;
       monto: number;
       descripcion?: string;
+      referenciaTabla?: string;
+      referenciaId?: number;
       montoCapital?: number;
       montoInteres?: number;
       montoMora?: number;
     } = { tipo: raw.tipo, monto };
+
+    if (targetTipo && raw.referenciaId != null) {
+      request.referenciaTabla = targetTipo;
+      request.referenciaId = Number(raw.referenciaId);
+    }
 
     if (raw.tipo === 'COBRO_CREDITO') {
       request.montoCapital = Number(raw.montoCapital ?? 0);
@@ -217,6 +322,7 @@ export class CajaComponent implements OnInit {
       next: () => {
         this.movimientoForm.patchValue({
           tipo: 'APORTACION',
+          referenciaId: null,
           monto: 0,
           descripcion: '',
           montoCapital: null,
@@ -271,6 +377,10 @@ export class CajaComponent implements OnInit {
     this.cajaService.cerrar(caja.id).pipe(finalize(() => this.guardando.set(false))).subscribe({
       next: () => {
         this.toast.success('Caja cerrada.');
+        this.seleccionada.set(null);
+        this.saldo.set(null);
+        this.movimientos.set([]);
+        this.arqueoResultado.set(null);
         this.cargarCajas();
       },
       error: (err: HttpErrorResponse) => {
