@@ -11,5 +11,7 @@ public record CajaAperturaRequest(
         @DecimalMin(value = "0.0", message = "El saldo inicial no puede ser negativo")
         BigDecimal saldoInicial,
 
+        Long cajeroId,
+
         LocalDate fecha) {
 }

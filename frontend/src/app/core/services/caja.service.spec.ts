@@ -80,4 +80,24 @@ describe('CajaService', () => {
     expect(req.request.method).toBe('POST');
     req.flush({ id: 3, cajeroId: 1, fecha: '2026-08-11', saldoInicial: 500, estado: 'CERRADA' });
   });
+
+  it('listado hace GET a /caja/listado con estado', () => {
+    service.listado('ABIERTA', { page: 0, size: 10 }).subscribe((res) => {
+      expect(res.content.length).toBe(1);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/caja/listado?page=0&size=10&estado=ABIERTA`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ content: [{ id: 1, cajeroId: 1, fecha: '2026-08-11', saldoInicial: 500, estado: 'ABIERTA' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });
+  });
+
+  it('cajeros hace GET a /caja/cajeros', () => {
+    service.cajeros().subscribe((res) => {
+      expect(res.length).toBe(2);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/caja/cajeros`);
+    expect(req.request.method).toBe('GET');
+    req.flush([{ id: 1, username: 'cajero', nombre: 'Cajero Uno' }, { id: 2, username: 'cajero2', nombre: 'Cajero Dos' }]);
+  });
 });

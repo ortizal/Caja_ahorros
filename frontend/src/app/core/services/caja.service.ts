@@ -7,6 +7,7 @@ import {
   CajaArqueo,
   CajaMovimiento,
   CajaMovimientoRequest,
+  Cajero,
   SaldoCaja
 } from '../models/caja.model';
 import { Paginated, Paginacion, paginar } from '../models/paginado.model';
@@ -17,15 +18,28 @@ export class CajaService {
 
   constructor(private readonly http: HttpClient) {}
 
-  apertura(saldoInicial: number, fecha?: string): Observable<CajaApertura> {
+  apertura(saldoInicial: number, fecha?: string, cajeroId?: number): Observable<CajaApertura> {
     return this.http.post<CajaApertura>(`${this.base}/apertura`, {
       saldoInicial,
-      ...(fecha ? { fecha } : {})
+      ...(fecha ? { fecha } : {}),
+      ...(cajeroId != null ? { cajeroId } : {})
     });
   }
 
   misCajas(paginacion?: Paginacion): Observable<Paginated<CajaApertura>> {
     return this.http.get<Paginated<CajaApertura>>(`${this.base}/mias`, { params: paginar(paginacion) });
+  }
+
+  listado(estado?: string, paginacion?: Paginacion): Observable<Paginated<CajaApertura>> {
+    const params: Record<string, string | number> = paginar(paginacion);
+    if (estado) {
+      params['estado'] = estado;
+    }
+    return this.http.get<Paginated<CajaApertura>>(`${this.base}/listado`, { params });
+  }
+
+  cajeros(): Observable<Cajero[]> {
+    return this.http.get<Cajero[]>(`${this.base}/cajeros`);
   }
 
   cerrar(id: number): Observable<CajaApertura> {

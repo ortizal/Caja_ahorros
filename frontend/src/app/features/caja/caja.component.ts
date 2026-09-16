@@ -12,25 +12,31 @@ import {
   CajaMovimiento,
   SaldoCaja,
   TIPOS_MOVIMIENTO_CAJA,
-  referenciaParaTipo
+  objetoParaTipo
 } from '../../core/models/caja.model';
 import { CajaService } from '../../core/services/caja.service';
 import { ReporteService } from '../../core/services/reporte.service';
 import { ToastService } from '../../core/services/toast.service';
-import { SocioService } from '../../core/services/socio.service';
 import { AhorroService } from '../../core/services/ahorro.service';
 import { CreditoService } from '../../core/services/credito.service';
+import { AportacionService } from '../../core/services/aportacion.service';
 import { Socio } from '../../core/models/socio.model';
-import { CuentaAhorro } from '../../core/models/ahorro.model';
-import { Credito } from '../../core/models/credito.model';
-import { AccionesMenuComponent } from '../../shared/components/acciones-menu/acciones-menu.component';
 import { SortState } from '../../core/models/paginado.model';
 import { PaginadorComponent } from '../../shared/components/paginador/paginador.component';
 import { SortableHeaderDirective } from '../../shared/components/sortable-header/sortable-header.directive';
+import { SocioBuscadorComponent } from './socio-buscador.component';
+
+interface OpcionMovimiento {
+  id: number;
+  label: string;
+  pendiente?: number;
+  saldo?: number;
+  estado?: string;
+}
 
 @Component({
   selector: 'app-caja',
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, AccionesMenuComponent, PaginadorComponent, SortableHeaderDirective],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, PaginadorComponent, SortableHeaderDirective, SocioBuscadorComponent],
   templateUrl: './caja.html',
   styleUrl: './caja.css'
 })
@@ -41,9 +47,9 @@ export class CajaComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly reporteService = inject(ReporteService);
   private readonly toast = inject(ToastService);
-  private readonly socioService = inject(SocioService);
   private readonly ahorroService = inject(AhorroService);
   private readonly creditoService = inject(CreditoService);
+  private readonly aportacionService = inject(AportacionService);
 
   protected readonly cajas = signal<CajaApertura[]>([]);
   protected readonly seleccionada = signal<CajaApertura | null>(null);
@@ -57,27 +63,21 @@ export class CajaComponent implements OnInit {
   protected readonly tipos = TIPOS_MOVIMIENTO_CAJA;
   protected readonly tabActiva = signal<'arqueo' | 'movimientos'>('arqueo');
 
-  protected readonly page = signal(0);
-  protected readonly size = signal(10);
-  protected readonly sort = signal<SortState | null>(null);
-  protected readonly totalElements = signal(0);
-  protected readonly totalPages = signal(0);
-
   protected readonly movPage = signal(0);
   protected readonly movSize = signal(10);
   protected readonly movSort = signal<SortState | null>(null);
   protected readonly movTotalElements = signal(0);
   protected readonly movTotalPages = signal(0);
 
-  protected readonly socios = signal<Socio[]>([]);
-  protected readonly cuentas = signal<CuentaAhorro[]>([]);
-  protected readonly creditos = signal<Credito[]>([]);
+  protected readonly socioSeleccionado = signal<Socio | null>(null);
+  protected readonly modalSocioAbierto = signal(false);
+  protected readonly items = signal<OpcionMovimiento[]>([]);
   protected readonly cargandoOpciones = signal(false);
 
   protected readonly movimientoForm = this.fb.nonNullable.group({
     tipo: ['APORTACION', [Validators.required]],
     referenciaId: [null as number | null, [Validators.required]],
-    monto: [0, [Validators.required, Validators.min(0.01)]],
+    monto: [0],
     descripcion: [''],
     montoCapital: [null as number | null],
     montoInteres: [null as number | null],
@@ -91,10 +91,109 @@ export class CajaComponent implements OnInit {
 
   protected readonly cobroActivo = signal(false);
   protected readonly puedeCrear = computed(() => this.auth.hasPermiso('CAJA:CREAR'));
+  protected readonly puedeAprobar = computed(() => this.auth.hasPermiso('CAJA:APROBAR'));
   protected readonly tieneCajaAbierta = computed(() => this.cajas().some((c) => c.estado === 'ABIERTA'));
   protected readonly cajaAbierta = computed(
     () => this.seleccionada()?.estado === 'ABIERTA' && this.cajas().some((c) => c.id === this.seleccionada()?.id)
   );
+
+  irListado(): void {
+    this.router.navigate(['/caja/listado']);
+  }
+
+  protected readonly tipoActual = computed(() => this.estadoForm().tipo ?? 'APORTACION');
+  protected readonly objetoActual = computed(() => objetoParaTipo(this.tipoActual()));
+  protected readonly requiereSocio = computed(() => this.objetoActual() !== null);
+
+  protected readonly itemSeleccionado = computed(() => {
+    const ref = this.estadoForm().referenciaId;
+    return this.items().find((i) => i.id === ref) ?? null;
+  });
+
+  protected readonly estadoForm = signal(this.movimientoForm.getRawValue());
+
+  protected readonly etiquetaItem = computed(() => {
+    switch (this.objetoActual()) {
+      case 'aportacion':
+        return 'Aportación (periodo)';
+      case 'cuenta':
+        return 'Cuenta de Ahorro';
+      case 'credito':
+        return 'Crédito';
+      default:
+        return 'Referencia';
+    }
+  });
+
+  protected readonly etiquetaBoton = computed(() => {
+    switch (this.tipoActual()) {
+      case 'APORTACION':
+        return '💾 Pagar Aportación';
+      case 'DEPOSITO':
+        return '💾 Registrar Depósito';
+      case 'RETIRO':
+        return '💾 Registrar Retiro';
+      case 'COBRO_CREDITO':
+        return '💾 Registrar Cobro';
+      case 'DESEMBOLSO':
+        return '💾 Desembolsar Crédito';
+      default:
+        return '💾 Registrar';
+    }
+  });
+
+  protected readonly hintMonto = computed(() => {
+    const item = this.itemSeleccionado();
+    if (item == null) {
+      return null;
+    }
+    switch (this.tipoActual()) {
+      case 'APORTACION':
+        return item.pendiente != null ? `Pendiente a pagar: $${item.pendiente.toFixed(2)}` : null;
+      case 'RETIRO':
+        return item.saldo != null ? `Saldo disponible para retiro: $${item.saldo.toFixed(2)}` : null;
+      case 'DEPOSITO':
+        return item.saldo != null ? `Saldo actual de la cuenta: $${item.saldo.toFixed(2)}` : null;
+      case 'DESEMBOLSO':
+        return item.estado === 'APROBADA' ? 'Monto acreditado por el monto aprobado del crédito.' : null;
+      case 'COBRO_CREDITO':
+        return item.estado != null ? `Estado del crédito: ${item.estado}` : null;
+      default:
+        return null;
+    }
+  });
+
+  protected readonly avisoItem = computed(() => {
+    const item = this.itemSeleccionado();
+    const tipo = this.tipoActual();
+    if (item != null && tipo === 'DESEMBOLSO' && item.estado !== 'APROBADA') {
+      return 'Solo se pueden desembolsar créditos en estado APROBADA.';
+    }
+    if (item != null && tipo === 'RETIRO' && (item.saldo ?? 0) <= 0) {
+      return 'La cuenta seleccionada no tiene saldo disponible.';
+    }
+    if (item != null && tipo === 'APORTACION' && (item.pendiente ?? 0) <= 0) {
+      return 'La aportación seleccionada no tiene monto pendiente.';
+    }
+    return null;
+  });
+
+  protected readonly formValido = computed(() => {
+    const raw = this.movimientoForm.getRawValue();
+    if (!raw.tipo || raw.referenciaId == null) {
+      return false;
+    }
+    if (raw.tipo === 'DESEMBOLSO') {
+      return this.itemSeleccionado()?.estado === 'APROBADA';
+    }
+    if (raw.tipo === 'COBRO_CREDITO') {
+      return (
+        Number(raw.montoCapital ?? 0) + Number(raw.montoInteres ?? 0) + Number(raw.montoMora ?? 0) >
+        0
+      );
+    }
+    return Number(raw.monto) > 0;
+  });
 
   irAbrirCaja(): void {
     if (this.tieneCajaAbierta()) {
@@ -104,96 +203,117 @@ export class CajaComponent implements OnInit {
     this.router.navigate(['/caja/nuevo']);
   }
 
-  protected readonly tipoReferencia = computed(() => referenciaParaTipo(this.movimientoForm.controls.tipo.value));
-
-  protected readonly opcionesPersona = computed(() => {
-    const tipo = this.tipoReferencia();
-    if (tipo === 'socio') {
-      return this.socios().map((s) => ({ id: s.id, label: `${s.codigo} — ${s.nombres} ${s.apellidos}`, nombre: `${s.nombres} ${s.apellidos}` }));
-    }
-    if (tipo === 'cuenta_ahorro') {
-      return this.cuentas().map((c) => ({
-        id: c.id,
-        label: `${c.numeroCuenta} — ${c.socioNombre ?? 'Socio'}`,
-        nombre: c.socioNombre ?? null
-      }));
-    }
-    if (tipo === 'credito') {
-      return this.creditos().map((c) => ({
-        id: c.id,
-        label: `#${c.id} — ${c.socioNombre ?? c.clienteNoSocioNombre ?? 'Cliente'}`,
-        nombre: c.socioNombre ?? c.clienteNoSocioNombre ?? null
-      }));
-    }
-    return [] as { id: number; label: string; nombre: string | null }[];
-  });
-
-  protected readonly etiquetaPersona = computed(() => {
-    switch (this.tipoReferencia()) {
-      case 'socio':
-        return 'Socio afectado';
-      case 'cuenta_ahorro':
-        return 'Cuenta de Ahorro';
-      case 'credito':
-        return 'Crédito / Cliente';
-      default:
-        return 'Persona';
-    }
-  });
-
   ngOnInit(): void {
     this.cobroActivo.set(this.movimientoForm.getRawValue().tipo === 'COBRO_CREDITO');
     this.movimientoForm.controls.tipo.valueChanges.subscribe((tipo) => {
       this.cobroActivo.set(tipo === 'COBRO_CREDITO');
       this.movimientoForm.controls.referenciaId.setValue(null);
+      this.movimientoForm.controls.monto.setValue(0);
+      this.movimientoForm.controls.montoCapital.setValue(null);
+      this.movimientoForm.controls.montoInteres.setValue(null);
+      this.movimientoForm.controls.montoMora.setValue(null);
+      this.cargarItems();
+    });
+    this.movimientoForm.controls.referenciaId.valueChanges.subscribe((v) => {
+      const item = this.items().find((i) => i.id === v);
+      if (this.tipoActual() === 'APORTACION' && item?.pendiente != null) {
+        this.movimientoForm.controls.monto.setValue(item.pendiente);
+      }
     });
     this.cargarCajas();
-    this.cargarOpcionesPersona();
   }
 
-  cargarOpcionesPersona(): void {
+  abrirBuscadorSocio(): void {
+    this.modalSocioAbierto.set(true);
+  }
+
+  cerrarBuscadorSocio(): void {
+    this.modalSocioAbierto.set(false);
+  }
+
+  elegirSocio(socio: Socio): void {
+    this.socioSeleccionado.set(socio);
+    this.modalSocioAbierto.set(false);
+    this.movimientoForm.controls.referenciaId.setValue(null);
+    this.cargarItems();
+  }
+
+  quitarSocio(): void {
+    this.socioSeleccionado.set(null);
+    this.items.set([]);
+    this.movimientoForm.controls.referenciaId.setValue(null);
+  }
+
+  cargarItems(): void {
+    const socio = this.socioSeleccionado();
+    if (!socio) {
+      this.items.set([]);
+      return;
+    }
+    const objeto = this.objetoActual();
+    if (!objeto) {
+      this.items.set([]);
+      return;
+    }
     this.cargandoOpciones.set(true);
-    this.socioService.listar({ size: 100 }).subscribe({
-      next: (p) => {
-        this.socios.set(p.content);
-        this.cargarCuentas();
-      },
-      error: () => this.cargarCuentas()
-    });
-  }
-
-  private cargarCuentas(): void {
-    this.ahorroService.cuentas(undefined, { size: 100 }).subscribe({
-      next: (p) => {
-        this.cuentas.set(p.content);
-        this.cargarCreditos();
-      },
-      error: () => this.cargarCreditos()
-    });
-  }
-
-  private cargarCreditos(): void {
-    this.creditoService.creditos(undefined, { size: 100 }).subscribe({
-      next: (p) => {
-        this.creditos.set(p.content);
-        this.cargandoOpciones.set(false);
-      },
-      error: () => this.cargandoOpciones.set(false)
-    });
+    const fin = () => this.cargandoOpciones.set(false);
+    if (objeto === 'aportacion') {
+      this.aportacionService.aportaciones({ socioId: socio.id, size: 100 }).subscribe({
+        next: (p) => {
+          this.items.set(
+            p.content
+              .filter((a) => a.estado !== 'PAGADA')
+              .map((a) => ({
+                id: a.id,
+                label: `${a.periodo} — Cuota $${a.montoEsperado} · Pagado $${a.montoPagado}`,
+                pendiente: a.montoEsperado - a.montoPagado,
+                estado: a.estado
+              }))
+          );
+          fin();
+        },
+        error: () => fin()
+      });
+    } else if (objeto === 'cuenta') {
+      this.ahorroService.cuentas(socio.id, { size: 100 }).subscribe({
+        next: (p) => {
+          this.items.set(
+            p.content
+              .filter((c) => c.estado === 'ABIERTA')
+              .map((c) => ({
+                id: c.id,
+                label: `${c.numeroCuenta} — ${c.tipoAhorro}`,
+                saldo: c.saldo,
+                estado: c.estado
+              }))
+          );
+          fin();
+        },
+        error: () => fin()
+      });
+    } else {
+      this.creditoService.creditos(socio.id, { size: 100 }).subscribe({
+        next: (p) => {
+          this.items.set(
+            p.content.map((c) => ({
+              id: c.id,
+              label: `#${c.id} — ${c.socioNombre ?? c.clienteNoSocioNombre ?? 'Cliente'}`,
+              estado: c.estado
+            }))
+          );
+          fin();
+        },
+        error: () => fin()
+      });
+    }
   }
 
   cargarCajas(): void {
     this.cargando.set(true);
     this.error.set('');
-    this.cajaService.misCajas({
-      page: this.page(),
-      size: this.size(),
-      sort: this.sort() ? `${this.sort()!.key},${this.sort()!.dir}` : undefined
-    }).subscribe({
+    this.cajaService.misCajas({ size: 50, sort: 'openedAt,desc' }).subscribe({
       next: (paginated) => {
         this.cajas.set(paginated.content);
-        this.totalElements.set(paginated.totalElements);
-        this.totalPages.set(paginated.totalPages);
         const abierta = paginated.content.find((c) => c.estado === 'ABIERTA');
         if (abierta) {
           this.seleccionar(abierta);
@@ -236,23 +356,6 @@ export class CajaComponent implements OnInit {
     });
   }
 
-  cambiarPagina(p: number): void {
-    this.page.set(p);
-    this.cargarCajas();
-  }
-
-  cambiarTamano(t: number): void {
-    this.size.set(t);
-    this.page.set(0);
-    this.cargarCajas();
-  }
-
-  ordenar(s: SortState): void {
-    this.sort.set(s);
-    this.page.set(0);
-    this.cargarCajas();
-  }
-
   cambiarMovPagina(p: number): void {
     this.movPage.set(p);
     const caja = this.seleccionada();
@@ -280,48 +383,88 @@ export class CajaComponent implements OnInit {
   }
 
   registrarMovimiento(): void {
-    if (this.movimientoForm.invalid || this.guardando()) {
+    if (!this.formValido() || this.guardando()) {
       return;
     }
     const raw = this.movimientoForm.getRawValue();
-    let monto = Number(raw.monto);
-    const targetTipo = referenciaParaTipo(raw.tipo);
-    const request: {
-      tipo: string;
-      monto: number;
-      descripcion?: string;
-      referenciaTabla?: string;
-      referenciaId?: number;
-      montoCapital?: number;
-      montoInteres?: number;
-      montoMora?: number;
-    } = { tipo: raw.tipo, monto };
-
-    if (targetTipo && raw.referenciaId != null) {
-      request.referenciaTabla = targetTipo;
-      request.referenciaId = Number(raw.referenciaId);
-    }
-
-    if (raw.tipo === 'COBRO_CREDITO') {
-      request.montoCapital = Number(raw.montoCapital ?? 0);
-      request.montoInteres = Number(raw.montoInteres ?? 0);
-      request.montoMora = Number(raw.montoMora ?? 0);
-      request.monto = request.montoCapital + request.montoInteres + request.montoMora;
-    }
-    if (raw.descripcion) {
-      request.descripcion = raw.descripcion;
-    }
-
+    const tipo = raw.tipo;
+    const item = this.itemSeleccionado();
     const caja = this.seleccionada();
-    if (!caja) {
+    if (!item || !caja) {
       return;
     }
+    const refId = Number(raw.referenciaId);
+    const monto = Number(raw.monto);
+
+    switch (tipo) {
+      case 'APORTACION': {
+        if (monto <= 0) {
+          this.setError('El monto a pagar debe ser mayor a 0.');
+          return;
+        }
+        this.ejecutar(this.aportacionService.pagar(refId, monto), 'Aportación pagada correctamente.');
+        break;
+      }
+      case 'DEPOSITO': {
+        if (monto <= 0) {
+          this.setError('El monto a depositar debe ser mayor a 0.');
+          return;
+        }
+        this.ejecutar(this.ahorroService.depositar(refId, monto), 'Depósito registrado correctamente.');
+        break;
+      }
+      case 'RETIRO': {
+        if (monto <= 0) {
+          this.setError('El monto a retirar debe ser mayor a 0.');
+          return;
+        }
+        if (item.saldo != null && monto > item.saldo) {
+          this.setError('El monto a retirar supera el saldo disponible de la cuenta.');
+          return;
+        }
+        this.ejecutar(this.ahorroService.retirar(refId, monto), 'Retiro registrado correctamente.');
+        break;
+      }
+      case 'COBRO_CREDITO': {
+        const request: {
+          tipo: string;
+          monto: number;
+          descripcion?: string;
+          referenciaTabla?: string;
+          referenciaId?: number;
+          montoCapital?: number;
+          montoInteres?: number;
+          montoMora?: number;
+        } = { tipo, monto };
+        request.referenciaTabla = 'credito';
+        request.referenciaId = refId;
+        request.montoCapital = Number(raw.montoCapital ?? 0);
+        request.montoInteres = Number(raw.montoInteres ?? 0);
+        request.montoMora = Number(raw.montoMora ?? 0);
+        request.monto = request.montoCapital + request.montoInteres + request.montoMora;
+        if (raw.descripcion) {
+          request.descripcion = raw.descripcion;
+        }
+        this.ejecutar(this.cajaService.registrarMovimiento(caja.id, request), 'Cobro registrado correctamente.');
+        break;
+      }
+      case 'DESEMBOLSO': {
+        this.ejecutar(this.creditoService.desembolsar(refId), 'Crédito desembolsado correctamente.');
+        break;
+      }
+      default:
+        return;
+    }
+  }
+
+  private ejecutar(obs: Observable<unknown>, mensaje: string): void {
+    const caja = this.seleccionada();
     this.guardando.set(true);
     this.error.set('');
-    this.cajaService.registrarMovimiento(caja.id, request).pipe(finalize(() => this.guardando.set(false))).subscribe({
+    obs.pipe(finalize(() => this.guardando.set(false))).subscribe({
       next: () => {
+        this.toast.success(mensaje);
         this.movimientoForm.patchValue({
-          tipo: 'APORTACION',
           referenciaId: null,
           monto: 0,
           descripcion: '',
@@ -329,16 +472,23 @@ export class CajaComponent implements OnInit {
           montoInteres: null,
           montoMora: null
         });
-        this.toast.success('Movimiento registrado correctamente.');
-        this.cargarSaldo(caja.id);
-        this.cargarMovimientos(caja.id);
+        this.cargarItems();
+        if (caja) {
+          this.cargarSaldo(caja.id);
+          this.cargarMovimientos(caja.id);
+        }
       },
       error: (err: HttpErrorResponse) => {
-        const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo registrar el movimiento.';
+        const msg = (err.error as ApiError | undefined)?.message ?? 'No se pudo completar la operación.';
         this.error.set(msg);
         this.toast.error(msg);
       }
     });
+  }
+
+  private setError(msg: string): void {
+    this.error.set(msg);
+    this.toast.error(msg);
   }
 
   hacerArqueo(): void {

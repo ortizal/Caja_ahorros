@@ -1,0 +1,47 @@
+<app-modal [abierto]="abierto()" titulo="Buscar Socio" data-testid="socio-buscador-modal" (cerrar)="cerrar.emit()">
+  <div class="buscador-form" data-testid="socio-buscador-form">
+    <label class="field" style="flex: 1;">
+      <span>Nombre, apellido, cédula o código</span>
+      <input
+        class="form-control form-control-sm"
+        [value]="q()"
+        (input)="q.set($any($event.target).value)"
+        (keyup.enter)="buscar()"
+        placeholder="Busque el socio…"
+        autocomplete="off"
+        data-testid="input-buscar-socio"
+      />
+    </label>
+    <button type="button" class="btn btn-sm btn-primary" data-testid="btn-buscar-socio" [disabled]="buscando() || q().trim().length === 0" (click)="buscar()">
+      🔍 Buscar
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-error" style="margin-top: 10px;" data-testid="socio-buscador-error">
+      <span>⚠️ {{ error() }}</span>
+    </div>
+  }
+
+  <div class="buscador-resultados" data-testid="socio-buscador-resultados">
+    @if (buscando()) {
+      <div class="empty-state-text">Buscando…</div>
+    } @else if (resultados().length === 0 && q().trim().length > 0) {
+      <div class="empty-state-text">Sin resultados.</div>
+    } @else {
+      @for (s of resultados(); track s.id) {
+        <div class="buscador-fila" data-testid="socio-resultado">
+          <div class="buscador-fila-info">
+            <strong>{{ s.nombres }} {{ s.apellidos }}</strong>
+            <span class="text-muted">{{ s.codigo }} · {{ s.identificacion }}</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-elegir-socio" (click)="elegir(s)">Elegir</button>
+        </div>
+      }
+    }
+  </div>
+
+  <ng-container modal-footer>
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cerrar.emit()">Cerrar</button>
+  </ng-container>
+</app-modal>

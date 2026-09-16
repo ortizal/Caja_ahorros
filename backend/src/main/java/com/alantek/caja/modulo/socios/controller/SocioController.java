@@ -32,8 +32,10 @@ public class SocioController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('SOCIOS:VER')")
-    public PageResponse<SocioResponse> listar(@RequestParam(required = false) String estado, @PageableDefault(size = 10) Pageable pageable) {
-        return socioService.listar(estado, pageable);
+    public PageResponse<SocioResponse> listar(@RequestParam(required = false) String q,
+                                              @RequestParam(required = false) String estado,
+                                              @PageableDefault(size = 10) Pageable pageable) {
+        return socioService.listar(q, estado, pageable);
     }
 
     @GetMapping("/{id}")

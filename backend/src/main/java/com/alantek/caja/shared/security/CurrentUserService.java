@@ -30,4 +30,11 @@ public class CurrentUserService {
                 .map(UserPrincipal::username)
                 .orElseThrow(() -> new BusinessException("Usuario no autenticado"));
     }
+
+    public boolean hasAuthority(String authority) {
+        return getCurrentUser()
+                .map(principal -> principal.authorities().stream()
+                        .anyMatch(granted -> authority.equals(granted.getAuthority())))
+                .orElse(false);
+    }
 }

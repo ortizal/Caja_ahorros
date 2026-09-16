@@ -11,7 +11,7 @@ export class SocioService {
 
   constructor(private http: HttpClient) {}
 
-  listar(paginacion?: Paginacion & { estado?: string }): Observable<Paginated<Socio>> {
+  listar(paginacion?: Paginacion & { estado?: string; q?: string }): Observable<Paginated<Socio>> {
     return this.http.get<Paginated<Socio>>(this.base, { params: paginar(paginacion) });
   }
 

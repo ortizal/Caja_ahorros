@@ -21,5 +21,9 @@ public interface CajaAperturaRepository extends JpaRepository<CajaApertura, Long
 
     Page<CajaApertura> findByCajeroIdOrderByOpenedAtDesc(Long cajeroId, Pageable pageable);
 
+    Page<CajaApertura> findAllByOrderByOpenedAtDesc(Pageable pageable);
+
+    Page<CajaApertura> findByEstadoOrderByOpenedAtDesc(String estado, Pageable pageable);
+
     List<CajaApertura> findByEstadoOrderByOpenedAtAsc(String estado);
 }

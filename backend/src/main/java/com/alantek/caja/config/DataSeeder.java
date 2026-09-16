@@ -150,7 +150,7 @@ public class DataSeeder implements ApplicationRunner {
                     "APORTACIONES:VER", "APORTACIONES:CREAR", "APORTACIONES:EDITAR",
                     "APORTACIONES:APROBAR", "APORTACIONES:ANULAR",
                     "AHORROS:VER", "AHORROS:CREAR", "AHORROS:EDITAR", "AHORROS:APROBAR", "AHORROS:ANULAR",
-                    "CREDITOS:VER", "CREDITOS:CREAR",
+                    "CREDITOS:VER", "CREDITOS:CREAR", "CREDITOS:APROBAR",
                     "TESORERIA:VER", "TESORERIA:CREAR", "TESORERIA:EDITAR", "TESORERIA:ANULAR");
             case "GERENTE" -> Set.of(
                     "SOCIOS:VER", "SOCIOS:CREAR", "SOCIOS:EDITAR", "SOCIOS:APROBAR", "SOCIOS:ANULAR",

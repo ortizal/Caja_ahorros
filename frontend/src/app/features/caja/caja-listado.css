@@ -1,0 +1,9 @@
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+.fila-activa {
+  background: #eff6ff;
+}

@@ -30,9 +30,21 @@ public class SocioService {
 
     @Transactional(readOnly = true)
     public PageResponse<SocioResponse> listar(String estado, Pageable pageable) {
-        Page<Socio> page = (estado == null || estado.isBlank())
-                ? socioRepository.findAll(pageable)
-                : socioRepository.findByEstado(estado, pageable);
+        return listar(null, estado, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<SocioResponse> listar(String q, String estado, Pageable pageable) {
+        String busqueda = (q == null || q.isBlank()) ? null : q.trim();
+        String estadoFiltro = (estado == null || estado.isBlank()) ? null : estado;
+        Page<Socio> page;
+        if (busqueda == null && estadoFiltro == null) {
+            page = socioRepository.findAll(pageable);
+        } else if (busqueda == null) {
+            page = socioRepository.findByEstado(estadoFiltro, pageable);
+        } else {
+            page = socioRepository.buscar(busqueda, estadoFiltro, pageable);
+        }
         return PageResponse.of(page, this::toResponse);
     }
 

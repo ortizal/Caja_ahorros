@@ -1,0 +1,81 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-testid="page-title">Listado de Cajas</h1>
+    <p class="page-subtitle">Todas las aperturas de caja del sistema</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-operaciones" (click)="irOperaciones()">
+      🏠 Operaciones de Caja
+    </button>
+    @if (puedeCrear('CAJA:CREAR')) {
+      <button type="button" class="btn btn-sm btn-primary" data-testid="btn-abrir-caja" (click)="abrirCaja()">
+        ➕ Abrir Caja
+      </button>
+    }
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-error" data-testid="error-msg">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+}
+
+<div class="filter-bar" data-testid="filtro-estados">
+  @for (est of estados; track est) {
+    <button type="button" class="btn btn-sm" [class.btn-primary]="estado() === est" [class.btn-outline-secondary]="estado() !== est"
+            (click)="filtrarPorEstados(est)">
+      {{ est || 'Todas' }}
+    </button>
+  }
+</div>
+
+@if (cargando()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando listado de cajas…</div>
+  </div>
+} @else if (cajas().length === 0) {
+  <div class="card">
+    <div class="empty-state" style="padding: 20px;" data-testid="cajas-vacio">
+      <div class="empty-state-text">Sin cajas registradas.</div>
+    </div>
+  </div>
+} @else {
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table" data-testid="cajas-table">
+        <thead>
+          <tr>
+            <th appSortable sortKey="id" [sort]="sort()" (sortChange)="ordenar($event)">#</th>
+            <th appSortable sortKey="fecha" [sort]="sort()" (sortChange)="ordenar($event)">Fecha</th>
+            <th appSortable sortKey="saldoInicial" [sort]="sort()" (sortChange)="ordenar($event)">Saldo Inicial</th>
+            <th>Cajero</th>
+            <th appSortable sortKey="openedAt" [sort]="sort()" (sortChange)="ordenar($event)">Apertura</th>
+            <th appSortable sortKey="closedAt" [sort]="sort()" (sortChange)="ordenar($event)">Cierre</th>
+            <th appSortable sortKey="estado" [sort]="sort()" (sortChange)="ordenar($event)">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (caja of cajas(); track caja.id) {
+            <tr [class.fila-activa]="caja.estado === 'ABIERTA'">
+              <td><strong>#{{ caja.id }}</strong></td>
+              <td>{{ caja.fecha }}</td>
+              <td>\${{ caja.saldoInicial | number: '1.2-2' }}</td>
+              <td>{{ caja.cajeroNombre || '—' }}</td>
+              <td>{{ caja.openedAt | date: 'short' }}</td>
+              <td>{{ caja.closedAt | date: 'short' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="caja.estado === 'ABIERTA'" [class.badge-secondary]="caja.estado !== 'ABIERTA'">
+                  {{ caja.estado }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-paginador [page]="page()" [size]="size()" [totalElements]="totalElements()" [totalPages]="totalPages()"
+                   (pageChange)="cambiarPagina($event)" (sizeChange)="cambiarTamano($event)" />
+  </div>
+}

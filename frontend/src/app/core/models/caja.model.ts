@@ -1,11 +1,18 @@
 export interface CajaApertura {
   id: number;
   cajeroId: number;
+  cajeroNombre: string | null;
   fecha: string;
   saldoInicial: number;
   estado: string;
   openedAt: string;
   closedAt: string | null;
+}
+
+export interface Cajero {
+  id: number;
+  username: string;
+  nombre: string;
 }
 
 export interface CajaMovimiento {
@@ -67,6 +74,23 @@ export function referenciaParaTipo(tipo: string): TipoReferenciaCaja {
     case 'DEPOSITO':
     case 'RETIRO':
       return 'cuenta_ahorro';
+    case 'COBRO_CREDITO':
+    case 'DESEMBOLSO':
+      return 'credito';
+    default:
+      return null;
+  }
+}
+
+export type ObjetoMovimientoCaja = 'aportacion' | 'cuenta' | 'credito' | null;
+
+export function objetoParaTipo(tipo: string): ObjetoMovimientoCaja {
+  switch (tipo) {
+    case 'APORTACION':
+      return 'aportacion';
+    case 'DEPOSITO':
+    case 'RETIRO':
+      return 'cuenta';
     case 'COBRO_CREDITO':
     case 'DESEMBOLSO':
       return 'credito';

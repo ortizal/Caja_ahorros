@@ -24,6 +24,20 @@
         <span>Saldo Inicial *</span>
         <input type="number" step="0.01" class="form-control form-control-sm" formControlName="saldoInicial" placeholder="0.00" data-testid="input-saldo-inicial" />
       </label>
+      @if (puedeAsignar()) {
+        <label class="field">
+          <span>Cajero *</span>
+          <select class="form-select form-select-sm" formControlName="cajeroId" data-testid="select-cajero">
+            <option [ngValue]="null">— Yo (cajero actual) —</option>
+            @for (cajero of cajeros(); track cajero.id) {
+              <option [ngValue]="cajero.id">{{ cajero.nombre }} ({{ cajero.username }})</option>
+            }
+          </select>
+          @if (cargandoCajeros()) {
+            <div class="empty-state-text">Cargando cajeros…</div>
+          }
+        </label>
+      }
     </div>
   </div>
 

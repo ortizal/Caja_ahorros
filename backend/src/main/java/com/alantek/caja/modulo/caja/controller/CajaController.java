@@ -6,6 +6,7 @@ import com.alantek.caja.modulo.caja.dto.CajaArqueoRequest;
 import com.alantek.caja.modulo.caja.dto.CajaArqueoResponse;
 import com.alantek.caja.modulo.caja.dto.CajaMovimientoRequest;
 import com.alantek.caja.modulo.caja.dto.CajaMovimientoResponse;
+import com.alantek.caja.modulo.caja.dto.CajeroResponse;
 import com.alantek.caja.modulo.caja.dto.SaldoCajaResponse;
 import com.alantek.caja.modulo.caja.service.CajaService;
 import com.alantek.caja.shared.PageResponse;
@@ -20,7 +21,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/caja")
@@ -55,6 +59,19 @@ public class CajaController {
     @PreAuthorize("hasAuthority('CAJA:VER')")
     public PageResponse<CajaAperturaResponse> misCajas(@PageableDefault(size = 10) Pageable pageable) {
         return cajaService.misCajas(pageable);
+    }
+
+    @GetMapping("/listado")
+    @PreAuthorize("hasAuthority('CAJA:APROBAR')")
+    public PageResponse<CajaAperturaResponse> listado(@RequestParam(required = false) String estado,
+                                                      @PageableDefault(size = 10) Pageable pageable) {
+        return cajaService.listarTodas(estado, pageable);
+    }
+
+    @GetMapping("/cajeros")
+    @PreAuthorize("hasAuthority('CAJA:APROBAR')")
+    public List<CajeroResponse> cajeros() {
+        return cajaService.listarCajeros();
     }
 
     @GetMapping("/{id}/movimientos")

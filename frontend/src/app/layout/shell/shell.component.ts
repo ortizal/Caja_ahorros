@@ -11,6 +11,7 @@ const MENU: MenuItem[] = [
   { ruta: '/dashboard', etiqueta: 'Dashboard', permiso: '' },
   { ruta: '/socios', etiqueta: 'Socios', permiso: 'SOCIOS:VER' },
   { ruta: '/caja', etiqueta: 'Caja', permiso: 'CAJA:VER' },
+  { ruta: '/caja/listado', etiqueta: 'Listado de Cajas', permiso: 'CAJA:APROBAR' },
   { ruta: '/bancos', etiqueta: 'Bancos', permiso: 'BANCOS:VER' },
   { ruta: '/contabilidad', etiqueta: 'Contabilidad', permiso: 'CONTABILIDAD:VER' },
   { ruta: '/aportaciones', etiqueta: 'Aportaciones', permiso: 'APORTACIONES:VER' },

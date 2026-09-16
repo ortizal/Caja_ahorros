@@ -1,9 +1,14 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">Operaciones de Caja</h1>
-    <p class="page-subtitle">Apertura de caja diaria, registro de cobros/pagos, arqueos y comprobantes</p>
+    <p class="page-subtitle">Apertura de caja diaria, cobros/pagos, desembolsos, arqueos y comprobantes</p>
   </div>
   <div class="header-actions">
+    @if (puedeAprobar()) {
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-listado-cajas" (click)="irListado()">
+        📋 Listado de Cajas
+      </button>
+    }
     @if (puedeCrear()) {
       <button type="button" class="btn btn-sm btn-primary" data-testid="btn-abrir-caja"
               [disabled]="tieneCajaAbierta()" (click)="irAbrirCaja()">
@@ -26,10 +31,23 @@
   </div>
 }
 
+@if (!seleccionada() && !cargando()) {
+  <div class="card">
+    <div class="empty-state" style="padding: 24px;">
+      <div class="empty-state-text">No hay una caja abierta. Abra una caja para comenzar a registrar operaciones.</div>
+      @if (puedeCrear()) {
+        <button type="button" class="btn btn-sm btn-primary" style="margin-top: 12px;" (click)="irAbrirCaja()">➕ Abrir Caja</button>
+      }
+    </div>
+  </div>
+}
+
 @if (seleccionada(); as caja) {
   <div class="card">
     <div class="card-header">
-      <h3 class="card-title">Caja #{{ caja.id }} — <span class="badge" [class.badge-success]="caja.estado === 'ABIERTA'" [class.badge-secondary]="caja.estado !== 'ABIERTA'">{{ caja.estado }}</span> · {{ caja.fecha }}</h3>
+      <h3 class="card-title">Caja #{{ caja.id }} — <span class="badge" [class.badge-success]="caja.estado === 'ABIERTA'" [class.badge-secondary]="caja.estado !== 'ABIERTA'">{{ caja.estado }}</span> · {{ caja.fecha }}
+        @if (caja.cajeroNombre) { · Cajero: {{ caja.cajeroNombre }} }
+      </h3>
       <div class="header-actions">
         <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-exportar-caja-xlsx"
                 [disabled]="exportando()" (click)="exportarExcel()">
@@ -88,7 +106,7 @@
       </div>
       <form [formGroup]="movimientoForm" (ngSubmit)="registrarMovimiento()" class="form-grid" data-testid="movimiento-form">
         <label class="field">
-          <span>Tipo de Movimiento</span>
+          <span>Tipo de Movimiento *</span>
           <select class="form-select form-select-sm" formControlName="tipo" data-testid="input-tipo-movimiento">
             @for (tipo of tipos; track tipo) {
               <option [value]="tipo">{{ tipo }}</option>
@@ -96,23 +114,56 @@
           </select>
         </label>
 
+        @if (requiereSocio()) {
+          <label class="field">
+            <span>Socio *</span>
+            @if (socioSeleccionado(); as socio) {
+              <div class="socio-chip" data-testid="socio-seleccionado">
+                <div class="socio-chip-info">
+                  <strong>{{ socio.nombres }} {{ socio.apellidos }}</strong>
+                  <span class="text-muted">{{ socio.codigo }} · {{ socio.identificacion }}</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-testid="btn-cambiar-socio" (click)="abrirBuscadorSocio()">Cambiar</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-testid="btn-quitar-socio" (click)="quitarSocio()">✕</button>
+              </div>
+            } @else {
+              <button type="button" class="btn btn-sm btn-outline-primary" data-testid="btn-buscar-socio" (click)="abrirBuscadorSocio()">
+                🔍 Buscar socio
+              </button>
+            }
+          </label>
+        }
+
         <label class="field">
-          <span>{{ etiquetaPersona() }} *</span>
-          @if (tipoReferencia() && cargandoOpciones()) {
+          <span>{{ etiquetaItem() }} *</span>
+          @if (cargandoOpciones()) {
             <div class="empty-state-text">Cargando opciones…</div>
-          } @else if (tipoReferencia() && opcionesPersona().length === 0) {
+          } @else if (requiereSocio() && !socioSeleccionado()) {
+            <input class="form-control form-control-sm" disabled placeholder="Primero seleccione el socio" />
+          } @else if (items().length === 0) {
             <div class="empty-state-text">Sin opciones disponibles.</div>
           } @else {
-            <select class="form-select form-select-sm" formControlName="referenciaId" data-testid="input-referencia-movimiento">
+            <select class="form-select form-select-sm" formControlName="referenciaId" data-testid="input-item-movimiento">
               <option [ngValue]="null" disabled>Seleccione…</option>
-              @for (opcion of opcionesPersona(); track opcion.id) {
-                <option [ngValue]="opcion.id" data-testid="opcion-referencia-movimiento">{{ opcion.label }}</option>
+              @for (opcion of items(); track opcion.id) {
+                <option [ngValue]="opcion.id" data-testid="opcion-item-movimiento">{{ opcion.label }}</option>
               }
             </select>
           }
         </label>
 
-        @if (!cobroActivo()) {
+        @if (hintMonto(); as hint) {
+          <div class="alert alert-info" style="grid-column: 1 / -1;" data-testid="hint-monto">
+            <span>ℹ️ {{ hint }}</span>
+          </div>
+        }
+        @if (avisoItem(); as aviso) {
+          <div class="alert alert-error" style="grid-column: 1 / -1;" data-testid="aviso-item">
+            <span>⚠️ {{ aviso }}</span>
+          </div>
+        }
+
+        @if (!cobroActivo() && tipoActual() !== 'DESEMBOLSO') {
           <label class="field">
             <span>Monto</span>
             <input type="number" step="0.01" class="form-control form-control-sm" formControlName="monto" placeholder="0.00" data-testid="input-monto-movimiento" />
@@ -132,15 +183,16 @@
             <input type="number" step="0.01" class="form-control form-control-sm" formControlName="montoMora" placeholder="0.00" data-testid="input-monto-mora" />
           </label>
         }
-
-        <label class="field" style="grid-column: 1 / -1;">
-          <span>Descripción / Concepto</span>
-          <input class="form-control form-control-sm" formControlName="descripcion" placeholder="Detalle del movimiento" data-testid="input-descripcion-movimiento" />
-        </label>
+        @if (cobroActivo()) {
+          <label class="field" style="grid-column: 1 / -1;">
+            <span>Descripción / Concepto</span>
+            <input class="form-control form-control-sm" formControlName="descripcion" placeholder="Detalle del cobro" data-testid="input-descripcion-movimiento" />
+          </label>
+        }
 
         <div class="form-actions" style="grid-column: 1 / -1;">
-          <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-registrar-movimiento" [disabled]="movimientoForm.invalid || guardando()">
-            💾 Registrar Movimiento
+          <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-registrar-movimiento" [disabled]="!formValido() || guardando()">
+            {{ etiquetaBoton() }}
           </button>
         </div>
       </form>
@@ -242,50 +294,4 @@
   </div>
 }
 
-<div class="card">
-  <div class="card-header">
-    <h3 class="card-title">Historial de Cajas</h3>
-  </div>
-  @if (cajas().length === 0) {
-    <div class="empty-state" style="padding: 20px;" data-testid="cajas-vacio">
-      <div class="empty-state-text">Sin cajas registradas.</div>
-    </div>
-  } @else {
-    <div class="table-responsive">
-      <table class="table" data-testid="cajas-table">
-        <thead>
-          <tr>
-            <th appSortable sortKey="id" [sort]="sort()" (sortChange)="ordenar($event)">#</th>
-            <th appSortable sortKey="fecha" [sort]="sort()" (sortChange)="ordenar($event)">Fecha</th>
-            <th appSortable sortKey="saldoInicial" [sort]="sort()" (sortChange)="ordenar($event)">Saldo Inicial</th>
-            <th appSortable sortKey="estado" [sort]="sort()" (sortChange)="ordenar($event)">Estado</th>
-            <th style="text-align: right;">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (caja of cajas(); track caja.id) {
-            <tr [class.fila-activa]="seleccionada()?.id === caja.id">
-              <td><strong>#{{ caja.id }}</strong></td>
-              <td>{{ caja.fecha }}</td>
-              <td>\${{ caja.saldoInicial | number: '1.2-2' }}</td>
-              <td>
-                <span class="badge" [class.badge-success]="caja.estado === 'ABIERTA'" [class.badge-secondary]="caja.estado !== 'ABIERTA'">
-                  {{ caja.estado }}
-                </span>
-              </td>
-              <td style="text-align: right;">
-                <app-acciones-menu>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="seleccionar(caja)" [attr.data-testid]="'btn-caja-' + caja.id">
-                    👁 Ver Caja
-                  </button>
-                </app-acciones-menu>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    <app-paginador [page]="page()" [size]="size()" [totalElements]="totalElements()" [totalPages]="totalPages()"
-                   (pageChange)="cambiarPagina($event)" (sizeChange)="cambiarTamano($event)" />
-  }
-</div>
+<app-socio-buscador [abierto]="modalSocioAbierto()" (seleccionar)="elegirSocio($event)" (cerrar)="cerrarBuscadorSocio()" />

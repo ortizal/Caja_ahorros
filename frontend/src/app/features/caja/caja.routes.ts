@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { permisoGuard } from '../../core/auth/auth.guard';
 
 export const cajaRoutes: Routes = [
   {
@@ -13,6 +14,12 @@ export const cajaRoutes: Routes = [
         path: 'nuevo',
         loadComponent: () =>
           import('./caja-apertura-form.component').then((m) => m.CajaAperturaFormComponent)
+      },
+      {
+        path: 'listado',
+        canActivate: [permisoGuard('CAJA:APROBAR')],
+        loadComponent: () =>
+          import('./caja-listado.component').then((m) => m.CajaListadoComponent)
       }
     ]
   }

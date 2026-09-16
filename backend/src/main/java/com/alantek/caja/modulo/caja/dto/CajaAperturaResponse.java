@@ -7,6 +7,7 @@ import java.time.LocalDate;
 public record CajaAperturaResponse(
         Long id,
         Long cajeroId,
+        String cajeroNombre,
         LocalDate fecha,
         BigDecimal saldoInicial,
         String estado,
