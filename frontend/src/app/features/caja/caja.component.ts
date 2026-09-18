@@ -179,7 +179,7 @@ export class CajaComponent implements OnInit {
   });
 
   protected readonly formValido = computed(() => {
-    const raw = this.movimientoForm.getRawValue();
+    const raw = this.estadoForm();
     if (!raw.tipo || raw.referenciaId == null) {
       return false;
     }
@@ -205,6 +205,17 @@ export class CajaComponent implements OnInit {
 
   ngOnInit(): void {
     this.cobroActivo.set(this.movimientoForm.getRawValue().tipo === 'COBRO_CREDITO');
+    this.movimientoForm.valueChanges.subscribe((v) => {
+      this.estadoForm.set({
+        tipo: v.tipo ?? 'APORTACION',
+        referenciaId: v.referenciaId ?? null,
+        monto: v.monto ?? 0,
+        descripcion: v.descripcion ?? '',
+        montoCapital: v.montoCapital ?? null,
+        montoInteres: v.montoInteres ?? null,
+        montoMora: v.montoMora ?? null
+      });
+    });
     this.movimientoForm.controls.tipo.valueChanges.subscribe((tipo) => {
       this.cobroActivo.set(tipo === 'COBRO_CREDITO');
       this.movimientoForm.controls.referenciaId.setValue(null);
