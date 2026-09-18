@@ -1,0 +1,82 @@
+<div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Balance de Comprobación (Sumas y Saldos)</h3>
+      @if (datos()) {
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-outline" (click)="exportar('pdf')">📄 PDF</button>
+          <button type="button" class="btn btn-sm btn-outline" (click)="exportar('xlsx')">📊 Excel</button>
+        </div>
+      }
+    </div>
+  <div class="form-inline" style="padding: 16px;">
+    <label class="field">
+      <span>Año</span>
+      <input type="number" class="form-control form-control-sm" [ngModel]="anio()" (ngModelChange)="anio.set($event)" min="2020" max="2030" />
+    </label>
+    <label class="field">
+      <span>Mes</span>
+      <select class="form-select form-select-sm" [ngModel]="mes()" (ngModelChange)="mes.set($event)">
+        <option [value]="1">Enero</option>
+        <option [value]="2">Febrero</option>
+        <option [value]="3">Marzo</option>
+        <option [value]="4">Abril</option>
+        <option [value]="5">Mayo</option>
+        <option [value]="6">Junio</option>
+        <option [value]="7">Julio</option>
+        <option [value]="8">Agosto</option>
+        <option [value]="9">Septiembre</option>
+        <option [value]="10">Octubre</option>
+        <option [value]="11">Noviembre</option>
+        <option [value]="12">Diciembre</option>
+      </select>
+    </label>
+    <button type="button" class="btn btn-sm btn-primary" [disabled]="cargando()" (click)="cargar()">
+      📋 Cargar
+    </button>
+  </div>
+</div>
+
+@if (cargando()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando balance de comprobación…</div>
+  </div>
+}
+
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (datos(); as d) {
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table" data-testid="comprobacion-table">
+        <thead>
+          <tr>
+            <th>Cuenta</th>
+            <th>Nombre</th>
+            <th>Debe</th>
+            <th>Haber</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (linea of d.lineas; track linea.cuentaCodigo) {
+            <tr>
+              <td><strong>{{ linea.cuentaCodigo }}</strong></td>
+              <td>{{ linea.cuentaNombre }}</td>
+              <td>\${{ linea.debe | number: '1.2-2' }}</td>
+              <td>\${{ linea.haber | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr class="balance-total">
+            <td colspan="2"><strong>TOTALES</strong></td>
+            <td><strong>\${{ d.totalDebe | number: '1.2-2' }}</strong></td>
+            <td><strong>\${{ d.totalHaber | number: '1.2-2' }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+}

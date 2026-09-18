@@ -1,0 +1,17 @@
+.form-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kpi-highlight {
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  border-radius: var(--radius-md);
+}
+
+.kpi-highlight .kpi-value {
+  color: #166534;
+  font-size: 24px;
+}

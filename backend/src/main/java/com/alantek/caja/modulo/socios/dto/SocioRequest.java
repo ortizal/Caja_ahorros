@@ -26,6 +26,7 @@ public record SocioRequest(
         String telefono,
         String email,
         String direccion,
+        String sexo,
 
         @NotNull(message = "La fecha de ingreso es obligatoria")
         LocalDate fechaIngreso,

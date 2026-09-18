@@ -50,6 +50,9 @@ public class Socio {
     @Column(length = 255)
     private String direccion;
 
+    @Column(length = 1)
+    private String sexo;
+
     @Column(name = "fecha_ingreso", nullable = false)
     private LocalDate fechaIngreso;
 
@@ -99,6 +102,8 @@ public class Socio {
     public void setEmail(String email) { this.email = email; }
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
+    public String getSexo() { return sexo; }
+    public void setSexo(String sexo) { this.sexo = sexo; }
     public LocalDate getFechaIngreso() { return fechaIngreso; }
     public void setFechaIngreso(LocalDate fechaIngreso) { this.fechaIngreso = fechaIngreso; }
     public LocalDate getFechaRetiro() { return fechaRetiro; }

@@ -1,0 +1,170 @@
+@if (cargando()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando balance social…</div>
+  </div>
+}
+
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (datos(); as d) {
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Balance Social Cooperativo</h3>
+      <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-outline" (click)="exportar('pdf')">📄 PDF</button>
+        <button type="button" class="btn btn-sm btn-outline" (click)="exportar('xlsx')">📊 Excel</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" data-testid="social-kpis">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-blue">👥</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.totalSocios }}</span>
+          <span class="kpi-label">Total Socios</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">✅</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.sociosActivos }}</span>
+          <span class="kpi-label">Socios Activos</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-rose">♀️</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.sociosMujeres }}</span>
+          <span class="kpi-label">Socias Mujeres</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-violet">♂️</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.sociosHombres }}</span>
+          <span class="kpi-label">Socios Hombres</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-amber">♀️</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.porcentajeInclusionFemenina | percent: '1.1-1' }}</span>
+          <span class="kpi-label">Inclusión Femenina</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">📖</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.creditosNoSocios }}</span>
+          <span class="kpi-label">Créditos No Socios (Educación)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-blue">💰</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.saldoTotalAhorros | number: '1.2-2' }}</span>
+          <span class="kpi-label">Saldo Total Ahorros</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">🐷</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.totalCuentasAhorro }}</span>
+          <span class="kpi-label">Cuentas de Ahorro</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-amber">📅</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.cuentasDecimo13 }}</span>
+          <span class="kpi-label">Cuentas Décimo Tercero</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-violet">📅</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.cuentasDecimo14 }}</span>
+          <span class="kpi-label">Cuentas Décimo Cuarto</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">✅</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.aportacionesPagadas | number: '1.2-2' }}</span>
+          <span class="kpi-label">Aportaciones Pagadas</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-rose">⏳</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.aportacionesPendientes | number: '1.2-2' }}</span>
+          <span class="kpi-label">Aportaciones Pendientes</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-blue">📊</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.tasaCumplimientoAportaciones | percent: '1.1-1' }}</span>
+          <span class="kpi-label">Tasa Cumplimiento Aportaciones</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">💵</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.carteraColocada | number: '1.2-2' }}</span>
+          <span class="kpi-label">Cartera Colocada</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-blue">📋</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.creditosVigentes }}</span>
+          <span class="kpi-label">Créditos Vigentes</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-rose">⚠️</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.porcentajeMorosidad | percent: '1.1-1' }}</span>
+          <span class="kpi-label">Morosidad</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">📈</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.ingresosIntereses | number: '1.2-2' }}</span>
+          <span class="kpi-label">Ingresos por Intereses</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-amber">📈</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.ingresosMora | number: '1.2-2' }}</span>
+          <span class="kpi-label">Ingresos por Mora</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-rose">📉</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.gastosOperativos | number: '1.2-2' }}</span>
+          <span class="kpi-label">Gastos Operativos</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

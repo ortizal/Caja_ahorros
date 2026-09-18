@@ -1,0 +1,134 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Balance Personal del Socio</h3>
+  </div>
+  <div class="form-inline" style="padding: 16px;">
+    <label class="field">
+      <span>ID Socio</span>
+      <input type="number" class="form-control form-control-sm" [ngModel]="socioId()" (ngModelChange)="socioId.set($event)" min="1" />
+    </label>
+    <button type="button" class="btn btn-sm btn-primary" [disabled]="cargando()" (click)="cargar()">
+      👤 Consultar
+    </button>
+  </div>
+</div>
+
+@if (cargando()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando balance del socio…</div>
+  </div>
+}
+
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (datos(); as d) {
+  <div class="card">
+<div class="card-header">
+    <h3 class="card-title">{{ d.codigo }} — {{ d.nombreCompleto }}</h3>
+    <div class="btn-group">
+      <button type="button" class="btn btn-sm btn-outline" (click)="exportar('pdf')">📄 PDF</button>
+      <button type="button" class="btn btn-sm btn-outline" (click)="exportar('xlsx')">📊 Excel</button>
+    </div>
+    <span class="badge badge-info">{{ d.estado }}</span>
+    </div>
+    <div class="kpi-grid" data-testid="personal-kpis">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">📅</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.fechaIngreso }}</span>
+          <span class="kpi-label">Fecha de Ingreso</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">💵</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.totalAportado | number: '1.2-2' }}</span>
+          <span class="kpi-label">Total Aportado</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-amber">⏳</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.aportePendienteActual | number: '1.2-2' }}</span>
+          <span class="kpi-label">Aporte Pendiente</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Ahorros e Inversiones</h3>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-blue">💰</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.saldoTotalAhorros | number: '1.2-2' }}</span>
+          <span class="kpi-label">Saldo Total Ahorros</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-emerald">🐷</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.cuentasAhorro.length }}</span>
+          <span class="kpi-label">Cuentas de Ahorro</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Créditos</h3>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-rose">📋</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.saldoTotalCreditos | number: '1.2-2' }}</span>
+          <span class="kpi-label">Saldo Total Créditos</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-blue">✅</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.creditosVigentes }}</span>
+          <span class="kpi-label">Créditos Vigentes</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-rose">⚠️</div>
+        <div class="kpi-info">
+          <span class="kpi-value">{{ d.cuotasVencidas }}</span>
+          <span class="kpi-label">Cuotas Vencidas</span>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon-wrapper kpi-amber">💰</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.moraTotal | number: '1.2-2' }}</span>
+          <span class="kpi-label">Mora Total</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Posición Neta del Socio</h3>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi kpi-highlight">
+        <div class="kpi-icon-wrapper kpi-emerald">🏦</div>
+        <div class="kpi-info">
+          <span class="kpi-value">${{ d.posicionNeta | number: '1.2-2' }}</span>
+          <span class="kpi-label">Posición Neta</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

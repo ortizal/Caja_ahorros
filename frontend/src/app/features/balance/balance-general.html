@@ -1,0 +1,103 @@
+<div class="kpi-grid" data-testid="balance-general-kpis">
+  @if (datos(); as d) {
+    <div class="kpi">
+      <div class="kpi-icon-wrapper kpi-blue">💰</div>
+      <div class="kpi-info">
+        <span class="kpi-value">${{ d.totalActivo | number: '1.2-2' }}</span>
+        <span class="kpi-label">Total Activo</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon-wrapper kpi-rose">📉</div>
+      <div class="kpi-info">
+        <span class="kpi-value">${{ d.totalPasivo | number: '1.2-2' }}</span>
+        <span class="kpi-label">Total Pasivo</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon-wrapper kpi-emerald">🏦</div>
+      <div class="kpi-info">
+        <span class="kpi-value">${{ d.totalPatrimonio | number: '1.2-2' }}</span>
+        <span class="kpi-label">Total Patrimonio</span>
+      </div>
+    </div>
+  }
+</div>
+
+@if (cargando()) {
+  <div class="empty-state">
+    <div class="empty-state-icon">⌛</div>
+    <div class="empty-state-text">Cargando balance general…</div>
+  </div>
+}
+
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (datos(); as d) {
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Balance de Situación</h3>
+      <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-outline" (click)="exportar('pdf')">📄 PDF</button>
+        <button type="button" class="btn btn-sm btn-outline" (click)="exportar('xlsx')">📊 Excel</button>
+      </div>
+    </div>
+    <div class="balance-grid">
+      <div class="balance-seccion">
+        <h4>ACTIVO</h4>
+        @if (d.activo.length === 0) {
+          <div class="empty-state-text">Sin datos.</div>
+        } @else {
+          @for (item of d.activo; track item.cuentaCodigo) {
+            <div class="balance-linea">
+              <span>{{ item.cuentaCodigo }} — {{ item.cuentaNombre }}</span>
+              <strong>${{ item.saldo | number: '1.2-2' }}</strong>
+            </div>
+          }
+          <div class="balance-total">
+            <span>Total Activo</span>
+            <strong>${{ d.totalActivo | number: '1.2-2' }}</strong>
+          </div>
+        }
+      </div>
+
+      <div class="balance-seccion">
+        <h4>PASIVO</h4>
+        @if (d.pasivo.length === 0) {
+          <div class="empty-state-text">Sin datos.</div>
+        } @else {
+          @for (item of d.pasivo; track item.cuentaCodigo) {
+            <div class="balance-linea">
+              <span>{{ item.cuentaCodigo }} — {{ item.cuentaNombre }}</span>
+              <strong>${{ item.saldo | number: '1.2-2' }}</strong>
+            </div>
+          }
+          <div class="balance-total">
+            <span>Total Pasivo</span>
+            <strong>${{ d.totalPasivo | number: '1.2-2' }}</strong>
+          </div>
+        }
+      </div>
+
+      <div class="balance-seccion">
+        <h4>PATRIMONIO</h4>
+        @if (d.patrimonio.length === 0) {
+          <div class="empty-state-text">Sin datos.</div>
+        } @else {
+          @for (item of d.patrimonio; track item.cuentaCodigo) {
+            <div class="balance-linea">
+              <span>{{ item.cuentaCodigo }} — {{ item.cuentaNombre }}</span>
+              <strong>${{ item.saldo | number: '1.2-2' }}</strong>
+            </div>
+          }
+          <div class="balance-total">
+            <span>Total Patrimonio</span>
+            <strong>${{ d.totalPatrimonio | number: '1.2-2' }}</strong>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

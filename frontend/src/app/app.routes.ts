@@ -75,6 +75,11 @@ export const routes: Routes = [
         path: 'reportes',
         canActivate: [permisoGuard('SEGURIDAD:VER')],
         loadChildren: () => import('./features/reportes/reportes.routes').then((m) => m.reportesRoutes)
+      },
+      {
+        path: 'balance',
+        canActivate: [permisoGuard('CONTABILIDAD:VER')],
+        loadChildren: () => import('./features/balance/balance.routes').then((m) => m.balanceRoutes)
       }
     ]
   },

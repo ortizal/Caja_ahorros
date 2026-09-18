@@ -1,0 +1,10 @@
+.form-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.balance-total {
+  background: #eff6ff;
+}

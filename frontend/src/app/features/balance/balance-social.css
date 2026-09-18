@@ -1,0 +1,15 @@
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  padding: 16px;
+}
+
+.kpi-grid + .kpi-grid {
+  padding-top: 0;
+}
+
+.kpi-icon-wrapper.kpi-violet {
+  background: #f3e8ff;
+  color: #7c3aed;
+}

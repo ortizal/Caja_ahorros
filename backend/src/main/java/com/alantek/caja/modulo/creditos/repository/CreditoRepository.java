@@ -28,4 +28,6 @@ public interface CreditoRepository extends JpaRepository<Credito, Long> {
 
     @Query("SELECT COUNT(c) FROM Credito c WHERE c.estado IN ('VIGENTE', 'EN_MORA')")
     long countVigentes();
+
+    long countBySocioIdIsNull();
 }

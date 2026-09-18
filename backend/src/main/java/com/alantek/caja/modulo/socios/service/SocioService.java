@@ -70,6 +70,7 @@ public class SocioService {
         socio.setTelefono(request.telefono());
         socio.setEmail(request.email());
         socio.setDireccion(request.direccion());
+        socio.setSexo(request.sexo());
         socio.setFechaIngreso(request.fechaIngreso());
         socio.setUsuarioId(request.usuarioId());
         socio.setEstado(request.estado() != null ? request.estado().toUpperCase() : "ACTIVO");
@@ -97,6 +98,7 @@ public class SocioService {
         socio.setTelefono(request.telefono());
         socio.setEmail(request.email());
         socio.setDireccion(request.direccion());
+        socio.setSexo(request.sexo());
         socio.setFechaIngreso(request.fechaIngreso());
         socio.setUsuarioId(request.usuarioId());
         if (request.estado() != null && !request.estado().isBlank()) {
@@ -185,6 +187,7 @@ public class SocioService {
                 socio.getTelefono(),
                 socio.getEmail(),
                 socio.getDireccion(),
+                socio.getSexo(),
                 socio.getFechaIngreso(),
                 socio.getFechaRetiro(),
                 socio.getEstado(),

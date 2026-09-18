@@ -37,4 +37,8 @@ public interface SocioRepository extends JpaRepository<Socio, Long> {
     Long maxId();
 
     long countByEstado(String estado);
+
+    long countBySexo(String sexo);
+
+    long countBySexoAndEstado(String sexo, String estado);
 }

@@ -222,6 +222,7 @@ public class DataSeeder implements ApplicationRunner {
             socio.setApellidos("Perez");
             socio.setFechaIngreso(LocalDate.now());
             socio.setEstado("ACTIVO");
+            socio.setSexo("F");
             socio.setUsuarioId(usuarioId);
             socioRepository.save(socio);
         }

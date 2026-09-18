@@ -4,7 +4,9 @@ import com.alantek.caja.modulo.aportaciones.entity.Aportacion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +27,12 @@ public interface AportacionRepository extends JpaRepository<Aportacion, Long> {
     Page<Aportacion> findBySocioId(Long socioId, Pageable pageable);
 
     Page<Aportacion> findByPeriodoAndSocioId(String periodo, Long socioId, Pageable pageable);
+
+    long countByEstado(String estado);
+
+    @Query("SELECT COALESCE(SUM(a.montoPagado), 0) FROM Aportacion a")
+    BigDecimal sumMontoPagado();
+
+    @Query("SELECT COALESCE(SUM(a.montoEsperado - a.montoPagado), 0) FROM Aportacion a WHERE a.estado != 'PAGADA'")
+    BigDecimal sumPendiente();
 }

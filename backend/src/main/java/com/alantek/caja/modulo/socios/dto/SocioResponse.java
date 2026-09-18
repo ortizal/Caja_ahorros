@@ -13,6 +13,7 @@ public record SocioResponse(
         String telefono,
         String email,
         String direccion,
+        String sexo,
         LocalDate fechaIngreso,
         LocalDate fechaRetiro,
         String estado,

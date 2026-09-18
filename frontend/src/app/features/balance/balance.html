@@ -1,0 +1,34 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Balances</h1>
+    <p class="page-subtitle">Estados financieros, comprobación, social y balance personal</p>
+  </div>
+</div>
+
+<div class="tabs" data-testid="balance-tabs">
+  <button type="button" class="tab" [class.tab-activa]="tabActiva() === 'general'" (click)="tabActiva.set('general')">
+    📊 General Financiero
+  </button>
+  <button type="button" class="tab" [class.tab-activa]="tabActiva() === 'comprobacion'" (click)="tabActiva.set('comprobacion')">
+    📋 Comprobación
+  </button>
+  <button type="button" class="tab" [class.tab-activa]="tabActiva() === 'social'" (click)="tabActiva.set('social')">
+    🤝 Social Cooperativo
+  </button>
+  <button type="button" class="tab" [class.tab-activa]="tabActiva() === 'personal'" (click)="tabActiva.set('personal')">
+    👤 Personal del Socio
+  </button>
+</div>
+
+@if (tabActiva() === 'general') {
+  <app-balance-general />
+}
+@if (tabActiva() === 'comprobacion') {
+  <app-balance-comprobacion />
+}
+@if (tabActiva() === 'social') {
+  <app-balance-social />
+}
+@if (tabActiva() === 'personal') {
+  <app-balance-personal />
+}

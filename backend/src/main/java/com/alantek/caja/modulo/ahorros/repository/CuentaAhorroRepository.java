@@ -5,7 +5,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +27,11 @@ public interface CuentaAhorroRepository extends JpaRepository<CuentaAhorro, Long
 
     @Query("SELECT COALESCE(MAX(c.id), 0) FROM CuentaAhorro c")
     Long maxId();
+
+    long countByTipoAhorro(String tipoAhorro);
+
+    @Query("SELECT COALESCE(SUM(c.saldo), 0) FROM CuentaAhorro c WHERE c.estado = :estado")
+    BigDecimal sumSaldoByEstado(@Param("estado") String estado);
+
+    long countByEstado(String estado);
 }

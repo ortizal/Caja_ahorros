@@ -4,7 +4,9 @@ import com.alantek.caja.modulo.creditos.entity.PagoCuota;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface PagoCuotaRepository extends JpaRepository<PagoCuota, Long> {
@@ -14,4 +16,10 @@ public interface PagoCuotaRepository extends JpaRepository<PagoCuota, Long> {
     List<PagoCuota> findByCuotaId(Long cuotaId);
 
     Page<PagoCuota> findByCreditoId(Long creditoId, Pageable pageable);
+
+    @Query("SELECT COALESCE(SUM(p.montoInteres), 0) FROM PagoCuota p")
+    BigDecimal sumMontoInteres();
+
+    @Query("SELECT COALESCE(SUM(p.montoMora), 0) FROM PagoCuota p")
+    BigDecimal sumMontoMora();
 }
